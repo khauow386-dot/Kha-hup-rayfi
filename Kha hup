@@ -1,0 +1,1465 @@
+--==================================================
+-- KHA HUB - RAYFIELD GEN2
+--==================================================
+
+local Rayfield = loadstring(
+    game:HttpGet("https://sirius.menu/gen2")
+)()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+--==================================================
+-- WINDOW
+--==================================================
+
+local Window = Rayfield:CreateWindow({
+    name = "kha hup",
+    subtitle = "by David",
+    theme = "default",
+
+    configuration = {
+        autoSave = true,
+        autoLoad = true,
+        fileName = "kha Hub"
+    }
+})
+
+--==================================================
+-- TABS
+--==================================================
+
+local ItemsTab = Window:CreateTab({
+    name = "Items",
+    icon = 4483362458
+})
+
+local BuildTab = Window:CreateTab({
+    name = "Building",
+    icon = 4483362458
+})
+
+local TeleportTab = Window:CreateTab({
+    name = "Teleports",
+    icon = 4483362458
+})
+
+--==================================================
+-- VARIABLES
+--==================================================
+
+local selectedBuild = "hut"
+local floorPreviewCFrame = nil
+local buildUIButton = nil
+
+--==================================================
+-- NOTIFY
+--==================================================
+
+local function notify(title, content)
+    pcall(function()
+        Window:Notify({
+            title = title,
+            content = content,
+            duration = 4
+        })
+    end)
+end
+
+--==================================================
+-- CHARACTER
+--==================================================
+
+local function getCharacter()
+    local character = LocalPlayer.Character
+
+    if not character then
+        return nil, nil
+    end
+
+    local root =
+        character:FindFirstChild("HumanoidRootPart")
+
+    if not root then
+        return character, nil
+    end
+
+    return character, root
+end
+
+--==================================================
+-- PREVIEW FOLDER
+--==================================================
+
+local previewFolder = Instance.new("Folder")
+
+previewFolder.Name = "KhaHubPreview"
+previewFolder.Parent = workspace
+
+local function clearPreview()
+    for _, object in ipairs(
+        previewFolder:GetChildren()
+    ) do
+        object:Destroy()
+    end
+end
+
+local function createPreviewPart(size, cframe)
+    local preview = Instance.new("Part")
+
+    preview.Name = "PreviewPart"
+
+    preview.Anchored = true
+    preview.CanCollide = false
+    preview.CanTouch = false
+    preview.CanQuery = false
+    preview.CastShadow = false
+
+    preview.Transparency = 0.75
+    preview.Color = Color3.fromRGB(
+        0,
+        255,
+        0
+    )
+
+    preview.Material =
+        Enum.Material.ForceField
+
+    preview.Size = size
+    preview.CFrame = cframe
+
+    preview.Parent = previewFolder
+
+    return preview
+end
+
+--==================================================
+-- TELEPORTS
+--==================================================
+
+TeleportTab:CreateButton({
+    name = "Shop",
+
+    callback = function()
+        local _, root = getCharacter()
+
+        if not root then
+            notify(
+                "Teleport",
+                "Character not ready."
+            )
+            return
+        end
+
+        root.CFrame = CFrame.new(
+            -425,
+            6,
+            77
+        )
+    end
+})
+
+TeleportTab:CreateButton({
+    name = "Main Area",
+
+    callback = function()
+        local _, root = getCharacter()
+
+        if not root then
+            notify(
+                "Teleport",
+                "Character not ready."
+            )
+            return
+        end
+
+        root.CFrame = CFrame.new(
+            -394,
+            3,
+            423
+        )
+    end
+})
+
+--==================================================
+-- RANDOM ITEM TELEPORT
+--==================================================
+
+local function teleportToRandomAsset(searchName)
+
+    local _, root = getCharacter()
+
+    if not root then
+        notify(
+            "Item",
+            "Character not ready."
+        )
+        return
+    end
+
+    local matches = {}
+
+    local search =
+        string.lower(searchName)
+
+    for _, object in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if object:IsA("BasePart") then
+
+            local objectName =
+                string.lower(object.Name)
+
+            if objectName:find(
+                search,
+                1,
+                true
+            ) then
+
+                table.insert(
+                    matches,
+                    object
+                )
+            end
+        end
+    end
+
+    if #matches == 0 then
+        notify(
+            "Item Not Found",
+            "Could not find: " ..
+            searchName
+        )
+        return
+    end
+
+    local choice =
+        matches[
+            math.random(
+                1,
+                #matches
+            )
+        ]
+
+    root.CFrame =
+        choice.CFrame +
+        Vector3.new(
+            0,
+            3,
+            0
+        )
+
+    notify(
+        "Item Found",
+        "Teleported to: " ..
+        choice.Name
+    )
+end
+
+--==================================================
+-- ITEM BUTTONS
+--==================================================
+
+ItemsTab:CreateButton({
+    name = "Hammer",
+
+    callback = function()
+        teleportToRandomAsset("hammer")
+    end
+})
+
+ItemsTab:CreateButton({
+    name = "Food",
+
+    callback = function()
+        teleportToRandomAsset("food")
+    end
+})
+
+ItemsTab:CreateButton({
+    name = "Money",
+
+    callback = function()
+        teleportToRandomAsset("money")
+    end
+})
+
+ItemsTab:CreateButton({
+    name = "Crowbar",
+
+    callback = function()
+        teleportToRandomAsset("crowbar")
+    end
+})
+
+ItemsTab:CreateButton({
+    name = "Bat",
+
+    callback = function()
+        teleportToRandomAsset("bat")
+    end
+})
+
+ItemsTab:CreateButton({
+    name = "Lantern",
+
+    callback = function()
+        teleportToRandomAsset("lantern")
+    end
+})
+
+--==================================================
+-- BUILD DATA
+--==================================================
+
+local function getBuildData()
+
+    local character, root =
+        getCharacter()
+
+    if not character or not root then
+        notify(
+            "Build Error",
+            "Character not ready."
+        )
+        return nil
+    end
+
+    local hammer =
+        character:FindFirstChild("Hammer")
+
+    if not hammer then
+        notify(
+            "Build Error",
+            "Hammer not found."
+        )
+        return nil
+    end
+
+    local remote =
+        hammer:FindFirstChild(
+            "BuildPlank"
+        )
+
+    if not remote then
+        notify(
+            "Build Error",
+            "BuildPlank not found."
+        )
+        return nil
+    end
+
+    return character, root, hammer, remote
+end
+
+--==================================================
+-- BUILD HUT
+--==================================================
+
+local function BuildHut()
+
+    local character, root, hammer, remote =
+        getBuildData()
+
+    if not remote then
+        return
+    end
+
+    local road =
+        workspace:FindFirstChild("Road")
+
+    if not road then
+        notify(
+            "Build Error",
+            "Road not found."
+        )
+        return
+    end
+
+    local part =
+        road:GetChildren()[33]
+
+    if not part then
+        notify(
+            "Build Error",
+            "Road part #33 not found."
+        )
+        return
+    end
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+    local origin =
+        root.Position +
+        Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+    local function fire(p1, p2)
+
+        remote:FireServer(
+            p1,
+            p2,
+            part,
+            part,
+            Vector3.new(
+                0,
+                1,
+                0
+            )
+        )
+    end
+
+    -- Front
+    for y = 0.5, 7, 0.5 do
+
+        if y < 1 or y > 5.5 then
+
+            fire(
+                origin +
+                    right * -6 +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    ),
+
+                origin +
+                    right * 6 +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+            )
+
+        else
+
+            fire(
+                origin +
+                    right * -6 +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    ),
+
+                origin +
+                    right * -2 +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+            )
+
+            fire(
+                origin +
+                    right * 2 +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    ),
+
+                origin +
+                    right * 6 +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+            )
+        end
+    end
+
+    -- Right
+    for y = 0.5, 7, 0.5 do
+
+        fire(
+            origin +
+                right * 6 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
+
+            origin +
+                right * 6 +
+                forward * 12 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+        )
+    end
+
+    -- Back
+    for y = 0.5, 7, 0.5 do
+
+        fire(
+            origin +
+                right * -6 +
+                forward * 12 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
+
+            origin +
+                right * 6 +
+                forward * 12 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+        )
+    end
+
+    -- Left
+    for y = 0.5, 7, 0.5 do
+
+        fire(
+            origin +
+                right * -6 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
+
+            origin +
+                right * -6 +
+                forward * 12 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+        )
+    end
+
+    -- Roof
+    for z = 0, 12, 2 do
+
+        fire(
+            origin +
+                right * -6 +
+                forward * z +
+                Vector3.new(
+                    0,
+                    7.5,
+                    0
+                ),
+
+            origin +
+                right * 6 +
+                forward * z +
+                Vector3.new(
+                    0,
+                    7.5,
+                    0
+                )
+        )
+    end
+
+    notify(
+        "Building",
+        "Hut complete."
+    )
+end
+
+--==================================================
+-- BUILD WALL
+--==================================================
+
+local function BuildWall()
+
+    local character, root, hammer, remote =
+        getBuildData()
+
+    if not remote then
+        return
+    end
+
+    local ground =
+        workspace:FindFirstChild("Ground")
+
+    if not ground then
+        notify(
+            "Build Error",
+            "Ground not found."
+        )
+        return
+    end
+
+    local part =
+        ground:GetChildren()[9]
+
+    if not part then
+        notify(
+            "Build Error",
+            "Ground part #9 not found."
+        )
+        return
+    end
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+    local start =
+        root.Position +
+        forward * 2 +
+        Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+    local function fire(p1, p2)
+
+        remote:FireServer(
+            p1,
+            p2,
+            part,
+            part,
+            Vector3.new(
+                0,
+                1,
+                0
+            )
+        )
+    end
+
+    for y = 0.5, 6, 0.5 do
+
+        fire(
+            start +
+                right * -6 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
+
+            start +
+                right * 6 +
+                Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+        )
+    end
+
+    notify(
+        "Building",
+        "Wall complete."
+    )
+end
+
+--==================================================
+-- BUILD FLOOR
+--==================================================
+
+local function BuildFloor()
+
+    local character, root, hammer, remote =
+        getBuildData()
+
+    if not remote then
+        return
+    end
+
+    if not floorPreviewCFrame then
+        notify(
+            "Build Error",
+            "Floor preview is not ready."
+        )
+        return
+    end
+
+    local road =
+        workspace:FindFirstChild("Road")
+
+    if not road then
+        notify(
+            "Build Error",
+            "Road not found."
+        )
+        return
+    end
+
+    local part =
+        road:GetChildren()[33]
+
+    if not part then
+        notify(
+            "Build Error",
+            "Road part #33 not found."
+        )
+        return
+    end
+
+    local function fire(p1, p2)
+
+        remote:FireServer(
+            p1,
+            p2,
+            part,
+            part,
+            Vector3.new(
+                0,
+                1,
+                0
+            )
+        )
+    end
+
+    local cframe =
+        floorPreviewCFrame
+
+    for x = -6, 5.5, 0.5 do
+
+        local p1 =
+            cframe *
+            Vector3.new(
+                x,
+                0,
+                -6
+            )
+
+        local p2 =
+            cframe *
+            Vector3.new(
+                x,
+                0,
+                6
+            )
+
+        fire(
+            p1,
+            p2
+        )
+    end
+
+    notify(
+        "Building",
+        "Floor complete."
+    )
+end
+
+--==================================================
+-- BIG HOUSE
+--==================================================
+
+local function BuildBigHouse()
+
+    local character, root, hammer, remote =
+        getBuildData()
+
+    if not remote then
+        return
+    end
+
+    local road =
+        workspace:FindFirstChild("Road")
+
+    if not road then
+        notify(
+            "Build Error",
+            "Road not found."
+        )
+        return
+    end
+
+    local part =
+        road:GetChildren()[33]
+
+    if not part then
+        notify(
+            "Build Error",
+            "Road part #33 not found."
+        )
+        return
+    end
+
+    --==================================================
+    -- SETTINGS
+    --==================================================
+
+    local SIZE = 60
+    local HEIGHT = 16
+
+    -- Maximum length accepted by the original script.
+    local MAX_PLANK = 11
+
+    -- Delay between RemoteEvent calls.
+    local BUILD_DELAY = 0.015
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+    local origin =
+        root.Position +
+        Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+    --==================================================
+    -- SAFE FIRE
+    --==================================================
+
+    local function fire(p1, p2)
+
+        local distance =
+            (p2 - p1).Magnitude
+
+        if distance <= 0.01 then
+            return
+        end
+
+        local direction =
+            (p2 - p1).Unit
+
+        local current =
+            p1
+
+        local remaining =
+            distance
+
+        while remaining > 0.01 do
+
+            local length =
+                math.min(
+                    MAX_PLANK,
+                    remaining
+                )
+
+            local nextPoint =
+                current +
+                direction * length
+
+            remote:FireServer(
+                current,
+                nextPoint,
+                part,
+                part,
+                Vector3.new(
+                    0,
+                    1,
+                    0
+                )
+            )
+
+            current =
+                nextPoint
+
+            remaining -=
+                length
+
+            task.wait(
+                BUILD_DELAY
+            )
+        end
+    end
+
+    --==================================================
+    -- WALL
+    --==================================================
+
+    local function buildWall(
+        p1,
+        p2,
+        wallHeight,
+        hasDoor
+    )
+
+        local direction =
+            (p2 - p1).Unit
+
+        local doorWidth = 5
+
+        for y = 0.5,
+            wallHeight,
+            0.5 do
+
+            if hasDoor and y <= 8 then
+
+                local center =
+                    (p1 + p2) / 2
+
+                local left =
+                    center -
+                    direction *
+                    (doorWidth / 2)
+
+                local rightDoor =
+                    center +
+                    direction *
+                    (doorWidth / 2)
+
+                -- Left side
+                fire(
+                    p1 +
+                        Vector3.new(
+                            0,
+                            y,
+                            0
+                        ),
+
+                    left +
+                        Vector3.new(
+                            0,
+                            y,
+                            0
+                        )
+                )
+
+                -- Right side
+                fire(
+                    rightDoor +
+                        Vector3.new(
+                            0,
+                            y,
+                            0
+                        ),
+
+                    p2 +
+                        Vector3.new(
+                            0,
+                            y,
+                            0
+                        )
+                )
+
+            else
+
+                fire(
+                    p1 +
+                        Vector3.new(
+                            0,
+                            y,
+                            0
+                        ),
+
+                    p2 +
+                        Vector3.new(
+                            0,
+                            y,
+                            0
+                        )
+                )
+            end
+        end
+    end
+
+    --==================================================
+    -- CORNERS
+    --==================================================
+
+    local half =
+        SIZE / 2
+
+    local corner1 =
+        origin +
+        right * -half
+
+    local corner2 =
+        origin +
+        right * half
+
+    local corner3 =
+        origin +
+        right * half +
+        forward * SIZE
+
+    local corner4 =
+        origin +
+        right * -half +
+        forward * SIZE
+
+    --==================================================
+    -- WALLS
+    --==================================================
+
+    buildWall(
+        corner1,
+        corner2,
+        HEIGHT,
+        true
+    )
+
+    buildWall(
+        corner2,
+        corner3,
+        HEIGHT,
+        false
+    )
+
+    buildWall(
+        corner3,
+        corner4,
+        HEIGHT,
+        false
+    )
+
+    buildWall(
+        corner4,
+        corner1,
+        HEIGHT,
+        false
+    )
+
+    --==================================================
+    -- FLOOR / CEILING
+    --==================================================
+
+    local function buildSurface(y)
+
+        local ROW_STEP = 2
+
+        local z = 0
+
+        while z < SIZE do
+
+            local currentX =
+                -half
+
+            local remainingWidth =
+                SIZE
+
+            while remainingWidth > 0.01 do
+
+                -- IMPORTANT:
+                -- This handles the final 5 studs.
+                local plankLength =
+                    math.min(
+                        MAX_PLANK,
+                        remainingWidth
+                    )
+
+                local p1 =
+                    origin +
+                    right * currentX +
+                    forward * z +
+                    Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+
+                local p2 =
+                    p1 +
+                    right * plankLength
+
+                fire(
+                    p1,
+                    p2
+                )
+
+                currentX +=
+                    plankLength
+
+                remainingWidth -=
+                    plankLength
+            end
+
+            z += ROW_STEP
+        end
+    end
+
+    --==================================================
+    -- FLOOR
+    --==================================================
+
+    buildSurface(
+        0.25
+    )
+
+    --==================================================
+    -- CEILING
+    --==================================================
+
+    buildSurface(
+        HEIGHT + 0.5
+    )
+
+    notify(
+        "Big House",
+        "Big House completed."
+    )
+end
+
+--==================================================
+-- BUILD SELECTOR
+--==================================================
+
+BuildTab:CreateInput({
+    name = "Select Build",
+    placeholder = "hut / wall / floor / big house",
+    removeTextAfterFocusLost = false,
+
+    callback = function(text)
+
+        text =
+            tostring(text)
+            :lower()
+            :gsub("^%s+", "")
+            :gsub("%s+$", "")
+
+        if text == "hut"
+            or text == "wall"
+            or text == "floor"
+            or text == "big house"
+        then
+
+            selectedBuild =
+                text
+
+            notify(
+                "Build Selected",
+                selectedBuild
+            )
+
+        else
+
+            notify(
+                "Invalid Build",
+                "Use: hut, wall, floor, big house"
+            )
+        end
+    end
+})
+
+--==================================================
+-- BUILD SELECTED
+--==================================================
+
+local function buildSelected()
+
+    if selectedBuild == "hut" then
+
+        BuildHut()
+
+    elseif selectedBuild == "wall" then
+
+        BuildWall()
+
+    elseif selectedBuild == "floor" then
+
+        BuildFloor()
+
+    elseif selectedBuild == "big house" then
+
+        BuildBigHouse()
+
+    else
+
+        notify(
+            "Build Error",
+            "Unknown build type."
+        )
+    end
+end
+
+BuildTab:CreateButton({
+    name = "Build Selected Structure",
+
+    callback = function()
+        buildSelected()
+    end
+})
+
+--==================================================
+-- ON-SCREEN BUILD BUTTON
+--==================================================
+
+BuildTab:CreateToggle({
+    name = "Build Button",
+    currentValue = false,
+
+    callback = function(value)
+
+        -- OFF
+        if not value then
+
+            if buildUIButton then
+                buildUIButton:Destroy()
+                buildUIButton = nil
+            end
+
+            return
+        end
+
+        -- Remove old
+        if buildUIButton then
+            buildUIButton:Destroy()
+            buildUIButton = nil
+        end
+
+        local playerGui =
+            LocalPlayer:WaitForChild(
+                "PlayerGui"
+            )
+
+        buildUIButton =
+            Instance.new("ScreenGui")
+
+        buildUIButton.Name =
+            "KhaHubBuildButton"
+
+        buildUIButton.ResetOnSpawn =
+            false
+
+        buildUIButton.Parent =
+            playerGui
+
+        local button =
+            Instance.new("TextButton")
+
+        button.Name =
+            "Build"
+
+        button.Size =
+            UDim2.new(
+                0,
+                150,
+                0,
+                50
+            )
+
+        button.Position =
+            UDim2.new(
+                0.5,
+                -75,
+                0.85,
+                0
+            )
+
+        button.BackgroundColor3 =
+            Color3.fromRGB(
+                0,
+                200,
+                0
+            )
+
+        button.BorderSizePixel = 0
+
+        button.Text =
+            "Build"
+
+        button.TextColor3 =
+            Color3.new(
+                1,
+                1,
+                1
+            )
+
+        button.Font =
+            Enum.Font.SourceSansBold
+
+        button.TextSize =
+            24
+
+        button.Active = true
+        button.Draggable = true
+
+        button.Parent =
+            buildUIButton
+
+        local corner =
+            Instance.new("UICorner")
+
+        corner.CornerRadius =
+            UDim.new(
+                0,
+                8
+            )
+
+        corner.Parent =
+            button
+
+        button.MouseButton1Click:Connect(
+            function()
+                buildSelected()
+            end
+        )
+    end
+})
+
+--==================================================
+-- PREVIEW
+--==================================================
+
+RunService.RenderStepped:Connect(
+    function()
+
+        local _, root =
+            getCharacter()
+
+        if not root then
+            clearPreview()
+            return
+        end
+
+        clearPreview()
+
+        local forward =
+            root.CFrame.LookVector
+
+        local origin =
+            root.Position +
+            Vector3.new(
+                0,
+                -3,
+                0
+            )
+
+        --================================================
+        -- HUT PREVIEW
+        --================================================
+
+        if selectedBuild == "hut" then
+
+            local center =
+                origin +
+                forward * 6 +
+                Vector3.new(
+                    0,
+                    3.75,
+                    0
+                )
+
+            createPreviewPart(
+                Vector3.new(
+                    12,
+                    7.5,
+                    12
+                ),
+
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+            )
+
+        --================================================
+        -- WALL PREVIEW
+        --================================================
+
+        elseif selectedBuild == "wall" then
+
+            local center =
+                origin +
+                forward * 2 +
+                Vector3.new(
+                    0,
+                    3,
+                    0
+                )
+
+            createPreviewPart(
+                Vector3.new(
+                    12,
+                    6,
+                    0.5
+                ),
+
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+            )
+
+        --================================================
+        -- FLOOR PREVIEW
+        --================================================
+
+        elseif selectedBuild == "floor" then
+
+            local center =
+                origin +
+                forward * 6 +
+                Vector3.new(
+                    0,
+                    0.25,
+                    0
+                )
+
+            floorPreviewCFrame =
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+
+            createPreviewPart(
+                Vector3.new(
+                    12,
+                    0.5,
+                    12
+                ),
+
+                floorPreviewCFrame
+            )
+
+        --================================================
+        -- BIG HOUSE PREVIEW
+        --================================================
+
+        elseif selectedBuild == "big house" then
+
+            local center =
+                origin +
+                forward * 30 +
+                Vector3.new(
+                    0,
+                    8,
+                    0
+                )
+
+            createPreviewPart(
+                Vector3.new(
+                    60,
+                    16,
+                    60
+                ),
+
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+            )
+        end
+    end
+)
+
+--==================================================
+-- LOADED
+--==================================================
+
+notify(
+    "khaHub",
+    "Rayfield Gen2 loaded successfully."
+)
