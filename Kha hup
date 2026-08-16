@@ -1,9 +1,10 @@
 --==================================================
 -- KHA HUB - RAYFIELD GEN2
+-- BIG FLOOR 100x100
 --==================================================
 
 local Rayfield = loadstring(
-game:HttpGet("https://sirius.menu/gen2")
+    game:HttpGet("https://sirius.menu/gen2")
 )()
 
 local Players = game:GetService("Players")
@@ -16,16 +17,15 @@ local LocalPlayer = Players.LocalPlayer
 --==================================================
 
 local Window = Rayfield:CreateWindow({
-name = "kha hup",
-subtitle = "by David",
-theme = "default",
+    name = "kha hup",
+    subtitle = "by David",
+    theme = "default",
 
-configuration = {  
-    autoSave = true,  
-    autoLoad = true,  
-    fileName = "kha Hub"  
-}
-
+    configuration = {
+        autoSave = true,
+        autoLoad = true,
+        fileName = "kha Hub"
+    }
 })
 
 --==================================================
@@ -33,23 +33,23 @@ configuration = {
 --==================================================
 
 local ItemsTab = Window:CreateTab({
-name = "Items",
-icon = 4483362458
+    name = "Items",
+    icon = 4483362458
 })
 
 local BuildTab = Window:CreateTab({
-name = "Building",
-icon = 4483362458
+    name = "Building",
+    icon = 4483362458
 })
 
 local TeleportTab = Window:CreateTab({
-name = "Teleports",
-icon = 4483362458
+    name = "Teleports",
+    icon = 4483362458
 })
 
 local LagTab = Window:CreateTab({
-name = "Fix Lag",
-icon = 4483362458
+    name = "Fix Lag",
+    icon = 4483362458
 })
 
 --==================================================
@@ -57,11 +57,13 @@ icon = 4483362458
 --==================================================
 
 local selectedBuild = "hut"
+
 local floorPreviewCFrame = nil
 local bigFloorPreviewCFrame = nil
 local buildUIButton = nil
 
 local fixLagEnabled = false
+
 local hiddenObjects = {}
 local disabledEffects = {}
 
@@ -70,13 +72,17 @@ local disabledEffects = {}
 --==================================================
 
 local function notify(title, content)
-pcall(function()
-Window:Notify({
-title = title,
-content = content,
-duration = 4
-})
-end)
+
+    pcall(function()
+
+        Window:Notify({
+            title = title,
+            content = content,
+            duration = 4
+        })
+
+    end)
+
 end
 
 --==================================================
@@ -85,23 +91,23 @@ end
 
 local function getCharacter()
 
-local character =  
-    LocalPlayer.Character  
+    local character =
+        LocalPlayer.Character
 
-if not character then  
-    return nil, nil  
-end  
+    if not character then
+        return nil, nil
+    end
 
-local root =  
-    character:FindFirstChild(  
-        "HumanoidRootPart"  
-    )  
+    local root =
+        character:FindFirstChild(
+            "HumanoidRootPart"
+        )
 
-if not root then  
-    return character, nil  
-end  
+    if not root then
+        return character, nil
+    end
 
-return character, root
+    return character, root
 
 end
 
@@ -110,73 +116,83 @@ end
 --==================================================
 
 local previewFolder =
-Instance.new("Folder")
+    Instance.new("Folder")
 
 previewFolder.Name =
-"KhaHubPreview"
+    "KhaHubPreview"
 
 previewFolder.Parent =
-workspace
+    workspace
+
+--==================================================
+-- CLEAR PREVIEW
+--==================================================
 
 local function clearPreview()
 
-for _, object in ipairs(  
-    previewFolder:GetChildren()  
-) do  
-    object:Destroy()  
-end
+    for _, object in ipairs(
+        previewFolder:GetChildren()
+    ) do
+
+        object:Destroy()
+
+    end
 
 end
+
+--==================================================
+-- CREATE PREVIEW
+--==================================================
 
 local function createPreviewPart(
-size,
-cframe
+    size,
+    cframe
 )
 
-local preview =  
-    Instance.new("Part")  
+    local preview =
+        Instance.new("Part")
 
-preview.Name =  
-    "PreviewPart"  
+    preview.Name =
+        "PreviewPart"
 
-preview.Anchored =  
-    true  
+    preview.Anchored =
+        true
 
-preview.CanCollide =  
-    false  
+    preview.CanCollide =
+        false
 
-preview.CanTouch =  
-    false  
+    preview.CanTouch =
+        false
 
-preview.CanQuery =  
-    false  
+    preview.CanQuery =
+        false
 
-preview.CastShadow =  
-    false  
+    preview.CastShadow =
+        false
 
-preview.Transparency =  
-    0.75  
+    preview.Transparency =
+        0.75
 
-preview.Color =  
-    Color3.fromRGB(  
-        0,  
-        255,  
-        0  
-    )  
+    preview.Color =
+        Color3.fromRGB(
+            0,
+            255,
+            0
+        )
 
-preview.Material =  
-    Enum.Material.ForceField  
+    preview.Material =
+        Enum.Material.ForceField
 
-preview.Size =  
-    size  
+    preview.Size =
+        size
 
-preview.CFrame =  
-    cframe  
+    preview.CFrame =
+        cframe
 
-preview.Parent =  
-    previewFolder  
+    preview.Parent =
+        previewFolder
 
-return preview
+    return preview
 
 end
 
@@ -185,211 +201,250 @@ end
 --==================================================
 
 local vegetationKeywords = {
-"tree",
-"trees",
-"plant",
-"plants",
-"grass",
-"leaf",
-"leaves",
-"bush",
-"bushes",
-"flower",
-"flowers",
-"foliage",
-"branch",
-"branches"
+    "tree",
+    "trees",
+    "plant",
+    "plants",
+    "grass",
+    "leaf",
+    "leaves",
+    "bush",
+    "bushes",
+    "flower",
+    "flowers",
+    "foliage",
+    "branch",
+    "branches"
 }
 
 local function isVegetation(object)
 
-local name =  
-    string.lower(  
-        object.Name  
-    )  
+    local name =
+        string.lower(
+            object.Name
+        )
 
-for _, keyword in ipairs(  
-    vegetationKeywords  
-) do  
+    for _, keyword in ipairs(
+        vegetationKeywords
+    ) do
 
-    if name:find(  
-        keyword,  
-        1,  
-        true  
-    ) then  
+        if name:find(
+            keyword,
+            1,
+            true
+        ) then
 
-        return true  
-    end  
-end  
+            return true
 
-return false
+        end
+
+    end
+
+    return false
 
 end
+
+--==================================================
+-- HIDE VEGETATION
+--==================================================
 
 local function hideVegetation()
 
-local count = 0  
+    local count = 0
 
-for _, object in ipairs(  
-    workspace:GetDescendants()  
-) do  
+    for _, object in ipairs(
+        workspace:GetDescendants()
+    ) do
 
-    if object == previewFolder then  
-        continue  
-    end  
+        if object == previewFolder then
+            continue
+        end
 
-    if LocalPlayer.Character  
-        and object:IsDescendantOf(  
-            LocalPlayer.Character  
-        )  
-    then  
-        continue  
-    end  
+        if LocalPlayer.Character
+            and object:IsDescendantOf(
+                LocalPlayer.Character
+            )
+        then
+            continue
+        end
 
-    if object:IsA("BasePart")  
-        and isVegetation(object)  
-    then  
+        if object:IsA("BasePart")
+            and isVegetation(object)
+        then
 
-        if hiddenObjects[object] == nil then  
+            if hiddenObjects[object] == nil then
 
-            hiddenObjects[object] =  
-                object.LocalTransparencyModifier  
+                hiddenObjects[object] =
+                    object.LocalTransparencyModifier
 
-            pcall(function()  
+                pcall(function()
 
-                object.LocalTransparencyModifier =  
-                    1  
+                    object.LocalTransparencyModifier =
+                        1
 
-            end)  
+                end)
 
-            count += 1  
-        end  
-    end  
-end  
+                count += 1
 
-return count
+            end
+
+        end
+
+    end
+
+    return count
 
 end
+
+--==================================================
+-- DISABLE EFFECTS
+--==================================================
 
 local function disableEffects()
 
-local count = 0  
+    local count = 0
 
-for _, object in ipairs(  
-    workspace:GetDescendants()  
-) do  
+    for _, object in ipairs(
+        workspace:GetDescendants()
+    ) do
 
-    if object:IsA("ParticleEmitter")  
-        or object:IsA("Trail")  
-        or object:IsA("Beam")  
-        or object:IsA("Smoke")  
-        or object:IsA("Fire")  
-        or object:IsA("Sparkles")  
-    then  
+        if object:IsA("ParticleEmitter")
+            or object:IsA("Trail")
+            or object:IsA("Beam")
+            or object:IsA("Smoke")
+            or object:IsA("Fire")
+            or object:IsA("Sparkles")
+        then
 
-        if disabledEffects[object] == nil then  
+            if disabledEffects[object] == nil then
 
-            disabledEffects[object] =  
-                object.Enabled  
+                disabledEffects[object] =
+                    object.Enabled
 
-            pcall(function()  
-                object.Enabled = false  
-            end)  
+                pcall(function()
 
-            count += 1  
-        end  
-    end  
-end  
+                    object.Enabled =
+                        false
 
-return count
+                end)
+
+                count += 1
+
+            end
+
+        end
+
+    end
+
+    return count
 
 end
+
+--==================================================
+-- RESTORE VEGETATION
+--==================================================
 
 local function restoreVegetation()
 
-for object, oldValue in pairs(  
-    hiddenObjects  
-) do  
+    for object, oldValue in pairs(
+        hiddenObjects
+    ) do
 
-    if object  
-        and object.Parent  
-    then  
+        if object
+            and object.Parent
+        then
 
-        pcall(function()  
+            pcall(function()
 
-            object.LocalTransparencyModifier =  
-                oldValue  
+                object.LocalTransparencyModifier =
+                    oldValue
 
-        end)  
-    end  
-end  
+            end)
 
-table.clear(  
-    hiddenObjects  
-)
+        end
+
+    end
+
+    table.clear(
+        hiddenObjects
+    )
 
 end
+
+--==================================================
+-- RESTORE EFFECTS
+--==================================================
 
 local function restoreEffects()
 
-for object, oldValue in pairs(  
-    disabledEffects  
-) do  
+    for object, oldValue in pairs(
+        disabledEffects
+    ) do
 
-    if object  
-        and object.Parent  
-    then  
+        if object
+            and object.Parent
+        then
 
-        pcall(function()  
+            pcall(function()
 
-            object.Enabled =  
-                oldValue  
+                object.Enabled =
+                    oldValue
 
-        end)  
-    end  
-end  
+            end)
 
-table.clear(  
-    disabledEffects  
-)
+        end
+
+    end
+
+    table.clear(
+        disabledEffects
+    )
 
 end
+
+--==================================================
+-- ENABLE FIX LAG
+--==================================================
 
 local function enableFixLag()
 
-local treeCount =  
-    hideVegetation()  
+    local treeCount =
+        hideVegetation()
 
-local effectCount =  
-    disableEffects()  
+    local effectCount =
+        disableEffects()
 
-pcall(function()  
+    pcall(function()
 
-    settings().Rendering.QualityLevel =  
-        Enum.QualityLevel.Level01  
+        settings().Rendering.QualityLevel =
+            Enum.QualityLevel.Level01
 
-end)  
+    end)
 
-notify(  
-    "Fix Lag",  
-    "Đã tối ưu " ..  
-    treeCount ..  
-    " cây/cỏ và " ..  
-    effectCount ..  
-    " hiệu ứng."  
-)
+    notify(
+        "Fix Lag",
+        "Đã tối ưu "
+        .. treeCount
+        .. " cây/cỏ và "
+        .. effectCount
+        .. " hiệu ứng."
+    )
 
 end
 
+--==================================================
+-- DISABLE FIX LAG
+--==================================================
+
 local function disableFixLag()
 
-restoreVegetation()  
-restoreEffects()  
+    restoreVegetation()
+    restoreEffects()
 
-notify(  
-    "Fix Lag",  
-    "Đã khôi phục hiển thị."  
-)
+    notify(
+        "Fix Lag",
+        "Đã khôi phục hiển thị."
+    )
 
 end
 
@@ -398,77 +453,77 @@ end
 --==================================================
 
 LagTab:CreateToggle({
-name = "Fix Lag",
-currentValue = false,
+    name = "Fix Lag",
+    currentValue = false,
 
-callback = function(value)  
+    callback = function(value)
 
-    fixLagEnabled =  
-        value  
+        fixLagEnabled =
+            value
 
-    if value then  
+        if value then
 
-        enableFixLag()  
+            enableFixLag()
 
-    else  
+        else
 
-        disableFixLag()  
+            disableFixLag()
 
-    end  
-end
+        end
 
+    end
 })
 
 LagTab:CreateButton({
-name = "Xóa Cây / Cỏ / Lá",
+    name = "Xóa Cây / Cỏ / Lá",
 
-callback = function()  
+    callback = function()
 
-    local count =  
-        hideVegetation()  
+        local count =
+            hideVegetation()
 
-    notify(  
-        "Fix Lag",  
-        "Đã ẩn " ..  
-        count ..  
-        " cây/cỏ/lá."  
-    )  
-end
+        notify(
+            "Fix Lag",
+            "Đã ẩn "
+            .. count
+            .. " cây/cỏ/lá."
+        )
 
+    end
 })
 
 LagTab:CreateButton({
-name = "Tắt Particle / Effect",
+    name = "Tắt Particle / Effect",
 
-callback = function()  
+    callback = function()
 
-    local count =  
-        disableEffects()  
+        local count =
+            disableEffects()
 
-    notify(  
-        "Fix Lag",  
-        "Đã tắt " ..  
-        count ..  
-        " hiệu ứng."  
-    )  
-end
+        notify(
+            "Fix Lag",
+            "Đã tắt "
+            .. count
+            .. " hiệu ứng."
+        )
 
+    end
 })
 
 LagTab:CreateButton({
-name = "Khôi Phục Hiển Thị",
+    name = "Khôi Phục Hiển Thị",
 
-callback = function()  
+    callback = function()
 
-    restoreVegetation()  
-    restoreEffects()  
+        restoreVegetation()
+        restoreEffects()
 
-    notify(  
-        "Fix Lag",  
-        "Đã khôi phục."  
-    )  
-end
+        notify(
+            "Fix Lag",
+            "Đã khôi phục."
+        )
 
+    end
 })
 
 --==================================================
@@ -476,59 +531,61 @@ end
 --==================================================
 
 TeleportTab:CreateButton({
-name = "Shop",
+    name = "Shop",
 
-callback = function()  
+    callback = function()
 
-    local _, root =  
-        getCharacter()  
+        local _, root =
+            getCharacter()
 
-    if not root then  
+        if not root then
 
-        notify(  
-            "Teleport",  
-            "Character not ready."  
-        )  
+            notify(
+                "Teleport",
+                "Character not ready."
+            )
 
-        return  
-    end  
+            return
 
-    root.CFrame =  
-        CFrame.new(  
-            -425,  
-            6,  
-            77  
-        )  
-end
+        end
 
+        root.CFrame =
+            CFrame.new(
+                -425,
+                6,
+                77
+            )
+
+    end
 })
 
 TeleportTab:CreateButton({
-name = "Main Area",
+    name = "Main Area",
 
-callback = function()  
+    callback = function()
 
-    local _, root =  
-        getCharacter()  
+        local _, root =
+            getCharacter()
 
-    if not root then  
+        if not root then
 
-        notify(  
-            "Teleport",  
-            "Character not ready."  
-        )  
+            notify(
+                "Teleport",
+                "Character not ready."
+            )
 
-        return  
-    end  
+            return
 
-    root.CFrame =  
-        CFrame.new(  
-            -394,  
-            3,  
-            423  
-        )  
-end
+        end
 
+        root.CFrame =
+            CFrame.new(
+                -394,
+                3,
+                423
+            )
+
+    end
 })
 
 --==================================================
@@ -536,86 +593,91 @@ end
 --==================================================
 
 local function teleportToRandomAsset(
-searchName
+    searchName
 )
 
-local _, root =  
-    getCharacter()  
+    local _, root =
+        getCharacter()
 
-if not root then  
+    if not root then
 
-    notify(  
-        "Item",  
-        "Character not ready."  
-    )  
+        notify(
+            "Item",
+            "Character not ready."
+        )
 
-    return  
-end  
+        return
 
-local matches = {}  
+    end
 
-local search =  
-    string.lower(  
-        searchName  
-    )  
+    local matches = {}
 
-for _, object in ipairs(  
-    workspace:GetDescendants()  
-) do  
+    local search =
+        string.lower(
+            searchName
+        )
 
-    if object:IsA("BasePart") then  
+    for _, object in ipairs(
+        workspace:GetDescendants()
+    ) do
 
-        local objectName =  
-            string.lower(  
-                object.Name  
-            )  
+        if object:IsA("BasePart") then
 
-        if objectName:find(  
-            search,  
-            1,  
-            true  
-        ) then  
+            local objectName =
+                string.lower(
+                    object.Name
+                )
 
-            table.insert(  
-                matches,  
-                object  
-            )  
-        end  
-    end  
-end  
+            if objectName:find(
+                search,
+                1,
+                true
+            ) then
 
-if #matches == 0 then  
+                table.insert(
+                    matches,
+                    object
+                )
 
-    notify(  
-        "Item Not Found",  
-        "Could not find: " ..  
-        searchName  
-    )  
+            end
 
-    return  
-end  
+        end
 
-local choice =  
-    matches[  
-        math.random(  
-            1,  
-            #matches  
-        )  
-    ]  
+    end
 
-root.CFrame =  
-    choice.CFrame +  
-    Vector3.new(  
-        0,  
-        3,  
-        0  
-    )  
+    if #matches == 0 then
 
-notify(  
-    "Item Found",  
-    "Teleported to: " ..  
-    choice.Name  
-)
+        notify(
+            "Item Not Found",
+            "Could not find: "
+            .. searchName
+        )
+
+        return
+
+    end
+
+    local choice =
+        matches[
+            math.random(
+                1,
+                #matches
+            )
+        ]
+
+    root.CFrame =
+        choice.CFrame
+        + Vector3.new(
+            0,
+            3,
+            0
+        )
+
+    notify(
+        "Item Found",
+        "Teleported to: "
+        .. choice.Name
+    )
 
 end
 
@@ -624,69 +686,75 @@ end
 --==================================================
 
 ItemsTab:CreateButton({
-name = "Hammer",
+    name = "Hammer",
 
-callback = function()  
-    teleportToRandomAsset(  
-        "hammer"  
-    )  
-end
+    callback = function()
 
+        teleportToRandomAsset(
+            "hammer"
+        )
+
+    end
 })
 
 ItemsTab:CreateButton({
-name = "Food",
+    name = "Food",
 
-callback = function()  
-    teleportToRandomAsset(  
-        "food"  
-    )  
-end
+    callback = function()
 
+        teleportToRandomAsset(
+            "food"
+        )
+
+    end
 })
 
 ItemsTab:CreateButton({
-name = "Money",
+    name = "Money",
 
-callback = function()  
-    teleportToRandomAsset(  
-        "money"  
-    )  
-end
+    callback = function()
 
+        teleportToRandomAsset(
+            "money"
+        )
+
+    end
 })
 
 ItemsTab:CreateButton({
-name = "Crowbar",
+    name = "Crowbar",
 
-callback = function()  
-    teleportToRandomAsset(  
-        "crowbar"  
-    )  
-end
+    callback = function()
 
+        teleportToRandomAsset(
+            "crowbar"
+        )
+
+    end
 })
 
 ItemsTab:CreateButton({
-name = "Bat",
+    name = "Bat",
 
-callback = function()  
-    teleportToRandomAsset(  
-        "bat"  
-    )  
-end
+    callback = function()
 
+        teleportToRandomAsset(
+            "bat"
+        )
+
+    end
 })
 
 ItemsTab:CreateButton({
-name = "Lantern",
+    name = "Lantern",
 
-callback = function()  
-    teleportToRandomAsset(  
-        "lantern"  
-    )  
-end
+    callback = function()
 
+        teleportToRandomAsset(
+            "lantern"
+        )
+
+    end
 })
 
 --==================================================
@@ -695,55 +763,58 @@ end
 
 local function getBuildData()
 
-local character, root =  
-    getCharacter()  
+    local character, root =
+        getCharacter()
 
-if not character  
-    or not root  
-then  
+    if not character
+        or not root
+    then
 
-    notify(  
-        "Build Error",  
-        "Character not ready."  
-    )  
+        notify(
+            "Build Error",
+            "Character not ready."
+        )
 
-    return nil  
-end  
+        return nil
 
-local hammer =  
-    character:FindFirstChild(  
-        "Hammer"  
-    )  
+    end
 
-if not hammer then  
+    local hammer =
+        character:FindFirstChild(
+            "Hammer"
+        )
 
-    notify(  
-        "Build Error",  
-        "Hammer not found."  
-    )  
+    if not hammer then
 
-    return nil  
-end  
+        notify(
+            "Build Error",
+            "Hammer not found."
+        )
 
-local remote =  
-    hammer:FindFirstChild(  
-        "BuildPlank"  
-    )  
+        return nil
 
-if not remote then  
+    end
 
-    notify(  
-        "Build Error",  
-        "BuildPlank not found."  
-    )  
+    local remote =
+        hammer:FindFirstChild(
+            "BuildPlank"
+        )
 
-    return nil  
-end  
+    if not remote then
 
-return character,  
-    root,  
-    hammer,  
-    remote
+        notify(
+            "Build Error",
+            "BuildPlank not found."
+        )
+
+        return nil
+
+    end
+
+    return character,
+        root,
+        hammer,
+        remote
 
 end
 
@@ -753,234 +824,243 @@ end
 
 local function BuildHut()
 
-local character,  
-    root,  
-    hammer,  
-    remote =  
-    getBuildData()  
+    local character,
+        root,
+        hammer,
+        remote =
+        getBuildData()
 
-if not remote then  
-    return  
-end  
+    if not remote then
+        return
+    end
 
-local road =  
-    workspace:FindFirstChild(  
-        "Road"  
-    )  
+    local road =
+        workspace:FindFirstChild(
+            "Road"
+        )
 
-if not road then  
+    if not road then
 
-    notify(  
-        "Build Error",  
-        "Road not found."  
-    )  
+        notify(
+            "Build Error",
+            "Road not found."
+        )
 
-    return  
-end  
+        return
 
-local part =  
-    road:GetChildren()[33]  
+    end
 
-if not part then  
+    local part =
+        road:GetChildren()[33]
 
-    notify(  
-        "Build Error",  
-        "Road part #33 not found."  
-    )  
+    if not part then
 
-    return  
-end  
+        notify(
+            "Build Error",
+            "Road part #33 not found."
+        )
 
-local forward =  
-    root.CFrame.LookVector  
+        return
 
-local right =  
-    root.CFrame.RightVector  
+    end
 
-local origin =  
-    root.Position +  
-    Vector3.new(  
-        0,  
-        -3,  
-        0  
-    )  
+    local forward =
+        root.CFrame.LookVector
 
-local function fire(  
-    p1,  
-    p2  
-)  
+    local right =
+        root.CFrame.RightVector
 
-    remote:FireServer(  
-        p1,  
-        p2,  
-        part,  
-        part,  
-        Vector3.new(  
-            0,  
-            1,  
-            0  
-        )  
-    )  
-end  
+    local origin =
+        root.Position +
+        Vector3.new(
+            0,
+            -3,
+            0
+        )
 
-for y = 0.5, 7, 0.5 do  
+    local function fire(
+        p1,
+        p2
+    )
 
-    if y < 1  
-        or y > 5.5  
-    then  
+        remote:FireServer(
+            p1,
+            p2,
+            part,
+            part,
+            Vector3.new(
+                0,
+                1,
+                0
+            )
+        )
 
-        fire(  
-            origin +  
-                right * -6 +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                ),  
+    end
 
-            origin +  
-                right * 6 +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                )  
-        )  
+    for y = 0.5, 7, 0.5 do
 
-    else  
+        if y < 1
+            or y > 5.5
+        then
 
-        fire(  
-            origin +  
-                right * -6 +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                ),  
+            fire(
+                origin
+                + right * -6
+                + Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
 
-            origin +  
-                right * -2 +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                )  
-        )  
+                origin
+                + right * 6
+                + Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+            )
 
-        fire(  
-            origin +  
-                right * 2 +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                ),  
+        else
 
-            origin +  
-                right * 6 +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                )  
-        )  
-    end  
-end  
+            fire(
+                origin
+                + right * -6
+                + Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
 
-for y = 0.5, 7, 0.5 do  
+                origin
+                + right * -2
+                + Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+            )
 
-    fire(  
-        origin +  
-            right * 6 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            ),  
+            fire(
+                origin
+                + right * 2
+                + Vector3.new(
+                    0,
+                    y,
+                    0
+                ),
 
-        origin +  
-            right * 6 +  
-            forward * 12 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            )  
-    )  
-end  
+                origin
+                + right * 6
+                + Vector3.new(
+                    0,
+                    y,
+                    0
+                )
+            )
 
-for y = 0.5, 7, 0.5 do  
+        end
 
-    fire(  
-        origin +  
-            right * -6 +  
-            forward * 12 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            ),  
+    end
 
-        origin +  
-            right * 6 +  
-            forward * 12 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            )  
-    )  
-end  
+    for y = 0.5, 7, 0.5 do
 
-for y = 0.5, 7, 0.5 do  
+        fire(
+            origin
+            + right * 6
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
 
-    fire(  
-        origin +  
-            right * -6 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            ),  
+            origin
+            + right * 6
+            + forward * 12
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
 
-        origin +  
-            right * -6 +  
-            forward * 12 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            )  
-    )  
-end  
+    end
 
-for z = 0, 12, 2 do  
+    for y = 0.5, 7, 0.5 do
 
-    fire(  
-        origin +  
-            right * -6 +  
-            forward * z +  
-            Vector3.new(  
-                0,  
-                7.5,  
-                0  
-            ),  
+        fire(
+            origin
+            + right * -6
+            + forward * 12
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
 
-        origin +  
-            right * 6 +  
-            forward * z +  
-            Vector3.new(  
-                0,  
-                7.5,  
-                0  
-            )  
-    )  
-end  
+            origin
+            + right * 6
+            + forward * 12
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
 
-notify(  
-    "Building",  
-    "Hut complete."  
-)
+    end
+
+    for y = 0.5, 7, 0.5 do
+
+        fire(
+            origin
+            + right * -6
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            origin
+            + right * -6
+            + forward * 12
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+    for z = 0, 12, 2 do
+
+        fire(
+            origin
+            + right * -6
+            + forward * z
+            + Vector3.new(
+                0,
+                7.5,
+                0
+            ),
+
+            origin
+            + right * 6
+            + forward * z
+            + Vector3.new(
+                0,
+                7.5,
+                0
+            )
+        )
+
+    end
+
+    notify(
+        "Building",
+        "Hut complete."
+    )
 
 end
 
@@ -990,102 +1070,106 @@ end
 
 local function BuildWall()
 
-local character,  
-    root,  
-    hammer,  
-    remote =  
-    getBuildData()  
+    local character,
+        root,
+        hammer,
+        remote =
+        getBuildData()
 
-if not remote then  
-    return  
-end  
+    if not remote then
+        return
+    end
 
-local ground =  
-    workspace:FindFirstChild(  
-        "Ground"  
-    )  
+    local ground =
+        workspace:FindFirstChild(
+            "Ground"
+        )
 
-if not ground then  
+    if not ground then
 
-    notify(  
-        "Build Error",  
-        "Ground not found."  
-    )  
+        notify(
+            "Build Error",
+            "Ground not found."
+        )
 
-    return  
-end  
+        return
 
-local part =  
-    ground:GetChildren()[9]  
+    end
 
-if not part then  
+    local part =
+        ground:GetChildren()[9]
 
-    notify(  
-        "Build Error",  
-        "Ground part #9 not found."  
-    )  
+    if not part then
 
-    return  
-end  
+        notify(
+            "Build Error",
+            "Ground part #9 not found."
+        )
 
-local forward =  
-    root.CFrame.LookVector  
+        return
 
-local right =  
-    root.CFrame.RightVector  
+    end
 
-local start =  
-    root.Position +  
-    forward * 2 +  
-    Vector3.new(  
-        0,  
-        -3,  
-        0  
-    )  
+    local forward =
+        root.CFrame.LookVector
 
-local function fire(  
-    p1,  
-    p2  
-)  
+    local right =
+        root.CFrame.RightVector
 
-    remote:FireServer(  
-        p1,  
-        p2,  
-        part,  
-        part,  
-        Vector3.new(  
-            0,  
-            1,  
-            0  
-        )  
-    )  
-end  
+    local start =
+        root.Position
+        + forward * 2
+        + Vector3.new(
+            0,
+            -3,
+            0
+        )
 
-for y = 0.5, 6, 0.5 do  
+    local function fire(
+        p1,
+        p2
+    )
 
-    fire(  
-        start +  
-            right * -6 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            ),  
+        remote:FireServer(
+            p1,
+            p2,
+            part,
+            part,
+            Vector3.new(
+                0,
+                1,
+                0
+            )
+        )
 
-        start +  
-            right * 6 +  
-            Vector3.new(  
-                0,  
-                y,  
-                0  
-            )  
-    )  
-end  
+    end
 
-notify(  
-    "Building",  
-    "Wall complete."  
-)
+    for y = 0.5, 6, 0.5 do
+
+        fire(
+            start
+            + right * -6
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            start
+            + right * 6
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+    notify(
+        "Building",
+        "Wall complete."
+    )
 
 end
 
@@ -1095,103 +1179,108 @@ end
 
 local function BuildFloor()
 
-local character,  
-    root,  
-    hammer,  
-    remote =  
-    getBuildData()  
+    local character,
+        root,
+        hammer,
+        remote =
+        getBuildData()
 
-if not remote then  
-    return  
-end  
+    if not remote then
+        return
+    end
 
-if not floorPreviewCFrame then  
+    if not floorPreviewCFrame then
 
-    notify(  
-        "Build Error",  
-        "Floor preview is not ready."  
-    )  
+        notify(
+            "Build Error",
+            "Floor preview is not ready."
+        )
 
-    return  
-end  
+        return
 
-local road =  
-    workspace:FindFirstChild(  
-        "Road"  
-    )  
+    end
 
-if not road then  
+    local road =
+        workspace:FindFirstChild(
+            "Road"
+        )
 
-    notify(  
-        "Build Error",  
-        "Road not found."  
-    )  
+    if not road then
 
-    return  
-end  
+        notify(
+            "Build Error",
+            "Road not found."
+        )
 
-local part =  
-    road:GetChildren()[33]  
+        return
 
-if not part then  
+    end
 
-    notify(  
-        "Build Error",  
-        "Road part #33 not found."  
-    )  
+    local part =
+        road:GetChildren()[33]
 
-    return  
-end  
+    if not part then
 
-local function fire(  
-    p1,  
-    p2  
-)  
+        notify(
+            "Build Error",
+            "Road part #33 not found."
+        )
 
-    remote:FireServer(  
-        p1,  
-        p2,  
-        part,  
-        part,  
-        Vector3.new(  
-            0,  
-            1,  
-            0  
-        )  
-    )  
-end  
+        return
 
-local cframe =  
-    floorPreviewCFrame  
+    end
 
-for x = -6, 5.5, 0.5 do  
+    local function fire(
+        p1,
+        p2
+    )
 
-    local p1 =  
-        cframe *  
-        Vector3.new(  
-            x,  
-            0,  
-            -6  
-        )  
+        remote:FireServer(
+            p1,
+            p2,
+            part,
+            part,
+            Vector3.new(
+                0,
+                1,
+                0
+            )
+        )
 
-    local p2 =  
-        cframe *  
-        Vector3.new(  
-            x,  
-            0,  
-            6  
-        )  
+    end
 
-    fire(  
-        p1,  
-        p2  
-    )  
-end  
+    local cframe =
+        floorPreviewCFrame
 
-notify(  
-    "Building",  
-    "Floor complete."  
-)
+    for x = -6, 5.5, 0.5 do
+
+        local p1 =
+            cframe
+            * Vector3.new(
+                x,
+                0,
+                -6
+            )
+
+        local p2 =
+            cframe
+            * Vector3.new(
+                x,
+                0,
+                6
+            )
+
+        fire(
+            p1,
+            p2
+        )
+
+    end
+
+    notify(
+        "Building",
+        "Floor complete."
+    )
 
 end
 
@@ -1201,493 +1290,524 @@ end
 
 local function BuildBigHouse()
 
-local character,  
-    root,  
-    hammer,  
-    remote =  
-    getBuildData()  
-
-if not remote then  
-    return  
-end  
-
-local road =  
-    workspace:FindFirstChild(  
-        "Road"  
-    )  
-
-if not road then  
-
-    notify(  
-        "Build Error",  
-        "Road not found."  
-    )  
-
-    return  
-end  
-
-local part =  
-    road:GetChildren()[33]  
-
-if not part then  
-
-    notify(  
-        "Build Error",  
-        "Road part #33 not found."  
-    )  
-
-    return  
-end  
-
-local SIZE = 60  
-local HEIGHT = 16  
-local MAX_PLANK = 11  
-local BUILD_DELAY = 0.015  
-
-local forward =  
-    root.CFrame.LookVector  
-
-local right =  
-    root.CFrame.RightVector  
-
-local origin =  
-    root.Position +  
-    Vector3.new(  
-        0,  
-        -3,  
-        0  
-    )  
-
-local function fire(  
-    p1,  
-    p2  
-)  
-
-    local distance =  
-        (p2 - p1).Magnitude  
-
-    if distance <= 0.01 then  
-        return  
-    end  
-
-    local direction =  
-        (p2 - p1).Unit  
-
-    local current =  
-        p1  
-
-    local remaining =  
-        distance  
-
-    while remaining > 0.01 do  
-
-        local length =  
-            math.min(  
-                MAX_PLANK,  
-                remaining  
-            )  
-
-        local nextPoint =  
-            current +  
-            direction * length  
-
-        remote:FireServer(  
-            current,  
-            nextPoint,  
-            part,  
-            part,  
-            Vector3.new(  
-                0,  
-                1,  
-                0  
-            )  
-        )  
-
-        current =  
-            nextPoint  
-
-        remaining -=  
-            length  
-
-        task.wait(  
-            BUILD_DELAY  
-        )  
-    end  
-end  
-
-local function buildWall(  
-    p1,  
-    p2,  
-    wallHeight,  
-    hasDoor  
-)  
-
-    local direction =  
-        (p2 - p1).Unit  
-
-    local doorWidth = 5  
-
-    for y = 0.5,  
-        wallHeight,  
-        0.5 do  
-
-        if hasDoor  
-            and y <= 8  
-        then  
-
-            local center =  
-                (p1 + p2) / 2  
-
-            local left =  
-                center -  
-                direction *  
-                (doorWidth / 2)  
-
-            local rightDoor =  
-                center +  
-                direction *  
-                (doorWidth / 2)  
-
-            fire(  
-                p1 +  
-                    Vector3.new(  
-                        0,  
-                        y,  
-                        0  
-                    ),  
-
-                left +  
-                    Vector3.new(  
-                        0,  
-                        y,  
-                        0  
-                    )  
-            )  
-
-            fire(  
-                rightDoor +  
-                    Vector3.new(  
-                        0,  
-                        y,  
-                        0  
-                    ),  
-
-                p2 +  
-                    Vector3.new(  
-                        0,  
-                        y,  
-                        0  
-                    )  
-            )  
-
-        else  
-
-            fire(  
-                p1 +  
-                    Vector3.new(  
-                        0,  
-                        y,  
-                        0  
-                    ),  
-
-                p2 +  
-                    Vector3.new(  
-                        0,  
-                        y,  
-                        0  
-                    )  
-            )  
-        end  
-    end  
-end  
-
-local half =  
-    SIZE / 2  
-
-local corner1 =  
-    origin +  
-    right * -half  
-
-local corner2 =  
-    origin +  
-    right * half  
-
-local corner3 =  
-    origin +  
-    right * half +  
-    forward * SIZE  
-
-local corner4 =  
-    origin +  
-    right * -half +  
-    forward * SIZE  
-
-buildWall(  
-    corner1,  
-    corner2,  
-    HEIGHT,  
-    true  
-)  
-
-buildWall(  
-    corner2,  
-    corner3,  
-    HEIGHT,  
-    false  
-)  
-
-buildWall(  
-    corner3,  
-    corner4,  
-    HEIGHT,  
-    false  
-)  
-
-buildWall(  
-    corner4,  
-    corner1,  
-    HEIGHT,  
-    false  
-)  
-
-local function buildSurface(y)  
-
-    local ROW_STEP = 2  
-    local z = 0  
-
-    while z < SIZE do  
-
-        local currentX =  
-            -half  
-
-        local remainingWidth =  
-            SIZE  
-
-        while remainingWidth > 0.01 do  
-
-            local plankLength =  
-                math.min(  
-                    MAX_PLANK,  
-                    remainingWidth  
-                )  
-
-            local p1 =  
-                origin +  
-                right * currentX +  
-                forward * z +  
-                Vector3.new(  
-                    0,  
-                    y,  
-                    0  
-                )  
-
-            local p2 =  
-                p1 +  
-                right * plankLength  
-
-            fire(  
-                p1,  
-                p2  
-            )  
-
-            currentX +=  
-                plankLength  
-
-            remainingWidth -=  
-                plankLength  
-        end  
-
-        z += ROW_STEP  
-    end  
-end  
-
-buildSurface(0.25)  
-
-buildSurface(  
-    HEIGHT + 0.5  
-)  
-
-notify(  
-    "Big House",  
-    "Big House completed."  
-)
+    local character,
+        root,
+        hammer,
+        remote =
+        getBuildData()
+
+    if not remote then
+        return
+    end
+
+    local road =
+        workspace:FindFirstChild(
+            "Road"
+        )
+
+    if not road then
+
+        notify(
+            "Build Error",
+            "Road not found."
+        )
+
+        return
+
+    end
+
+    local part =
+        road:GetChildren()[33]
+
+    if not part then
+
+        notify(
+            "Build Error",
+            "Road part #33 not found."
+        )
+
+        return
+
+    end
+
+    local SIZE = 60
+    local HEIGHT = 16
+    local MAX_PLANK = 11
+    local BUILD_DELAY = 0.015
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+    local origin =
+        root.Position +
+        Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+    local function fire(
+        p1,
+        p2
+    )
+
+        local distance =
+            (p2 - p1).Magnitude
+
+        if distance <= 0.01 then
+            return
+        end
+
+        local direction =
+            (p2 - p1).Unit
+
+        local current =
+            p1
+
+        local remaining =
+            distance
+
+        while remaining > 0.01 do
+
+            local length =
+                math.min(
+                    MAX_PLANK,
+                    remaining
+                )
+
+            local nextPoint =
+                current
+                + direction * length
+
+            remote:FireServer(
+                current,
+                nextPoint,
+                part,
+                part,
+                Vector3.new(
+                    0,
+                    1,
+                    0
+                )
+            )
+
+            current =
+                nextPoint
+
+            remaining -=
+                length
+
+            task.wait(
+                BUILD_DELAY
+            )
+
+        end
+
+    end
+
+    local function buildWall(
+        p1,
+        p2,
+        wallHeight,
+        hasDoor
+    )
+
+        local direction =
+            (p2 - p1).Unit
+
+        local doorWidth = 5
+
+        for y = 0.5,
+            wallHeight,
+            0.5
+        do
+
+            if hasDoor
+                and y <= 8
+            then
+
+                local center =
+                    (p1 + p2) / 2
+
+                local left =
+                    center
+                    - direction
+                    * (doorWidth / 2)
+
+                local rightDoor =
+                    center
+                    + direction
+                    * (doorWidth / 2)
+
+                fire(
+                    p1
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    ),
+
+                    left
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+                )
+
+                fire(
+                    rightDoor
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    ),
+
+                    p2
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+                )
+
+            else
+
+                fire(
+                    p1
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    ),
+
+                    p2
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+                )
+
+            end
+
+        end
+
+    end
+
+    local half =
+        SIZE / 2
+
+    local corner1 =
+        origin
+        + right * -half
+
+    local corner2 =
+        origin
+        + right * half
+
+    local corner3 =
+        origin
+        + right * half
+        + forward * SIZE
+
+    local corner4 =
+        origin
+        + right * -half
+        + forward * SIZE
+
+    buildWall(
+        corner1,
+        corner2,
+        HEIGHT,
+        true
+    )
+
+    buildWall(
+        corner2,
+        corner3,
+        HEIGHT,
+        false
+    )
+
+    buildWall(
+        corner3,
+        corner4,
+        HEIGHT,
+        false
+    )
+
+    buildWall(
+        corner4,
+        corner1,
+        HEIGHT,
+        false
+    )
+
+    local function buildSurface(y)
+
+        local ROW_STEP = 2
+        local z = 0
+
+        while z < SIZE do
+
+            local currentX =
+                -half
+
+            local remainingWidth =
+                SIZE
+
+            while remainingWidth > 0.01 do
+
+                local plankLength =
+                    math.min(
+                        MAX_PLANK,
+                        remainingWidth
+                    )
+
+                local p1 =
+                    origin
+                    + right * currentX
+                    + forward * z
+                    + Vector3.new(
+                        0,
+                        y,
+                        0
+                    )
+
+                local p2 =
+                    p1
+                    + right * plankLength
+
+                fire(
+                    p1,
+                    p2
+                )
+
+                currentX +=
+                    plankLength
+
+                remainingWidth -=
+                    plankLength
+
+            end
+
+            z += ROW_STEP
+
+        end
+
+    end
+
+    buildSurface(
+        0.25
+    )
+
+    buildSurface(
+        HEIGHT + 0.5
+    )
+
+    notify(
+        "Big House",
+        "Big House completed."
+    )
 
 end
 
 --==================================================
--- BIG FLOOR
+-- BIG FLOOR 100 x 100
 --==================================================
 
 local function BuildBigFloor()
 
-local character,  
-    root,  
-    hammer,  
-    remote =  
-    getBuildData()  
+    local character,
+        root,
+        hammer,
+        remote =
+        getBuildData()
 
-if not remote then  
-    return  
-end  
+    if not remote then
+        return
+    end
 
-local road =  
-    workspace:FindFirstChild(  
-        "Road"  
-    )  
+    local road =
+        workspace:FindFirstChild(
+            "Road"
+        )
 
-if not road then  
+    if not road then
 
-    notify(  
-        "Big Floor Error",  
-        "Road not found."  
-    )  
+        notify(
+            "Big Floor Error",
+            "Road not found."
+        )
 
-    return  
-end  
+        return
 
-local part =  
-    road:GetChildren()[33]  
+    end
 
-if not part then  
+    local part =
+        road:GetChildren()[33]
 
-    notify(  
-        "Big Floor Error",  
-        "Road part #33 not found."  
-    )  
+    if not part then
 
-    return  
-end  
+        notify(
+            "Big Floor Error",
+            "Road part #33 not found."
+        )
 
-local SIZE = 60  
-local MAX_PLANK = 11  
-local ROW_STEP = 2  
-local BUILD_DELAY = 0.015  
+        return
 
-local forward =  
-    root.CFrame.LookVector  
+    end
 
-local right =  
-    root.CFrame.RightVector  
+    --==================================================
+    -- BIG FLOOR SIZE
+    --==================================================
 
-local origin =  
-    root.Position +  
-    Vector3.new(  
-        0,  
-        -3,  
-        0  
-    )  
+    local SIZE = 100
+    local MAX_PLANK = 11
+    local ROW_STEP = 2
+    local BUILD_DELAY = 0.015
 
-local half =  
-    SIZE / 2  
+    local forward =
+        root.CFrame.LookVector
 
-local function fire(  
-    p1,  
-    p2  
-)  
+    local right =
+        root.CFrame.RightVector
 
-    local distance =  
-        (p2 - p1).Magnitude  
+    local origin =
+        root.Position +
+        Vector3.new(
+            0,
+            -3,
+            0
+        )
 
-    if distance <= 0.01 then  
-        return  
-    end  
+    local half =
+        SIZE / 2
 
-    local direction =  
-        (p2 - p1).Unit  
+    --==================================================
+    -- FIRE PLANK
+    --==================================================
 
-    local current =  
-        p1  
+    local function fire(
+        p1,
+        p2
+    )
 
-    local remaining =  
-        distance  
+        local distance =
+            (p2 - p1).Magnitude
 
-    while remaining > 0.01 do  
+        if distance <= 0.01 then
+            return
+        end
 
-        local length =  
-            math.min(  
-                MAX_PLANK,  
-                remaining  
-            )  
+        local direction =
+            (p2 - p1).Unit
 
-        local nextPoint =  
-            current +  
-            direction * length  
+        local current =
+            p1
 
-        remote:FireServer(  
-            current,  
-            nextPoint,  
-            part,  
-            part,  
-            Vector3.new(  
-                0,  
-                1,  
-                0  
-            )  
-        )  
+        local remaining =
+            distance
 
-        current =  
-            nextPoint  
+        while remaining > 0.01 do
 
-        remaining -=  
-            length  
+            local length =
+                math.min(
+                    MAX_PLANK,
+                    remaining
+                )
 
-        task.wait(  
-            BUILD_DELAY  
-        )  
-    end  
-end  
+            local nextPoint =
+                current
+                + direction * length
 
-local z = 0  
+            remote:FireServer(
+                current,
+                nextPoint,
+                part,
+                part,
+                Vector3.new(
+                    0,
+                    1,
+                    0
+                )
+            )
 
-while z < SIZE do  
+            current =
+                nextPoint
 
-    local currentX =  
-        -half  
+            remaining -=
+                length
 
-    local remainingWidth =  
-        SIZE  
+            task.wait(
+                BUILD_DELAY
+            )
 
-    while remainingWidth > 0.01 do  
+        end
 
-        local plankLength =  
-            math.min(  
-                MAX_PLANK,  
-                remainingWidth  
-            )  
+    end
 
-        local p1 =  
-            origin +  
-            right * currentX +  
-            forward * z +  
-            Vector3.new(  
-                0,  
-                0.25,  
-                0  
-            )  
+    --==================================================
+    -- BUILD 100 x 100
+    --==================================================
 
-        local p2 =  
-            p1 +  
-            right * plankLength  
+    local z = 0
 
-        fire(  
-            p1,  
-            p2  
-        )  
+    while z < SIZE do
 
-        currentX +=  
-            plankLength  
+        local currentX =
+            -half
 
-        remainingWidth -=  
-            plankLength  
-    end  
+        local remainingWidth =
+            SIZE
 
-    z += ROW_STEP  
-end  
+        while remainingWidth > 0.01 do
 
-notify(  
-    "Big Floor",  
-    "60 x 60 Big Floor completed."  
-)
+            local plankLength =
+                math.min(
+                    MAX_PLANK,
+                    remainingWidth
+                )
+
+            local p1 =
+                origin
+                + right * currentX
+                + forward * z
+                + Vector3.new(
+                    0,
+                    0.25,
+                    0
+                )
+
+            local p2 =
+                p1
+                + right * plankLength
+
+            fire(
+                p1,
+                p2
+            )
+
+            currentX +=
+                plankLength
+
+            remainingWidth -=
+                plankLength
+
+        end
+
+        z += ROW_STEP
+
+    end
+
+    notify(
+        "Big Floor",
+        "100 x 100 Big Floor completed."
+    )
 
 end
 
@@ -1696,46 +1816,47 @@ end
 --==================================================
 
 BuildTab:CreateInput({
-name = "Select Build",
+    name = "Select Build",
 
-placeholder =  
-    "hut / wall / floor / big house / big floor",  
+    placeholder =
+        "hut / wall / floor / big house / big floor",
 
-removeTextAfterFocusLost =  
-    false,  
+    removeTextAfterFocusLost =
+        false,
 
-callback = function(text)  
+    callback = function(text)
 
-    text =  
-        tostring(text)  
-        :lower()  
-        :gsub("^%s+", "")  
-        :gsub("%s+$", "")  
+        text =
+            tostring(text)
+            :lower()
+            :gsub("^%s+", "")
+            :gsub("%s+$", "")
 
-    if text == "hut"  
-        or text == "wall"  
-        or text == "floor"  
-        or text == "big house"  
-        or text == "big floor"  
-    then  
+        if text == "hut"
+            or text == "wall"
+            or text == "floor"
+            or text == "big house"
+            or text == "big floor"
+        then
 
-        selectedBuild =  
-            text  
+            selectedBuild =
+                text
 
-        notify(  
-            "Build Selected",  
-            selectedBuild  
-        )  
+            notify(
+                "Build Selected",
+                selectedBuild
+            )
 
-    else  
+        else
 
-        notify(  
-            "Invalid Build",  
-            "Use: hut, wall, floor, big house, big floor"  
-        )  
-    end  
-end
+            notify(
+                "Invalid Build",
+                "Use: hut, wall, floor, big house, big floor"
+            )
 
+        end
+
+    end
 })
 
 --==================================================
@@ -1744,44 +1865,46 @@ end
 
 local function buildSelected()
 
-if selectedBuild == "hut" then  
+    if selectedBuild == "hut" then
 
-    BuildHut()  
+        BuildHut()
 
-elseif selectedBuild == "wall" then  
+    elseif selectedBuild == "wall" then
 
-    BuildWall()  
+        BuildWall()
 
-elseif selectedBuild == "floor" then  
+    elseif selectedBuild == "floor" then
 
-    BuildFloor()  
+        BuildFloor()
 
-elseif selectedBuild == "big house" then  
+    elseif selectedBuild == "big house" then
 
-    BuildBigHouse()  
+        BuildBigHouse()
 
-elseif selectedBuild == "big floor" then  
+    elseif selectedBuild == "big floor" then
 
-    BuildBigFloor()  
+        BuildBigFloor()
 
-else  
+    else
 
-    notify(  
-        "Build Error",  
-        "Unknown build type."  
-    )  
-end
+        notify(
+            "Build Error",
+            "Unknown build type."
+        )
+
+    end
 
 end
 
 BuildTab:CreateButton({
-name =
-"Build Selected Structure",
+    name =
+        "Build Selected Structure",
 
-callback = function()  
-    buildSelected()  
-end
+    callback = function()
 
+        buildSelected()
+
+    end
 })
 
 --==================================================
@@ -1789,131 +1912,136 @@ end
 --==================================================
 
 BuildTab:CreateToggle({
-name = "Build Button",
-currentValue = false,
+    name = "Build Button",
+    currentValue = false,
 
-callback = function(value)  
+    callback = function(value)
 
-    if not value then  
+        if not value then
 
-        if buildUIButton then  
+            if buildUIButton then
 
-            buildUIButton:Destroy()  
+                buildUIButton:Destroy()
 
-            buildUIButton =  
-                nil  
-        end  
+                buildUIButton =
+                    nil
 
-        return  
-    end  
+            end
 
-    if buildUIButton then  
+            return
 
-        buildUIButton:Destroy()  
+        end
 
-        buildUIButton =  
-            nil  
-    end  
+        if buildUIButton then
 
-    local playerGui =  
-        LocalPlayer:WaitForChild(  
-            "PlayerGui"  
-        )  
+            buildUIButton:Destroy()
 
-    buildUIButton =  
-        Instance.new(  
-            "ScreenGui"  
-        )  
+            buildUIButton =
+                nil
 
-    buildUIButton.Name =  
-        "KhaHubBuildButton"  
+        end
 
-    buildUIButton.ResetOnSpawn =  
-        false  
+        local playerGui =
+            LocalPlayer:WaitForChild(
+                "PlayerGui"
+            )
 
-    buildUIButton.Parent =  
-        playerGui  
+        buildUIButton =
+            Instance.new(
+                "ScreenGui"
+            )
 
-    local button =  
-        Instance.new(  
-            "TextButton"  
-        )  
+        buildUIButton.Name =
+            "KhaHubBuildButton"
 
-    button.Name =  
-        "Build"  
+        buildUIButton.ResetOnSpawn =
+            false
 
-    button.Size =  
-        UDim2.new(  
-            0,  
-            150,  
-            0,  
-            50  
-        )  
+        buildUIButton.Parent =
+            playerGui
 
-    button.Position =  
-        UDim2.new(  
-            0.5,  
-            -75,  
-            0.85,  
-            0  
-        )  
+        local button =
+            Instance.new(
+                "TextButton"
+            )
 
-    button.BackgroundColor3 =  
-        Color3.fromRGB(  
-            0,  
-            200,  
-            0  
-        )  
+        button.Name =
+            "Build"
 
-    button.BorderSizePixel =  
-        0  
+        button.Size =
+            UDim2.new(
+                0,
+                150,
+                0,
+                50
+            )
 
-    button.Text =  
-        "Build"  
+        button.Position =
+            UDim2.new(
+                0.5,
+                -75,
+                0.85,
+                0
+            )
 
-    button.TextColor3 =  
-        Color3.new(  
-            1,  
-            1,  
-            1  
-        )  
+        button.BackgroundColor3 =
+            Color3.fromRGB(
+                0,
+                200,
+                0
+            )
 
-    button.Font =  
-        Enum.Font.SourceSansBold  
+        button.BorderSizePixel =
+            0
 
-    button.TextSize =  
-        24  
+        button.Text =
+            "Build"
 
-    button.Active =  
-        true  
+        button.TextColor3 =
+            Color3.new(
+                1,
+                1,
+                1
+            )
 
-    button.Draggable =  
-        true  
+        button.Font =
+            Enum.Font.SourceSansBold
 
-    button.Parent =  
-        buildUIButton  
+        button.TextSize =
+            24
 
-    local corner =  
-        Instance.new(  
-            "UICorner"  
-        )  
+        button.Active =
+            true
 
-    corner.CornerRadius =  
-        UDim.new(  
-            0,  
-            8  
-        )  
+        button.Draggable =
+            true
 
-    corner.Parent =  
-        button  
+        button.Parent =
+            buildUIButton
 
-    button.MouseButton1Click:Connect(  
-        function()  
-            buildSelected()  
-        end  
-    )  
-end
+        local corner =
+            Instance.new(
+                "UICorner"
+            )
 
+        corner.CornerRadius =
+            UDim.new(
+                0,
+                8
+            )
+
+        corner.Parent =
+            button
+
+        button.MouseButton1Click:Connect(
+            function()
+
+                buildSelected()
+
+            end
+        )
+
+    end
 })
 
 --==================================================
@@ -1921,165 +2049,187 @@ end
 --==================================================
 
 RunService.RenderStepped:Connect(
-function()
+    function()
 
-local _, root =  
-        getCharacter()  
+        local _, root =
+            getCharacter()
 
-    if not root then  
+        if not root then
 
-        clearPreview()  
+            clearPreview()
 
-        floorPreviewCFrame =  
-            nil  
+            floorPreviewCFrame =
+                nil
 
-        bigFloorPreviewCFrame =  
-            nil  
+            bigFloorPreviewCFrame =
+                nil
 
-        return  
-    end  
+            return
 
-    clearPreview()  
+        end
 
-    local forward =  
-        root.CFrame.LookVector  
+        clearPreview()
 
-    local origin =  
-        root.Position +  
-        Vector3.new(  
-            0,  
-            -3,  
-            0  
-        )  
+        local forward =
+            root.CFrame.LookVector
 
-    if selectedBuild == "hut" then  
+        local origin =
+            root.Position +
+            Vector3.new(
+                0,
+                -3,
+                0
+            )
 
-        local center =  
-            origin +  
-            forward * 6 +  
-            Vector3.new(  
-                0,  
-                3.75,  
-                0  
-            )  
+        --==================================================
+        -- HUT PREVIEW
+        --==================================================
 
-        createPreviewPart(  
-            Vector3.new(  
-                12,  
-                7.5,  
-                12  
-            ),  
+        if selectedBuild == "hut" then
 
-            CFrame.new(  
-                center,  
-                center + forward  
-            )  
-        )  
+            local center =
+                origin
+                + forward * 6
+                + Vector3.new(
+                    0,
+                    3.75,
+                    0
+                )
 
-    elseif selectedBuild == "wall" then  
+            createPreviewPart(
+                Vector3.new(
+                    12,
+                    7.5,
+                    12
+                ),
 
-        local center =  
-            origin +  
-            forward * 2 +  
-            Vector3.new(  
-                0,  
-                3,  
-                0  
-            )  
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+            )
 
-        createPreviewPart(  
-            Vector3.new(  
-                12,  
-                6,  
-                0.5  
-            ),  
+        --==================================================
+        -- WALL PREVIEW
+        --==================================================
 
-            CFrame.new(  
-                center,  
-                center + forward  
-            )  
-        )  
+        elseif selectedBuild == "wall" then
 
-    elseif selectedBuild == "floor" then  
+            local center =
+                origin
+                + forward * 2
+                + Vector3.new(
+                    0,
+                    3,
+                    0
+                )
 
-        local center =  
-            origin +  
-            forward * 6 +  
-            Vector3.new(  
-                0,  
-                0.25,  
-                0  
-            )  
+            createPreviewPart(
+                Vector3.new(
+                    12,
+                    6,
+                    0.5
+                ),
 
-        floorPreviewCFrame =  
-            CFrame.new(  
-                center,  
-                center + forward  
-            )  
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+            )
 
-        createPreviewPart(  
-            Vector3.new(  
-                12,  
-                0.5,  
-                12  
-            ),  
+        --==================================================
+        -- FLOOR PREVIEW
+        --==================================================
 
-            floorPreviewCFrame  
-        )  
+        elseif selectedBuild == "floor" then
 
-    elseif selectedBuild == "big house" then  
+            local center =
+                origin
+                + forward * 6
+                + Vector3.new(
+                    0,
+                    0.25,
+                    0
+                )
 
-        local center =  
-            origin +  
-            forward * 30 +  
-            Vector3.new(  
-                0,  
-                8,  
-                0  
-            )  
+            floorPreviewCFrame =
+                CFrame.new(
+                    center,
+                    center + forward
+                )
 
-        createPreviewPart(  
-            Vector3.new(  
-                60,  
-                16,  
-                60  
-            ),  
+            createPreviewPart(
+                Vector3.new(
+                    12,
+                    0.5,
+                    12
+                ),
 
-            CFrame.new(  
-                center,  
-                center + forward  
-            )  
-        )  
+                floorPreviewCFrame
+            )
 
-    elseif selectedBuild == "big floor" then  
+        --==================================================
+        -- BIG HOUSE PREVIEW
+        --==================================================
 
-        local center =  
-            origin +  
-            forward * 30 +  
-            Vector3.new(  
-                0,  
-                0.25,  
-                0  
-            )  
+        elseif selectedBuild == "big house" then
 
-        bigFloorPreviewCFrame =  
-            CFrame.new(  
-                center,  
-                center + forward  
-            )  
+            local center =
+                origin
+                + forward * 30
+                + Vector3.new(
+                    0,
+                    8,
+                    0
+                )
 
-        createPreviewPart(  
-            Vector3.new(  
-                60,  
-                0.5,  
-                60  
-            ),  
+            createPreviewPart(
+                Vector3.new(
+                    60,
+                    16,
+                    60
+                ),
 
-            bigFloorPreviewCFrame  
-        )  
-    end  
-end
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+            )
 
+        --==================================================
+        -- BIG FLOOR 100 x 100 PREVIEW
+        --==================================================
+
+        elseif selectedBuild == "big floor" then
+
+            local center =
+                origin
+                + forward * 50
+                + Vector3.new(
+                    0,
+                    0.25,
+                    0
+                )
+
+            bigFloorPreviewCFrame =
+                CFrame.new(
+                    center,
+                    center + forward
+                )
+
+            createPreviewPart(
+                Vector3.new(
+                    100,
+                    0.5,
+                    100
+                ),
+
+                bigFloorPreviewCFrame
+            )
+
+        end
+
+    end
 )
 
 --==================================================
@@ -2087,65 +2237,78 @@ end
 --==================================================
 
 workspace.DescendantAdded:Connect(
-function(object)
+    function(object)
 
-if not fixLagEnabled then  
-        return  
-    end  
+        if not fixLagEnabled then
+            return
+        end
 
-    task.defer(function()  
+        task.defer(
+            function()
 
-        if not object  
-            or not object.Parent  
-        then  
-            return  
-        end  
+                if not object
+                    or not object.Parent
+                then
+                    return
+                end
 
-        if object:IsA("BasePart")  
-            and isVegetation(object)  
-        then  
+                if object:IsA("BasePart")
+                    and isVegetation(object)
+                then
 
-            if not (  
-                LocalPlayer.Character  
-                and object:IsDescendantOf(  
-                    LocalPlayer.Character  
-                )  
-            ) then  
+                    if not (
+                        LocalPlayer.Character
+                        and object:IsDescendantOf(
+                            LocalPlayer.Character
+                        )
+                    ) then
 
-                if hiddenObjects[object] == nil then  
+                        if hiddenObjects[object] == nil then
 
-                    hiddenObjects[object] =  
-                        object.LocalTransparencyModifier  
+                            hiddenObjects[object] =
+                                object.LocalTransparencyModifier
 
-                    pcall(function()  
-                        object.LocalTransparencyModifier =  
-                            1  
-                    end)  
-                end  
-            end  
-        end  
+                            pcall(function()
 
-        if object:IsA("ParticleEmitter")  
-            or object:IsA("Trail")  
-            or object:IsA("Beam")  
-            or object:IsA("Smoke")  
-            or object:IsA("Fire")  
-            or object:IsA("Sparkles")  
-        then  
+                                object.LocalTransparencyModifier =
+                                    1
 
-            if disabledEffects[object] == nil then  
+                            end)
 
-                disabledEffects[object] =  
-                    object.Enabled  
+                        end
 
-                pcall(function()  
-                    object.Enabled = false  
-                end)  
-            end  
-        end  
-    end)  
-end
+                    end
 
+                end
+
+                if object:IsA("ParticleEmitter")
+                    or object:IsA("Trail")
+                    or object:IsA("Beam")
+                    or object:IsA("Smoke")
+                    or object:IsA("Fire")
+                    or object:IsA("Sparkles")
+                then
+
+                    if disabledEffects[object] == nil then
+
+                        disabledEffects[object] =
+                            object.Enabled
+
+                        pcall(function()
+
+                            object.Enabled =
+                                false
+
+                        end)
+
+                    end
+
+                end
+
+            end
+        )
+
+    end
 )
 
 --==================================================
@@ -2153,6 +2316,6 @@ end
 --==================================================
 
 notify(
-"khaHub",
-"Rayfield Gen2 loaded successfully."
+    "khaHub",
+    "Rayfield Gen2 loaded successfully."
 )
