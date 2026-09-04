@@ -1,514 +1,525 @@
 --==================================================
--- TELEPORT MENU
+-- MINH KHA HUB - RAYFIELD GEN2
+-- TELEPORT / MOVEMENT
 --==================================================
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/gen2"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 --==================================================
--- STATES
+-- WINDOW
+--==================================================
+
+local Window = Rayfield:CreateWindow({
+    Name = "Minh Kha Hub",
+    Subtitle = "Teleport Menu",
+    Theme = "default",
+
+    Configuration = {
+        autoSave = true,
+        autoLoad = true,
+        fileName = "MinhKhaHub"
+    }
+})
+
+--==================================================
+-- VARIABLES
 --==================================================
 
 local savedCFrame = nil
 local infiniteJumpEnabled = false
 local noclipEnabled = false
 local noclipConnection = nil
-local coordinateFrameVisible = false
 
---==================================================
--- SCREEN GUI
---==================================================
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TeleportMenuGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
-
---==================================================
--- MAIN FRAME
---==================================================
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 210, 0, 310)
-MainFrame.Position = UDim2.new(0.05, 0, 0.30, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-
-local FrameCorner = Instance.new("UICorner")
-FrameCorner.CornerRadius = UDim.new(0, 10)
-FrameCorner.Parent = MainFrame
-
---==================================================
--- TITLE
---==================================================
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 32)
-Title.BackgroundTransparency = 1
-Title.Text = "Teleport Menu"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
-Title.Parent = MainFrame
-
---==================================================
--- BUTTON CREATOR
---==================================================
-
-local function createButton(name, text, color, position)
-	local button = Instance.new("TextButton")
-	button.Name = name
-	button.Size = UDim2.new(0, 180, 0, 38)
-	button.Position = position
-	button.BackgroundColor3 = color
-	button.BorderSizePixel = 0
-	button.Text = text
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Font = Enum.Font.SourceSansBold
-	button.TextSize = 14
-	button.Parent = MainFrame
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = button
-
-	return button
-end
-
---==================================================
--- BUTTONS
---==================================================
-
-local ButtonTeleport = createButton(
-	"Button1",
-	"1. Teleport",
-	Color3.fromRGB(0, 120, 215),
-	UDim2.new(0.5, -90, 0, 40)
-)
-
-local ButtonCoordinate = createButton(
-	"Button2",
-	"2. Teleport Tọa Độ",
-	Color3.fromRGB(52, 152, 219),
-	UDim2.new(0.5, -90, 0, 84)
-)
-
-local ButtonSetPoint = createButton(
-	"Button3",
-	"3. Set Point",
-	Color3.fromRGB(46, 204, 113),
-	UDim2.new(0.5, -90, 0, 128)
-)
-
-local ButtonInfJump = createButton(
-	"Button4",
-	"4. Inf Jump (OFF)",
-	Color3.fromRGB(142, 68, 173),
-	UDim2.new(0.5, -90, 0, 172)
-)
-
-local ButtonNoclip = createButton(
-	"Button5",
-	"5. Noclip (OFF)",
-	Color3.fromRGB(52, 73, 94),
-	UDim2.new(0.5, -90, 0, 216)
-)
-
---==================================================
--- COORDINATE FRAME
---==================================================
-
-local CoordinateFrame = Instance.new("Frame")
-CoordinateFrame.Name = "CoordinateFrame"
-CoordinateFrame.Size = UDim2.new(0, 200, 0, 230)
-CoordinateFrame.Position = UDim2.new(0.05, 0, 0.25, 0)
-CoordinateFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-CoordinateFrame.BorderSizePixel = 0
-CoordinateFrame.Visible = false
-CoordinateFrame.Active = true
-CoordinateFrame.Draggable = true
-CoordinateFrame.Parent = ScreenGui
-
-local CoordinateCorner = Instance.new("UICorner")
-CoordinateCorner.CornerRadius = UDim.new(0, 10)
-CoordinateCorner.Parent = CoordinateFrame
-
---==================================================
--- COORDINATE TITLE
---==================================================
-
-local CoordinateTitle = Instance.new("TextLabel")
-CoordinateTitle.Size = UDim2.new(1, 0, 0, 35)
-CoordinateTitle.BackgroundTransparency = 1
-CoordinateTitle.Text = "Teleport Tọa Độ"
-CoordinateTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-CoordinateTitle.Font = Enum.Font.SourceSansBold
-CoordinateTitle.TextSize = 17
-CoordinateTitle.Parent = CoordinateFrame
-
---==================================================
--- TEXTBOX CREATOR
---==================================================
-
-local function createTextBox(name, placeholder, y)
-	local box = Instance.new("TextBox")
-	box.Name = name
-	box.Size = UDim2.new(0, 170, 0, 35)
-	box.Position = UDim2.new(0.5, -85, 0, y)
-	box.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	box.BorderSizePixel = 0
-	box.PlaceholderText = placeholder
-	box.PlaceholderColor3 = Color3.fromRGB(170, 170, 170)
-	box.Text = ""
-	box.TextColor3 = Color3.fromRGB(255, 255, 255)
-	box.Font = Enum.Font.SourceSans
-	box.TextSize = 14
-	box.ClearTextOnFocus = false
-	box.Parent = CoordinateFrame
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = box
-
-	return box
-end
-
-local XBox = createTextBox("XBox", "X tọa độ", 42)
-local YBox = createTextBox("YBox", "Y tọa độ", 82)
-local ZBox = createTextBox("ZBox", "Z tọa độ", 122)
-
---==================================================
--- COORDINATE BUTTONS
---==================================================
-
-local TeleportCoordinate = Instance.new("TextButton")
-TeleportCoordinate.Size = UDim2.new(0, 80, 0, 35)
-TeleportCoordinate.Position = UDim2.new(0, 10, 0, 165)
-TeleportCoordinate.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-TeleportCoordinate.BorderSizePixel = 0
-TeleportCoordinate.Text = "Teleport"
-TeleportCoordinate.TextColor3 = Color3.fromRGB(255, 255, 255)
-TeleportCoordinate.Font = Enum.Font.SourceSansBold
-TeleportCoordinate.TextSize = 13
-TeleportCoordinate.Parent = CoordinateFrame
-
-local TeleportCorner = Instance.new("UICorner")
-TeleportCorner.CornerRadius = UDim.new(0, 6)
-TeleportCorner.Parent = TeleportCoordinate
-
-local CopyCoordinate = Instance.new("TextButton")
-CopyCoordinate.Size = UDim2.new(0, 95, 0, 35)
-CopyCoordinate.Position = UDim2.new(0, 95, 0, 165)
-CopyCoordinate.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-CopyCoordinate.BorderSizePixel = 0
-CopyCoordinate.Text = "Copy Tọa Độ"
-CopyCoordinate.TextColor3 = Color3.fromRGB(255, 255, 255)
-CopyCoordinate.Font = Enum.Font.SourceSansBold
-CopyCoordinate.TextSize = 13
-CopyCoordinate.Parent = CoordinateFrame
-
-local CopyCorner = Instance.new("UICorner")
-CopyCorner.CornerRadius = UDim.new(0, 6)
-CopyCorner.Parent = CopyCoordinate
-
---==================================================
--- CLOSE COORDINATE
---==================================================
-
-local CloseCoordinate = Instance.new("TextButton")
-CloseCoordinate.Size = UDim2.new(0, 170, 0, 30)
-CloseCoordinate.Position = UDim2.new(0.5, -85, 0, 205)
-CloseCoordinate.BackgroundColor3 = Color3.fromRGB(192, 57, 43)
-CloseCoordinate.BorderSizePixel = 0
-CloseCoordinate.Text = "Đóng"
-CloseCoordinate.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseCoordinate.Font = Enum.Font.SourceSansBold
-CloseCoordinate.TextSize = 13
-CloseCoordinate.Parent = CoordinateFrame
-
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 6)
-CloseCorner.Parent = CloseCoordinate
-
---==================================================
--- TOGGLE MENU BUTTON
---==================================================
-
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(0, 40, 0, 40)
-ToggleButton.Position = UDim2.new(0.05, 0, 0.22, 0)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ToggleButton.BorderSizePixel = 0
-ToggleButton.Text = "Menu"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.Font = Enum.Font.SourceSansBold
-ToggleButton.TextSize = 11
-ToggleButton.Active = true
-ToggleButton.Draggable = true
-ToggleButton.Parent = ScreenGui
-
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 6)
-ToggleCorner.Parent = ToggleButton
+local X = 0
+local Y = 0
+local Z = 0
 
 --==================================================
 -- HELPER
 --==================================================
 
 local function getRoot()
-	local character = LocalPlayer.Character
-	if not character then
-		return nil
-	end
+    local character = LocalPlayer.Character
 
-	return character:FindFirstChild("HumanoidRootPart")
+    if not character then
+        return nil
+    end
+
+    return character:FindFirstChild("HumanoidRootPart")
+end
+
+local function notify(title, content)
+    pcall(function()
+        Window:Notify({
+            Title = title,
+            Content = content,
+            Duration = 2
+        })
+    end)
 end
 
 --==================================================
--- TOGGLE MAIN MENU
+-- TELEPORT TAB
 --==================================================
 
-local menuVisible = true
-
-ToggleButton.MouseButton1Click:Connect(function()
-	menuVisible = not menuVisible
-	MainFrame.Visible = menuVisible
-
-	if not menuVisible then
-		CoordinateFrame.Visible = false
-		ToggleButton.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-	else
-		ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	end
-end)
+local TeleportTab = Window:CreateTab({
+    Name = "Teleport",
+    Icon = 4483362458
+})
 
 --==================================================
--- 1. TELEPORT SAVED POINT
+-- SET POINT
 --==================================================
 
-ButtonTeleport.MouseButton1Click:Connect(function()
-	local rootPart = getRoot()
+TeleportTab:CreateButton({
+    Name = "Set Point",
 
-	if not savedCFrame then
-		ButtonTeleport.Text = "Chưa đặt điểm!"
-		task.wait(1)
-		ButtonTeleport.Text = "1. Teleport"
-		return
-	end
+    Callback = function()
 
-	if rootPart then
-		rootPart.CFrame = savedCFrame
+        local rootPart = getRoot()
 
-		ButtonTeleport.Text = "Đã Teleport!"
-		task.wait(1)
-		ButtonTeleport.Text = "1. Teleport"
-	end
-end)
+        if rootPart then
+            savedCFrame = rootPart.CFrame
 
---==================================================
--- 2. OPEN COORDINATE TELEPORT
---==================================================
+            notify(
+                "Minh Kha Hub",
+                "Đã lưu điểm!"
+            )
+        else
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
+        end
 
-ButtonCoordinate.MouseButton1Click:Connect(function()
-	coordinateFrameVisible = not coordinateFrameVisible
-	CoordinateFrame.Visible = coordinateFrameVisible
-end)
+    end
+})
 
 --==================================================
--- TELEPORT TO COORDINATES
+-- TELEPORT SAVED POINT
 --==================================================
 
-TeleportCoordinate.MouseButton1Click:Connect(function()
-	local x = tonumber(XBox.Text)
-	local y = tonumber(YBox.Text)
-	local z = tonumber(ZBox.Text)
+TeleportTab:CreateButton({
+    Name = "Teleport về Point",
 
-	if not x or not y or not z then
-		TeleportCoordinate.Text = "Sai tọa độ!"
+    Callback = function()
 
-		task.wait(1)
-		TeleportCoordinate.Text = "Teleport"
-		return
-	end
+        local rootPart = getRoot()
 
-	local rootPart = getRoot()
+        if not savedCFrame then
+            notify(
+                "Minh Kha Hub",
+                "Bạn chưa Set Point!"
+            )
+            return
+        end
 
-	if rootPart then
-		rootPart.CFrame = CFrame.new(x, y, z)
+        if rootPart then
+            rootPart.CFrame = savedCFrame
 
-		TeleportCoordinate.Text = "Đã Teleport!"
+            notify(
+                "Minh Kha Hub",
+                "Đã teleport về Point!"
+            )
+        end
 
-		task.wait(1)
-		TeleportCoordinate.Text = "Teleport"
-	end
-end)
-
---==================================================
--- COPY CURRENT COORDINATES
---==================================================
-
-CopyCoordinate.MouseButton1Click:Connect(function()
-	local rootPart = getRoot()
-
-	if not rootPart then
-		CopyCoordinate.Text = "Không tìm thấy!"
-
-		task.wait(1)
-		CopyCoordinate.Text = "Copy Tọa Độ"
-		return
-	end
-
-	local pos = rootPart.Position
-
-	local x = string.format("%.2f", pos.X)
-	local y = string.format("%.2f", pos.Y)
-	local z = string.format("%.2f", pos.Z)
-
-	local coordinateText = x .. ", " .. y .. ", " .. z
-
-	-- Điền thẳng vào 3 ô
-	XBox.Text = x
-	YBox.Text = y
-	ZBox.Text = z
-
-	-- Sao chép nếu executor hỗ trợ setclipboard
-	if setclipboard then
-		setclipboard(coordinateText)
-		CopyCoordinate.Text = "Đã Copy!"
-	else
-		CopyCoordinate.Text = "Đã lấy tọa độ!"
-	end
-
-	task.wait(1.2)
-	CopyCoordinate.Text = "Copy Tọa Độ"
-end)
+    end
+})
 
 --==================================================
--- CLOSE COORDINATE
+-- COORDINATE INPUT
 --==================================================
 
-CloseCoordinate.MouseButton1Click:Connect(function()
-	coordinateFrameVisible = false
-	CoordinateFrame.Visible = false
-end)
+local XInput = TeleportTab:CreateInput({
+    Name = "X Tọa Độ",
+    PlaceholderText = "Nhập X",
+    RemoveTextAfterFocusLost = false,
+
+    Callback = function(value)
+        X = tonumber(value) or 0
+    end
+})
+
+local YInput = TeleportTab:CreateInput({
+    Name = "Y Tọa Độ",
+    PlaceholderText = "Nhập Y",
+    RemoveTextAfterFocusLost = false,
+
+    Callback = function(value)
+        Y = tonumber(value) or 0
+    end
+})
+
+local ZInput = TeleportTab:CreateInput({
+    Name = "Z Tọa Độ",
+    PlaceholderText = "Nhập Z",
+    RemoveTextAfterFocusLost = false,
+
+    Callback = function(value)
+        Z = tonumber(value) or 0
+    end
+})
 
 --==================================================
--- 3. SET POINT
+-- TELEPORT COORDINATE
 --==================================================
 
-ButtonSetPoint.MouseButton1Click:Connect(function()
-	local rootPart = getRoot()
+TeleportTab:CreateButton({
+    Name = "Teleport Tọa Độ",
 
-	if rootPart then
-		savedCFrame = rootPart.CFrame
+    Callback = function()
 
-		ButtonSetPoint.Text = "Đã lưu điểm!"
+        local rootPart = getRoot()
 
-		task.wait(1)
-		ButtonSetPoint.Text = "3. Set Point"
-	else
-		ButtonSetPoint.Text = "Không tìm thấy!"
+        if not rootPart then
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
+            return
+        end
 
-		task.wait(1)
-		ButtonSetPoint.Text = "3. Set Point"
-	end
-end)
+        rootPart.CFrame = CFrame.new(
+            X,
+            Y,
+            Z
+        )
+
+        notify(
+            "Minh Kha Hub",
+            string.format(
+                "Đã teleport: %.2f, %.2f, %.2f",
+                X,
+                Y,
+                Z
+            )
+        )
+
+    end
+})
 
 --==================================================
--- 4. INFINITE JUMP
+-- COPY + AUTO INPUT COORDINATES
 --==================================================
+
+TeleportTab:CreateButton({
+    Name = "Lấy Tọa Độ Hiện Tại",
+
+    Callback = function()
+
+        local rootPart = getRoot()
+
+        if not rootPart then
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
+            return
+        end
+
+        local pos = rootPart.Position
+
+        local x = string.format("%.2f", pos.X)
+        local y = string.format("%.2f", pos.Y)
+        local z = string.format("%.2f", pos.Z)
+
+        --==========================================
+        -- LƯU TỌA ĐỘ
+        --==========================================
+
+        X = tonumber(x)
+        Y = tonumber(y)
+        Z = tonumber(z)
+
+        --==========================================
+        -- TỰ ĐỘNG ĐIỀN VÀO 3 Ô
+        --==========================================
+
+        pcall(function()
+
+            XInput:Set(x)
+            YInput:Set(y)
+            ZInput:Set(z)
+
+        end)
+
+        --==========================================
+        -- COPY CLIPBOARD
+        --==========================================
+
+        local coordinateText =
+            x .. ", " .. y .. ", " .. z
+
+        if setclipboard then
+
+            pcall(function()
+                setclipboard(coordinateText)
+            end)
+
+            notify(
+                "Minh Kha Hub",
+                "Đã copy + tự động nhập tọa độ!"
+            )
+
+        else
+
+            notify(
+                "Minh Kha Hub",
+                "Đã tự động nhập tọa độ!"
+            )
+
+        end
+
+    end
+})
+
+--==================================================
+-- HIGHEST FLOOR
+--==================================================
+
+local function findHighestFloor()
+
+    local highestPart = nil
+    local highestY = -math.huge
+
+    for _, obj in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if obj:IsA("BasePart")
+            and obj.CanCollide
+            and obj.Transparency < 1
+            and obj.Size.X >= 3
+            and obj.Size.Z >= 3 then
+
+            local topY =
+                obj.Position.Y +
+                (obj.Size.Y / 2)
+
+            if topY > highestY then
+
+                highestY = topY
+                highestPart = obj
+
+            end
+        end
+    end
+
+    return highestPart, highestY
+end
+
+--==================================================
+-- TELEPORT HIGHEST FLOOR
+--==================================================
+
+TeleportTab:CreateButton({
+    Name = "Teleport Sàn Cao Nhất",
+
+    Callback = function()
+
+        local rootPart = getRoot()
+
+        if not rootPart then
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
+            return
+        end
+
+        local floor, highestY =
+            findHighestFloor()
+
+        if not floor then
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy sàn!"
+            )
+            return
+        end
+
+        local targetPosition =
+            Vector3.new(
+                floor.Position.X,
+                highestY + 4,
+                floor.Position.Z
+            )
+
+        rootPart.CFrame =
+            CFrame.new(targetPosition)
+
+        notify(
+            "Minh Kha Hub",
+            "Đã teleport đến sàn cao nhất!"
+        )
+
+    end
+})
+
+--==================================================
+-- MOVEMENT TAB
+--==================================================
+
+local MovementTab = Window:CreateTab({
+    Name = "Movement",
+    Icon = 4483362458
+})
+
+--==================================================
+-- INFINITE JUMP
+--==================================================
+
+MovementTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+
+    Callback = function(value)
+
+        infiniteJumpEnabled = value
+
+        notify(
+            "Minh Kha Hub",
+            value
+                and "Infinite Jump: ON"
+                or "Infinite Jump: OFF"
+        )
+
+    end
+})
 
 UserInputService.JumpRequest:Connect(function()
-	if not infiniteJumpEnabled then
-		return
-	end
 
-	local character = LocalPlayer.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if not infiniteJumpEnabled then
+        return
+    end
 
-	if humanoid then
-		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	end
-end)
+    local character =
+        LocalPlayer.Character
 
-ButtonInfJump.MouseButton1Click:Connect(function()
-	infiniteJumpEnabled = not infiniteJumpEnabled
+    local humanoid =
+        character and
+        character:FindFirstChildOfClass(
+            "Humanoid"
+        )
 
-	if infiniteJumpEnabled then
-		ButtonInfJump.Text = "4. Inf Jump (ON)"
-		ButtonInfJump.BackgroundColor3 = Color3.fromRGB(155, 89, 182)
-	else
-		ButtonInfJump.Text = "4. Inf Jump (OFF)"
-		ButtonInfJump.BackgroundColor3 = Color3.fromRGB(142, 68, 173)
-	end
+    if humanoid then
+
+        humanoid:ChangeState(
+            Enum.HumanoidStateType.Jumping
+        )
+
+    end
+
 end)
 
 --==================================================
--- 5. NOCLIP
+-- NOCLIP
 --==================================================
 
 local function startNoclip()
-	if noclipConnection then
-		noclipConnection:Disconnect()
-		noclipConnection = nil
-	end
 
-	noclipConnection = RunService.Stepped:Connect(function()
-		if not noclipEnabled then
-			return
-		end
+    if noclipConnection then
 
-		local character = LocalPlayer.Character
+        noclipConnection:Disconnect()
+        noclipConnection = nil
 
-		if character then
-			for _, part in ipairs(character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = false
-				end
-			end
-		end
-	end)
+    end
+
+    noclipConnection =
+        RunService.Stepped:Connect(function()
+
+            if not noclipEnabled then
+                return
+            end
+
+            local character =
+                LocalPlayer.Character
+
+            if character then
+
+                for _, part in ipairs(
+                    character:GetDescendants()
+                ) do
+
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+
+                end
+
+            end
+
+        end)
 end
 
 local function stopNoclip()
-	if noclipConnection then
-		noclipConnection:Disconnect()
-		noclipConnection = nil
-	end
+
+    if noclipConnection then
+
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+
+    end
 end
 
-ButtonNoclip.MouseButton1Click:Connect(function()
-	noclipEnabled = not noclipEnabled
+MovementTab:CreateToggle({
+    Name = "Noclip",
+    CurrentValue = false,
 
-	if noclipEnabled then
-		startNoclip()
+    Callback = function(value)
 
-		ButtonNoclip.Text = "5. Noclip (ON)"
-		ButtonNoclip.BackgroundColor3 = Color3.fromRGB(127, 140, 141)
-	else
-		stopNoclip()
+        noclipEnabled = value
 
-		ButtonNoclip.Text = "5. Noclip (OFF)"
-		ButtonNoclip.BackgroundColor3 = Color3.fromRGB(52, 73, 94)
-	end
-end)
+        if value then
+
+            startNoclip()
+
+            notify(
+                "Minh Kha Hub",
+                "Noclip: ON"
+            )
+
+        else
+
+            stopNoclip()
+
+            notify(
+                "Minh Kha Hub",
+                "Noclip: OFF"
+            )
+
+        end
+
+    end
+})
 
 --==================================================
 -- RESPAWN SUPPORT
 --==================================================
 
 LocalPlayer.CharacterAdded:Connect(function()
-	if noclipEnabled then
-		task.wait(0.5)
-		startNoclip()
-	end
+
+    if noclipEnabled then
+
+        task.wait(0.5)
+
+        startNoclip()
+
+    end
+
 end)
+
+--==================================================
+-- LOADED
+--==================================================
+
+notify(
+    "Minh Kha Hub",
+    "Đã tải thành công!"
+)
