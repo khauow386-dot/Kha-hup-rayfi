@@ -1,586 +1,636 @@
 --==================================================
--- MINH KHA HUB
--- FLOOR TELEPORT + INFINITE JUMP
--- RAYFIELD GEN2
+-- MINH KHA HUB - RAYFIELD GEN2
+-- TELEPORT / MOVEMENT
 --==================================================
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/gen2"))()
 
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-
---==================================================
--- LOAD RAYFIELD
---==================================================
-
-local success, result = pcall(function()
-    return loadstring(
-        game:HttpGet("https://sirius.menu/gen2")
-    )()
-end)
-
-if not success or not result then
-    warn("======================================")
-    warn("MINH KHA HUB - RAYFIELD LOAD ERROR")
-    warn("======================================")
-    warn(tostring(result))
-    return
-end
-
-local Rayfield = result
 
 --==================================================
 -- WINDOW
 --==================================================
 
 local Window = Rayfield:CreateWindow({
-    name = "Minh Kha Hub",
-    subtitle = "Floor Teleport",
-    theme = "default",
+    Name = "Minh Kha Hub",
+    Subtitle = "Teleport Menu",
+    Theme = "default",
 
-    configuration = {
-        enabled = true,
+    Configuration = {
+        autoSave = true,
+        autoLoad = true,
         fileName = "MinhKhaHub"
     }
-})
-
---==================================================
--- TABS
---==================================================
-
-local TeleportTab = Window:CreateTab({
-    name = "Teleport",
-    icon = 4483362458
-})
-
-local PlayerTab = Window:CreateTab({
-    name = "Player",
-    icon = 4483362458
 })
 
 --==================================================
 -- VARIABLES
 --==================================================
 
-local stopTele = false
-local isTeleporting = false
+local savedCFrame = nil
 
-local teleportDelay = 0.20
-local infiniteJump = false
+local infiniteJumpEnabled = false
+
+local noclipEnabled = false
+local noclipConnection = nil
+
+local antiPausedEnabled = false
+
+local X = 0
+local Y = 0
+local Z = 0
 
 --==================================================
--- CHARACTER
+-- HELPER
 --==================================================
 
 local function getRoot()
-
-    local character =
-        LocalPlayer.Character
+    local character = LocalPlayer.Character
 
     if not character then
         return nil
     end
 
-    return character:FindFirstChild(
-        "HumanoidRootPart"
-    )
+    return character:FindFirstChild("HumanoidRootPart")
+end
+
+local function notify(title, content)
+    pcall(function()
+        Window:Notify({
+            Title = title,
+            Content = content,
+            Duration = 2
+        })
+    end)
 end
 
 --==================================================
--- FLOOR CHECK
+-- ANTI GAMEPLAY PAUSED
 --==================================================
 
-local function validFloor(part)
+local function removeNetworkPause()
 
-    if not part:IsA("BasePart") then
-        return false
-    end
+    pcall(function()
 
-    if not part.CanCollide then
-        return false
-    end
+        local RobloxGui =
+            CoreGui:FindFirstChild("RobloxGui")
 
-    if part.Transparency >= 1 then
-        return false
-    end
+        if RobloxGui then
 
-    if part.Size.X < 8 then
-        return false
-    end
+            local NetworkPause =
+                RobloxGui:FindFirstChild("CoreScripts/NetworkPause")
 
-    if part.Size.Z < 8 then
-        return false
-    end
-
-    if part.Size.Y > 8 then
-        return false
-    end
-
-    return true
-end
-
---==================================================
--- SCAN FLOORS
---==================================================
-
-local function getAllFloors()
-
-    local floors = {}
-
-    for _, obj in ipairs(
-        Workspace:GetDescendants()
-    ) do
-
-        if validFloor(obj) then
-
-            local topY =
-                obj.Position.Y +
-                obj.Size.Y / 2
-
-            table.insert(
-                floors,
-                {
-                    part = obj,
-                    y = topY
-                }
-            )
+            if NetworkPause then
+                NetworkPause:Destroy()
+            end
 
         end
-    end
 
-    return floors
+    end)
+
+end
+
+local function enableAntiPaused()
+
+    pcall(function()
+
+        GuiService:SetGameplayPausedNotificationEnabled(false)
+
+    end)
+
+    removeNetworkPause()
+
+end
+
+local function disableAntiPaused()
+
+    pcall(function()
+
+        GuiService:SetGameplayPausedNotificationEnabled(true)
+
+    end)
+
 end
 
 --==================================================
--- GROUP LEVELS
+-- TELEPORT TAB
 --==================================================
 
-local function getLevels()
+local TeleportTab = Window:CreateTab({
+    Name = "Teleport",
+    Icon = 4483362458
+})
 
-    local floors =
-        getAllFloors()
+--==================================================
+-- SET POINT
+--==================================================
 
-    table.sort(
-        floors,
-        function(a, b)
-            return a.y < b.y
-        end
-    )
+TeleportTab:CreateButton({
+    Name = "Set Point",
 
-    local levels = {}
+    Callback = function()
 
-    local LEVEL_DISTANCE = 3
+        local rootPart = getRoot()
 
-    for _, floor in ipairs(floors) do
+        if rootPart then
 
-        local last =
-            levels[#levels]
+            savedCFrame = rootPart.CFrame
 
-        if not last then
-
-            table.insert(
-                levels,
-                {
-                    y = floor.y,
-                    floors = {floor}
-                }
-            )
-
-        elseif math.abs(
-            last.y - floor.y
-        ) <= LEVEL_DISTANCE then
-
-            table.insert(
-                last.floors,
-                floor
+            notify(
+                "Minh Kha Hub",
+                "Đã lưu điểm!"
             )
 
         else
 
-            table.insert(
-                levels,
-                {
-                    y = floor.y,
-                    floors = {floor}
-                }
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
             )
 
         end
+
     end
-
-    return levels
-end
+})
 
 --==================================================
--- BEST FLOOR
+-- TELEPORT SAVED POINT
 --==================================================
 
-local function getBestFloor(level)
+TeleportTab:CreateButton({
+    Name = "Teleport về Point",
 
-    local best = nil
-    local bestArea = -1
+    Callback = function()
 
-    for _, floor in ipairs(
-        level.floors
+        local rootPart = getRoot()
+
+        if not savedCFrame then
+
+            notify(
+                "Minh Kha Hub",
+                "Bạn chưa Set Point!"
+            )
+
+            return
+        end
+
+        if rootPart then
+
+            rootPart.CFrame = savedCFrame
+
+            notify(
+                "Minh Kha Hub",
+                "Đã teleport về Point!"
+            )
+
+        end
+
+    end
+})
+
+--==================================================
+-- COORDINATE INPUT
+--==================================================
+
+local XInput = TeleportTab:CreateInput({
+    Name = "X Tọa Độ",
+    PlaceholderText = "Nhập X",
+    RemoveTextAfterFocusLost = false,
+
+    Callback = function(value)
+        X = tonumber(value) or 0
+    end
+})
+
+local YInput = TeleportTab:CreateInput({
+    Name = "Y Tọa Độ",
+    PlaceholderText = "Nhập Y",
+    RemoveTextAfterFocusLost = false,
+
+    Callback = function(value)
+        Y = tonumber(value) or 0
+    end
+})
+
+local ZInput = TeleportTab:CreateInput({
+    Name = "Z Tọa Độ",
+    PlaceholderText = "Nhập Z",
+    RemoveTextAfterFocusLost = false,
+
+    Callback = function(value)
+        Z = tonumber(value) or 0
+    end
+})
+
+--==================================================
+-- TELEPORT COORDINATE
+--==================================================
+
+TeleportTab:CreateButton({
+    Name = "Teleport Tọa Độ",
+
+    Callback = function()
+
+        local rootPart = getRoot()
+
+        if not rootPart then
+
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+        end
+
+        rootPart.CFrame =
+            CFrame.new(X, Y, Z)
+
+        notify(
+            "Minh Kha Hub",
+            string.format(
+                "Đã teleport: %.2f, %.2f, %.2f",
+                X,
+                Y,
+                Z
+            )
+        )
+
+    end
+})
+
+--==================================================
+-- COPY + AUTO INPUT COORDINATES
+--==================================================
+
+TeleportTab:CreateButton({
+    Name = "Lấy Tọa Độ Hiện Tại",
+
+    Callback = function()
+
+        local rootPart = getRoot()
+
+        if not rootPart then
+
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+        end
+
+        local pos = rootPart.Position
+
+        local x = string.format("%.2f", pos.X)
+        local y = string.format("%.2f", pos.Y)
+        local z = string.format("%.2f", pos.Z)
+
+        X = tonumber(x)
+        Y = tonumber(y)
+        Z = tonumber(z)
+
+        pcall(function()
+
+            XInput:Set(x)
+            YInput:Set(y)
+            ZInput:Set(z)
+
+        end)
+
+        local coordinateText =
+            x .. ", " .. y .. ", " .. z
+
+        if setclipboard then
+
+            pcall(function()
+                setclipboard(coordinateText)
+            end)
+
+            notify(
+                "Minh Kha Hub",
+                "Đã copy + tự động nhập tọa độ!"
+            )
+
+        else
+
+            notify(
+                "Minh Kha Hub",
+                "Đã tự động nhập tọa độ!"
+            )
+
+        end
+
+    end
+})
+
+--==================================================
+-- HIGHEST FLOOR
+--==================================================
+
+local function findHighestFloor()
+
+    local highestPart = nil
+    local highestY = -math.huge
+
+    for _, obj in ipairs(
+        workspace:GetDescendants()
     ) do
 
-        local part =
-            floor.part
+        if obj:IsA("BasePart")
+            and obj.CanCollide
+            and obj.Transparency < 1
+            and obj.Size.X >= 3
+            and obj.Size.Z >= 3 then
 
-        local area =
-            part.Size.X *
-            part.Size.Z
+            local topY =
+                obj.Position.Y +
+                (obj.Size.Y / 2)
 
-        if area > bestArea then
+            if topY > highestY then
 
-            bestArea = area
-            best = floor
+                highestY = topY
+                highestPart = obj
 
-        end
-    end
-
-    return best
-end
-
---==================================================
--- TELEPORT
---==================================================
-
-local function teleportFloor(floor)
-
-    local root =
-        getRoot()
-
-    if not root then
-        return false
-    end
-
-    local part =
-        floor.part
-
-    local position =
-        Vector3.new(
-            part.Position.X,
-            floor.y + 4,
-            part.Position.Z
-        )
-
-    root.CFrame =
-        CFrame.new(position)
-
-    return true
-end
-
---==================================================
--- TELEPORT TỪNG SÀN
---==================================================
-
-local function teleportFloorByFloor()
-
-    if isTeleporting then
-
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content = "Teleport đang chạy!",
-            duration = 2
-        })
-
-        return
-    end
-
-    isTeleporting = true
-    stopTele = false
-
-    local levels =
-        getLevels()
-
-    if #levels == 0 then
-
-        isTeleporting = false
-
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content = "Không tìm thấy sàn!",
-            duration = 3
-        })
-
-        return
-    end
-
-    for i = 1, #levels do
-
-        if stopTele then
-            break
-        end
-
-        local floor =
-            getBestFloor(
-                levels[i]
-            )
-
-        if floor then
-
-            teleportFloor(floor)
-
-            Window:Notify({
-                title = "Minh Kha Hub",
-                content =
-                    "Đang ở sàn "
-                    .. i
-                    .. " / "
-                    .. #levels,
-                duration = 0.5
-            })
-
-        end
-
-        local started =
-            os.clock()
-
-        while
-            os.clock() - started
-            < teleportDelay
-        do
-
-            if stopTele then
-                break
             end
 
-            task.wait()
         end
-    end
-
-    isTeleporting = false
-
-    if stopTele then
-
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content = "Đã STOP TELE!",
-            duration = 3
-        })
-
-    else
-
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content =
-                "Đã đến sàn cao nhất!",
-            duration = 3
-        })
 
     end
+
+    return highestPart, highestY
+
 end
 
 --==================================================
--- TELE CAO NHẤT
---==================================================
-
-local function teleportHighest()
-
-    stopTele = true
-
-    local levels =
-        getLevels()
-
-    if #levels == 0 then
-
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content = "Không tìm thấy sàn!",
-            duration = 3
-        })
-
-        return
-    end
-
-    local highestLevel =
-        levels[#levels]
-
-    local highestFloor =
-        getBestFloor(
-            highestLevel
-        )
-
-    if not highestFloor then
-        return
-    end
-
-    teleportFloor(
-        highestFloor
-    )
-
-    Window:Notify({
-        title = "Minh Kha Hub",
-        content =
-            "Đã TELE THẲNG đến sàn cao nhất!",
-        duration = 4
-    })
-end
-
---==================================================
--- TELEPORT BUTTONS
+-- TELEPORT HIGHEST FLOOR
 --==================================================
 
 TeleportTab:CreateButton({
-    name = "🚀 TELE TỪNG SÀN",
+    Name = "Teleport Sàn Cao Nhất",
 
-    callback = function()
+    Callback = function()
 
-        task.spawn(
-            teleportFloorByFloor
-        )
+        local rootPart = getRoot()
 
-    end
-})
+        if not rootPart then
 
-TeleportTab:CreateButton({
-    name = "🛑 STOP TELE",
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy nhân vật!"
+            )
 
-    callback = function()
+            return
+        end
 
-        stopTele = true
+        local floor, highestY =
+            findHighestFloor()
 
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content = "Đã STOP TELE!",
-            duration = 2
-        })
+        if not floor then
 
-    end
-})
+            notify(
+                "Minh Kha Hub",
+                "Không tìm thấy sàn!"
+            )
 
-TeleportTab:CreateButton({
-    name = "⚡ TELE THẲNG CAO NHẤT",
+            return
+        end
 
-    callback = function()
+        local targetPosition =
+            Vector3.new(
+                floor.Position.X,
+                highestY + 4,
+                floor.Position.Z
+            )
 
-        task.spawn(
-            teleportHighest
+        rootPart.CFrame =
+            CFrame.new(targetPosition)
+
+        notify(
+            "Minh Kha Hub",
+            "Đã teleport đến sàn cao nhất!"
         )
 
     end
 })
 
 --==================================================
--- DELAY SLIDER
+-- MOVEMENT TAB
 --==================================================
 
-TeleportTab:CreateSlider({
-
-    name = "⏱ THỜI GIAN GIỮA CÁC SÀN",
-
-    range = {
-        0.05,
-        2
-    },
-
-    increment = 0.05,
-
-    suffix = " giây",
-
-    currentValue = 0.20,
-
-    callback = function(value)
-
-        teleportDelay = value
-
-    end
-})
-
---==================================================
--- SCAN LEVELS
---==================================================
-
-TeleportTab:CreateButton({
-
-    name = "🔍 QUÉT SỐ TẦNG",
-
-    callback = function()
-
-        local levels =
-            getLevels()
-
-        Window:Notify({
-            title = "Minh Kha Hub",
-            content =
-                "Tìm thấy "
-                .. #levels
-                .. " tầng.",
-            duration = 4
-        })
-
-    end
+local MovementTab = Window:CreateTab({
+    Name = "Movement",
+    Icon = 4483362458
 })
 
 --==================================================
 -- INFINITE JUMP
 --==================================================
 
-PlayerTab:CreateToggle({
+MovementTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
 
-    name = "♾ INFINITE JUMP",
+    Callback = function(value)
 
-    currentValue = false,
+        infiniteJumpEnabled = value
 
-    callback = function(value)
+        notify(
+            "Minh Kha Hub",
+            value
+                and "Infinite Jump: ON"
+                or "Infinite Jump: OFF"
+        )
 
-        infiniteJump = value
+    end
+})
 
-        Window:Notify({
-            title = "Infinite Jump",
-            content =
-                value
-                and "Đã BẬT"
-                or "Đã TẮT",
-            duration = 2
-        })
+UserInputService.JumpRequest:Connect(function()
+
+    if not infiniteJumpEnabled then
+        return
+    end
+
+    local character =
+        LocalPlayer.Character
+
+    local humanoid =
+        character and
+        character:FindFirstChildOfClass(
+            "Humanoid"
+        )
+
+    if humanoid then
+
+        humanoid:ChangeState(
+            Enum.HumanoidStateType.Jumping
+        )
+
+    end
+
+end)
+
+--==================================================
+-- NOCLIP
+--==================================================
+
+local function startNoclip()
+
+    if noclipConnection then
+
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+
+    end
+
+    noclipConnection =
+        RunService.Stepped:Connect(function()
+
+            if not noclipEnabled then
+                return
+            end
+
+            local character =
+                LocalPlayer.Character
+
+            if character then
+
+                for _, part in ipairs(
+                    character:GetDescendants()
+                ) do
+
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+
+                end
+
+            end
+
+        end)
+
+end
+
+local function stopNoclip()
+
+    if noclipConnection then
+
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+
+    end
+
+end
+
+MovementTab:CreateToggle({
+    Name = "Noclip",
+    CurrentValue = false,
+
+    Callback = function(value)
+
+        noclipEnabled = value
+
+        if value then
+
+            startNoclip()
+
+            notify(
+                "Minh Kha Hub",
+                "Noclip: ON"
+            )
+
+        else
+
+            stopNoclip()
+
+            notify(
+                "Minh Kha Hub",
+                "Noclip: OFF"
+            )
+
+        end
 
     end
 })
 
 --==================================================
--- INFINITE JUMP ENGINE
+-- ANTI GAMEPLAY PAUSED TOGGLE
 --==================================================
 
-UserInputService.JumpRequest:Connect(
-    function()
+MovementTab:CreateToggle({
+    Name = "Anti Gameplay Paused",
+    CurrentValue = false,
 
-        if not infiniteJump then
-            return
-        end
+    Callback = function(value)
 
-        local character =
-            LocalPlayer.Character
+        antiPausedEnabled = value
 
-        if not character then
-            return
-        end
+        if value then
 
-        local humanoid =
-            character:FindFirstChildOfClass(
-                "Humanoid"
+            enableAntiPaused()
+
+            notify(
+                "Minh Kha Hub",
+                "Anti Gameplay Paused: ON"
             )
 
-        if humanoid then
+        else
 
-            humanoid:ChangeState(
-                Enum.HumanoidStateType.Jumping
+            disableAntiPaused()
+
+            notify(
+                "Minh Kha Hub",
+                "Anti Gameplay Paused: OFF"
             )
 
         end
 
     end
+})
+
+--==================================================
+-- ANTI PAUSED WATCHER
+--==================================================
+
+task.spawn(function()
+
+    while task.wait(1) do
+
+        if antiPausedEnabled then
+            enableAntiPaused()
+        end
+
+    end
+
+end)
+
+--==================================================
+-- RESPAWN SUPPORT
+--==================================================
+
+LocalPlayer.CharacterAdded:Connect(function()
+
+    if noclipEnabled then
+
+        task.wait(0.5)
+
+        startNoclip()
+
+    end
+
+end)
+
+--==================================================
+-- LOADED
+--==================================================
+
+notify(
+    "Minh Kha Hub",
+    "Đã tải thành công!"
 )
-
---==================================================
--- READY
---==================================================
-
-Window:Notify({
-    title = "Minh Kha Hub",
-    content =
-        "Đã tải thành công!",
-    duration = 4
-})
