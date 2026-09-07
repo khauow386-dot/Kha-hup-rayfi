@@ -1,6 +1,8 @@
 --==================================================
 -- KHA HUB - RAYFIELD GEN2
+-- BIG HOUSE 35 STUD
 -- BIG FLOOR 100x100
+-- NO = TẮT BUILD PREVIEW
 --==================================================
 
 local Rayfield = loadstring(
@@ -91,17 +93,14 @@ end
 
 local function getCharacter()
 
-    local character =
-        LocalPlayer.Character
+    local character = LocalPlayer.Character
 
     if not character then
         return nil, nil
     end
 
     local root =
-        character:FindFirstChild(
-            "HumanoidRootPart"
-        )
+        character:FindFirstChild("HumanoidRootPart")
 
     if not root then
         return character, nil
@@ -144,10 +143,7 @@ end
 -- CREATE PREVIEW
 --==================================================
 
-local function createPreviewPart(
-    size,
-    cframe
-)
+local function createPreviewPart(size, cframe)
 
     local preview =
         Instance.new("Part")
@@ -220,9 +216,7 @@ local vegetationKeywords = {
 local function isVegetation(object)
 
     local name =
-        string.lower(
-            object.Name
-        )
+        string.lower(object.Name)
 
     for _, keyword in ipairs(
         vegetationKeywords
@@ -365,9 +359,7 @@ local function restoreVegetation()
 
     end
 
-    table.clear(
-        hiddenObjects
-    )
+    table.clear(hiddenObjects)
 
 end
 
@@ -396,9 +388,7 @@ local function restoreEffects()
 
     end
 
-    table.clear(
-        disabledEffects
-    )
+    table.clear(disabledEffects)
 
 end
 
@@ -449,7 +439,7 @@ local function disableFixLag()
 end
 
 --==================================================
--- FIX LAG BUTTONS
+-- FIX LAG MENU
 --==================================================
 
 LagTab:CreateToggle({
@@ -458,17 +448,12 @@ LagTab:CreateToggle({
 
     callback = function(value)
 
-        fixLagEnabled =
-            value
+        fixLagEnabled = value
 
         if value then
-
             enableFixLag()
-
         else
-
             disableFixLag()
-
         end
 
     end
@@ -592,9 +577,7 @@ TeleportTab:CreateButton({
 -- RANDOM ITEM TELEPORT
 --==================================================
 
-local function teleportToRandomAsset(
-    searchName
-)
+local function teleportToRandomAsset(searchName)
 
     local _, root =
         getCharacter()
@@ -613,9 +596,7 @@ local function teleportToRandomAsset(
     local matches = {}
 
     local search =
-        string.lower(
-            searchName
-        )
+        string.lower(searchName)
 
     for _, object in ipairs(
         workspace:GetDescendants()
@@ -624,9 +605,7 @@ local function teleportToRandomAsset(
         if object:IsA("BasePart") then
 
             local objectName =
-                string.lower(
-                    object.Name
-                )
+                string.lower(object.Name)
 
             if objectName:find(
                 search,
@@ -689,11 +668,7 @@ ItemsTab:CreateButton({
     name = "Hammer",
 
     callback = function()
-
-        teleportToRandomAsset(
-            "hammer"
-        )
-
+        teleportToRandomAsset("hammer")
     end
 })
 
@@ -701,11 +676,7 @@ ItemsTab:CreateButton({
     name = "Food",
 
     callback = function()
-
-        teleportToRandomAsset(
-            "food"
-        )
-
+        teleportToRandomAsset("food")
     end
 })
 
@@ -713,11 +684,7 @@ ItemsTab:CreateButton({
     name = "Money",
 
     callback = function()
-
-        teleportToRandomAsset(
-            "money"
-        )
-
+        teleportToRandomAsset("money")
     end
 })
 
@@ -725,11 +692,7 @@ ItemsTab:CreateButton({
     name = "Crowbar",
 
     callback = function()
-
-        teleportToRandomAsset(
-            "crowbar"
-        )
-
+        teleportToRandomAsset("crowbar")
     end
 })
 
@@ -737,11 +700,7 @@ ItemsTab:CreateButton({
     name = "Bat",
 
     callback = function()
-
-        teleportToRandomAsset(
-            "bat"
-        )
-
+        teleportToRandomAsset("bat")
     end
 })
 
@@ -749,11 +708,7 @@ ItemsTab:CreateButton({
     name = "Lantern",
 
     callback = function()
-
-        teleportToRandomAsset(
-            "lantern"
-        )
-
+        teleportToRandomAsset("lantern")
     end
 })
 
@@ -780,9 +735,7 @@ local function getBuildData()
     end
 
     local hammer =
-        character:FindFirstChild(
-            "Hammer"
-        )
+        character:FindFirstChild("Hammer")
 
     if not hammer then
 
@@ -796,9 +749,7 @@ local function getBuildData()
     end
 
     local remote =
-        hammer:FindFirstChild(
-            "BuildPlank"
-        )
+        hammer:FindFirstChild("BuildPlank")
 
     if not remote then
 
@@ -835,9 +786,7 @@ local function BuildHut()
     end
 
     local road =
-        workspace:FindFirstChild(
-            "Road"
-        )
+        workspace:FindFirstChild("Road")
 
     if not road then
 
@@ -878,10 +827,7 @@ local function BuildHut()
             0
         )
 
-    local function fire(
-        p1,
-        p2
-    )
+    local function fire(p1, p2)
 
         remote:FireServer(
             p1,
@@ -906,19 +852,11 @@ local function BuildHut()
             fire(
                 origin
                 + right * -6
-                + Vector3.new(
-                    0,
-                    y,
-                    0
-                ),
+                + Vector3.new(0, y, 0),
 
                 origin
                 + right * 6
-                + Vector3.new(
-                    0,
-                    y,
-                    0
-                )
+                + Vector3.new(0, y, 0)
             )
 
         else
@@ -926,37 +864,21 @@ local function BuildHut()
             fire(
                 origin
                 + right * -6
-                + Vector3.new(
-                    0,
-                    y,
-                    0
-                ),
+                + Vector3.new(0, y, 0),
 
                 origin
                 + right * -2
-                + Vector3.new(
-                    0,
-                    y,
-                    0
-                )
+                + Vector3.new(0, y, 0)
             )
 
             fire(
                 origin
                 + right * 2
-                + Vector3.new(
-                    0,
-                    y,
-                    0
-                ),
+                + Vector3.new(0, y, 0),
 
                 origin
                 + right * 6
-                + Vector3.new(
-                    0,
-                    y,
-                    0
-                )
+                + Vector3.new(0, y, 0)
             )
 
         end
@@ -968,20 +890,12 @@ local function BuildHut()
         fire(
             origin
             + right * 6
-            + Vector3.new(
-                0,
-                y,
-                0
-            ),
+            + Vector3.new(0, y, 0),
 
             origin
             + right * 6
             + forward * 12
-            + Vector3.new(
-                0,
-                y,
-                0
-            )
+            + Vector3.new(0, y, 0)
         )
 
     end
@@ -992,20 +906,12 @@ local function BuildHut()
             origin
             + right * -6
             + forward * 12
-            + Vector3.new(
-                0,
-                y,
-                0
-            ),
+            + Vector3.new(0, y, 0),
 
             origin
             + right * 6
             + forward * 12
-            + Vector3.new(
-                0,
-                y,
-                0
-            )
+            + Vector3.new(0, y, 0)
         )
 
     end
@@ -1015,20 +921,12 @@ local function BuildHut()
         fire(
             origin
             + right * -6
-            + Vector3.new(
-                0,
-                y,
-                0
-            ),
+            + Vector3.new(0, y, 0),
 
             origin
             + right * -6
             + forward * 12
-            + Vector3.new(
-                0,
-                y,
-                0
-            )
+            + Vector3.new(0, y, 0)
         )
 
     end
@@ -1039,20 +937,12 @@ local function BuildHut()
             origin
             + right * -6
             + forward * z
-            + Vector3.new(
-                0,
-                7.5,
-                0
-            ),
+            + Vector3.new(0, 7.5, 0),
 
             origin
             + right * 6
             + forward * z
-            + Vector3.new(
-                0,
-                7.5,
-                0
-            )
+            + Vector3.new(0, 7.5, 0)
         )
 
     end
@@ -1081,9 +971,7 @@ local function BuildWall()
     end
 
     local ground =
-        workspace:FindFirstChild(
-            "Ground"
-        )
+        workspace:FindFirstChild("Ground")
 
     if not ground then
 
@@ -1125,10 +1013,7 @@ local function BuildWall()
             0
         )
 
-    local function fire(
-        p1,
-        p2
-    )
+    local function fire(p1, p2)
 
         remote:FireServer(
             p1,
@@ -1149,19 +1034,11 @@ local function BuildWall()
         fire(
             start
             + right * -6
-            + Vector3.new(
-                0,
-                y,
-                0
-            ),
+            + Vector3.new(0, y, 0),
 
             start
             + right * 6
-            + Vector3.new(
-                0,
-                y,
-                0
-            )
+            + Vector3.new(0, y, 0)
         )
 
     end
@@ -1201,9 +1078,7 @@ local function BuildFloor()
     end
 
     local road =
-        workspace:FindFirstChild(
-            "Road"
-        )
+        workspace:FindFirstChild("Road")
 
     if not road then
 
@@ -1230,10 +1105,7 @@ local function BuildFloor()
 
     end
 
-    local function fire(
-        p1,
-        p2
-    )
+    local function fire(p1, p2)
 
         remote:FireServer(
             p1,
@@ -1285,7 +1157,7 @@ local function BuildFloor()
 end
 
 --==================================================
--- BIG HOUSE
+-- BIG HOUSE 60 x 60 x 35
 --==================================================
 
 local function BuildBigHouse()
@@ -1301,9 +1173,7 @@ local function BuildBigHouse()
     end
 
     local road =
-        workspace:FindFirstChild(
-            "Road"
-        )
+        workspace:FindFirstChild("Road")
 
     if not road then
 
@@ -1331,7 +1201,7 @@ local function BuildBigHouse()
     end
 
     local SIZE = 60
-    local HEIGHT = 16
+    local HEIGHT = 35
     local MAX_PLANK = 11
     local BUILD_DELAY = 0.015
 
@@ -1349,10 +1219,7 @@ local function BuildBigHouse()
             0
         )
 
-    local function fire(
-        p1,
-        p2
-    )
+    local function fire(p1, p2)
 
         local distance =
             (p2 - p1).Magnitude
@@ -1444,52 +1311,28 @@ local function BuildBigHouse()
 
                 fire(
                     p1
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    ),
+                    + Vector3.new(0, y, 0),
 
                     left
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    )
+                    + Vector3.new(0, y, 0)
                 )
 
                 fire(
                     rightDoor
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    ),
+                    + Vector3.new(0, y, 0),
 
                     p2
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    )
+                    + Vector3.new(0, y, 0)
                 )
 
             else
 
                 fire(
                     p1
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    ),
+                    + Vector3.new(0, y, 0),
 
                     p2
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    )
+                    + Vector3.new(0, y, 0)
                 )
 
             end
@@ -1601,17 +1444,12 @@ local function BuildBigHouse()
 
     end
 
-    buildSurface(
-        0.25
-    )
-
-    buildSurface(
-        HEIGHT + 0.5
-    )
+    buildSurface(0.25)
+    buildSurface(HEIGHT + 0.5)
 
     notify(
         "Big House",
-        "Big House completed."
+        "Big House 60 x 60 x 35 completed."
     )
 
 end
@@ -1633,9 +1471,7 @@ local function BuildBigFloor()
     end
 
     local road =
-        workspace:FindFirstChild(
-            "Road"
-        )
+        workspace:FindFirstChild("Road")
 
     if not road then
 
@@ -1662,10 +1498,6 @@ local function BuildBigFloor()
 
     end
 
-    --==================================================
-    -- BIG FLOOR SIZE
-    --==================================================
-
     local SIZE = 100
     local MAX_PLANK = 11
     local ROW_STEP = 2
@@ -1688,14 +1520,7 @@ local function BuildBigFloor()
     local half =
         SIZE / 2
 
-    --==================================================
-    -- FIRE PLANK
-    --==================================================
-
-    local function fire(
-        p1,
-        p2
-    )
+    local function fire(p1, p2)
 
         local distance =
             (p2 - p1).Magnitude
@@ -1750,10 +1575,6 @@ local function BuildBigFloor()
         end
 
     end
-
-    --==================================================
-    -- BUILD 100 x 100
-    --==================================================
 
     local z = 0
 
@@ -1819,7 +1640,7 @@ BuildTab:CreateInput({
     name = "Select Build",
 
     placeholder =
-        "hut / wall / floor / big house / big floor",
+        "hut / wall / floor / big house / big floor / no",
 
     removeTextAfterFocusLost =
         false,
@@ -1831,6 +1652,36 @@ BuildTab:CreateInput({
             :lower()
             :gsub("^%s+", "")
             :gsub("%s+$", "")
+
+        --==================================================
+        -- NO = TẮT PREVIEW
+        --==================================================
+
+        if text == "no" then
+
+            selectedBuild =
+                "no"
+
+            clearPreview()
+
+            floorPreviewCFrame =
+                nil
+
+            bigFloorPreviewCFrame =
+                nil
+
+            notify(
+                "Build Preview",
+                "Đã tắt viền xanh."
+            )
+
+            return
+
+        end
+
+        --==================================================
+        -- BUILD TYPES
+        --==================================================
 
         if text == "hut"
             or text == "wall"
@@ -1851,7 +1702,7 @@ BuildTab:CreateInput({
 
             notify(
                 "Invalid Build",
-                "Use: hut, wall, floor, big house, big floor"
+                "Use: hut, wall, floor, big house, big floor hoặc no"
             )
 
         end
@@ -1865,7 +1716,14 @@ BuildTab:CreateInput({
 
 local function buildSelected()
 
-    if selectedBuild == "hut" then
+    if selectedBuild == "no" then
+
+        notify(
+            "Build",
+            "Hãy chọn công trình trước."
+        )
+
+    elseif selectedBuild == "hut" then
 
         BuildHut()
 
@@ -2068,6 +1926,24 @@ RunService.RenderStepped:Connect(
 
         end
 
+        --==================================================
+        -- NO = KHÔNG HIỆN VIỀN
+        --==================================================
+
+        if selectedBuild == "no" then
+
+            clearPreview()
+
+            floorPreviewCFrame =
+                nil
+
+            bigFloorPreviewCFrame =
+                nil
+
+            return
+
+        end
+
         clearPreview()
 
         local forward =
@@ -2169,7 +2045,7 @@ RunService.RenderStepped:Connect(
             )
 
         --==================================================
-        -- BIG HOUSE PREVIEW
+        -- BIG HOUSE 60 x 60 x 35 PREVIEW
         --==================================================
 
         elseif selectedBuild == "big house" then
@@ -2179,14 +2055,14 @@ RunService.RenderStepped:Connect(
                 + forward * 30
                 + Vector3.new(
                     0,
-                    8,
+                    17.5,
                     0
                 )
 
             createPreviewPart(
                 Vector3.new(
                     60,
-                    16,
+                    35,
                     60
                 ),
 
@@ -2233,7 +2109,7 @@ RunService.RenderStepped:Connect(
 )
 
 --==================================================
--- AUTO HIDE NEW VEGETATION
+-- AUTO HIDE NEW VEGETATION / EFFECTS
 --==================================================
 
 workspace.DescendantAdded:Connect(
