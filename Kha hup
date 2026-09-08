@@ -1,16 +1,20 @@
 --==================================================
--- KHA HUB - RAYFIELD GEN2
--- BIG HOUSE 35 STUD
--- BIG FLOOR 100x100
--- NO = TẮT BUILD PREVIEW
+-- MINH KHA HUB - RAYFIELD GEN2
 --==================================================
 
 local Rayfield = loadstring(
     game:HttpGet("https://sirius.menu/gen2")
 )()
 
+--==================================================
+-- SERVICES
+--==================================================
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -19,20 +23,25 @@ local LocalPlayer = Players.LocalPlayer
 --==================================================
 
 local Window = Rayfield:CreateWindow({
-    name = "kha hup",
-    subtitle = "by David",
+    name = "Minh Kha Hub",
+    subtitle = "Full Menu",
     theme = "default",
 
     configuration = {
         autoSave = true,
         autoLoad = true,
-        fileName = "kha Hub"
+        fileName = "MinhKhaHub"
     }
 })
 
 --==================================================
 -- TABS
 --==================================================
+
+local PlayersTab = Window:CreateTab({
+    name = "Players",
+    icon = 4483362458
+})
 
 local ItemsTab = Window:CreateTab({
     name = "Items",
@@ -45,7 +54,7 @@ local BuildTab = Window:CreateTab({
 })
 
 local TeleportTab = Window:CreateTab({
-    name = "Teleports",
+    name = "Teleport",
     icon = 4483362458
 })
 
@@ -58,16 +67,30 @@ local LagTab = Window:CreateTab({
 -- VARIABLES
 --==================================================
 
+local savedCFrame = nil
+
+local infiniteJumpEnabled = false
+
+local noclipEnabled = false
+local noclipConnection = nil
+
+local antiPausedEnabled = false
+
 local selectedBuild = "hut"
 
 local floorPreviewCFrame = nil
 local bigFloorPreviewCFrame = nil
+
 local buildUIButton = nil
 
 local fixLagEnabled = false
 
 local hiddenObjects = {}
 local disabledEffects = {}
+
+local X = 0
+local Y = 0
+local Z = 0
 
 --==================================================
 -- NOTIFY
@@ -80,7 +103,7 @@ local function notify(title, content)
         Window:Notify({
             title = title,
             content = content,
-            duration = 4
+            duration = 3
         })
 
     end)
@@ -102,417 +125,617 @@ local function getCharacter()
     local root =
         character:FindFirstChild("HumanoidRootPart")
 
-    if not root then
-        return character, nil
-    end
-
     return character, root
 
 end
 
---==================================================
--- PREVIEW FOLDER
---==================================================
+local function getHumanoid()
 
-local previewFolder =
-    Instance.new("Folder")
+    local character = LocalPlayer.Character
 
-previewFolder.Name =
-    "KhaHubPreview"
-
-previewFolder.Parent =
-    workspace
-
---==================================================
--- CLEAR PREVIEW
---==================================================
-
-local function clearPreview()
-
-    for _, object in ipairs(
-        previewFolder:GetChildren()
-    ) do
-
-        object:Destroy()
-
+    if not character then
+        return nil
     end
 
-end
-
---==================================================
--- CREATE PREVIEW
---==================================================
-
-local function createPreviewPart(size, cframe)
-
-    local preview =
-        Instance.new("Part")
-
-    preview.Name =
-        "PreviewPart"
-
-    preview.Anchored =
-        true
-
-    preview.CanCollide =
-        false
-
-    preview.CanTouch =
-        false
-
-    preview.CanQuery =
-        false
-
-    preview.CastShadow =
-        false
-
-    preview.Transparency =
-        0.75
-
-    preview.Color =
-        Color3.fromRGB(
-            0,
-            255,
-            0
-        )
-
-    preview.Material =
-        Enum.Material.ForceField
-
-    preview.Size =
-        size
-
-    preview.CFrame =
-        cframe
-
-    preview.Parent =
-        previewFolder
-
-    return preview
+    return character:FindFirstChildOfClass("Humanoid")
 
 end
 
 --==================================================
--- FIX LAG
+-- PLAYERS
 --==================================================
 
-local vegetationKeywords = {
-    "tree",
-    "trees",
-    "plant",
-    "plants",
-    "grass",
-    "leaf",
-    "leaves",
-    "bush",
-    "bushes",
-    "flower",
-    "flowers",
-    "foliage",
-    "branch",
-    "branches"
-}
-
-local function isVegetation(object)
-
-    local name =
-        string.lower(object.Name)
-
-    for _, keyword in ipairs(
-        vegetationKeywords
-    ) do
-
-        if name:find(
-            keyword,
-            1,
-            true
-        ) then
-
-            return true
-
-        end
-
-    end
-
-    return false
-
-end
-
 --==================================================
--- HIDE VEGETATION
+-- INFINITE JUMP
 --==================================================
 
-local function hideVegetation()
-
-    local count = 0
-
-    for _, object in ipairs(
-        workspace:GetDescendants()
-    ) do
-
-        if object == previewFolder then
-            continue
-        end
-
-        if LocalPlayer.Character
-            and object:IsDescendantOf(
-                LocalPlayer.Character
-            )
-        then
-            continue
-        end
-
-        if object:IsA("BasePart")
-            and isVegetation(object)
-        then
-
-            if hiddenObjects[object] == nil then
-
-                hiddenObjects[object] =
-                    object.LocalTransparencyModifier
-
-                pcall(function()
-
-                    object.LocalTransparencyModifier =
-                        1
-
-                end)
-
-                count += 1
-
-            end
-
-        end
-
-    end
-
-    return count
-
-end
-
---==================================================
--- DISABLE EFFECTS
---==================================================
-
-local function disableEffects()
-
-    local count = 0
-
-    for _, object in ipairs(
-        workspace:GetDescendants()
-    ) do
-
-        if object:IsA("ParticleEmitter")
-            or object:IsA("Trail")
-            or object:IsA("Beam")
-            or object:IsA("Smoke")
-            or object:IsA("Fire")
-            or object:IsA("Sparkles")
-        then
-
-            if disabledEffects[object] == nil then
-
-                disabledEffects[object] =
-                    object.Enabled
-
-                pcall(function()
-
-                    object.Enabled =
-                        false
-
-                end)
-
-                count += 1
-
-            end
-
-        end
-
-    end
-
-    return count
-
-end
-
---==================================================
--- RESTORE VEGETATION
---==================================================
-
-local function restoreVegetation()
-
-    for object, oldValue in pairs(
-        hiddenObjects
-    ) do
-
-        if object
-            and object.Parent
-        then
-
-            pcall(function()
-
-                object.LocalTransparencyModifier =
-                    oldValue
-
-            end)
-
-        end
-
-    end
-
-    table.clear(hiddenObjects)
-
-end
-
---==================================================
--- RESTORE EFFECTS
---==================================================
-
-local function restoreEffects()
-
-    for object, oldValue in pairs(
-        disabledEffects
-    ) do
-
-        if object
-            and object.Parent
-        then
-
-            pcall(function()
-
-                object.Enabled =
-                    oldValue
-
-            end)
-
-        end
-
-    end
-
-    table.clear(disabledEffects)
-
-end
-
---==================================================
--- ENABLE FIX LAG
---==================================================
-
-local function enableFixLag()
-
-    local treeCount =
-        hideVegetation()
-
-    local effectCount =
-        disableEffects()
-
-    pcall(function()
-
-        settings().Rendering.QualityLevel =
-            Enum.QualityLevel.Level01
-
-    end)
-
-    notify(
-        "Fix Lag",
-        "Đã tối ưu "
-        .. treeCount
-        .. " cây/cỏ và "
-        .. effectCount
-        .. " hiệu ứng."
-    )
-
-end
-
---==================================================
--- DISABLE FIX LAG
---==================================================
-
-local function disableFixLag()
-
-    restoreVegetation()
-    restoreEffects()
-
-    notify(
-        "Fix Lag",
-        "Đã khôi phục hiển thị."
-    )
-
-end
-
---==================================================
--- FIX LAG MENU
---==================================================
-
-LagTab:CreateToggle({
-    name = "Fix Lag",
+PlayersTab:CreateToggle({
+    name = "Infinite Jump",
     currentValue = false,
 
     callback = function(value)
 
-        fixLagEnabled = value
+        infiniteJumpEnabled = value
+
+        notify(
+            "Infinite Jump",
+            value and "ON" or "OFF"
+        )
+
+    end
+})
+
+UserInputService.JumpRequest:Connect(
+    function()
+
+        if not infiniteJumpEnabled then
+            return
+        end
+
+        local humanoid = getHumanoid()
+
+        if humanoid then
+
+            humanoid:ChangeState(
+                Enum.HumanoidStateType.Jumping
+            )
+
+        end
+
+    end
+)
+
+--==================================================
+-- NOCLIP
+--==================================================
+
+local function startNoclip()
+
+    if noclipConnection then
+
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+
+    end
+
+    noclipConnection =
+        RunService.Stepped:Connect(
+            function()
+
+                if not noclipEnabled then
+                    return
+                end
+
+                local character =
+                    LocalPlayer.Character
+
+                if not character then
+                    return
+                end
+
+                for _, part in ipairs(
+                    character:GetDescendants()
+                ) do
+
+                    if part:IsA("BasePart") then
+
+                        part.CanCollide = false
+
+                    end
+
+                end
+
+            end
+        )
+
+end
+
+local function stopNoclip()
+
+    if noclipConnection then
+
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+
+    end
+
+end
+
+PlayersTab:CreateToggle({
+    name = "Noclip",
+    currentValue = false,
+
+    callback = function(value)
+
+        noclipEnabled = value
 
         if value then
-            enableFixLag()
+
+            startNoclip()
+
+            notify(
+                "Noclip",
+                "ON"
+            )
+
         else
-            disableFixLag()
+
+            stopNoclip()
+
+            notify(
+                "Noclip",
+                "OFF"
+            )
+
         end
 
     end
 })
 
-LagTab:CreateButton({
-    name = "Xóa Cây / Cỏ / Lá",
+--==================================================
+-- ANTI GAMEPLAY PAUSED
+--==================================================
+
+local function removeNetworkPause()
+
+    pcall(function()
+
+        local RobloxGui =
+            CoreGui:FindFirstChild("RobloxGui")
+
+        if RobloxGui then
+
+            local NetworkPause =
+                RobloxGui:FindFirstChild(
+                    "CoreScripts/NetworkPause"
+                )
+
+            if NetworkPause then
+
+                NetworkPause:Destroy()
+
+            end
+
+        end
+
+    end)
+
+end
+
+local function enableAntiPaused()
+
+    pcall(function()
+
+        GuiService:SetGameplayPausedNotificationEnabled(
+            false
+        )
+
+    end)
+
+    removeNetworkPause()
+
+end
+
+local function disableAntiPaused()
+
+    pcall(function()
+
+        GuiService:SetGameplayPausedNotificationEnabled(
+            true
+        )
+
+    end)
+
+end
+
+PlayersTab:CreateToggle({
+    name = "Anti Gameplay Paused",
+    currentValue = false,
+
+    callback = function(value)
+
+        antiPausedEnabled = value
+
+        if value then
+
+            enableAntiPaused()
+
+            notify(
+                "Anti Gameplay Paused",
+                "ON"
+            )
+
+        else
+
+            disableAntiPaused()
+
+            notify(
+                "Anti Gameplay Paused",
+                "OFF"
+            )
+
+        end
+
+    end
+})
+
+task.spawn(function()
+
+    while task.wait(1) do
+
+        if antiPausedEnabled then
+            enableAntiPaused()
+        end
+
+    end
+
+end)
+
+--==================================================
+-- XVC HUB
+--==================================================
+
+PlayersTab:CreateButton({
+    name = "XVC Hub",
 
     callback = function()
 
-        local count =
-            hideVegetation()
+        local success, err =
+            pcall(function()
+
+                loadstring(
+                    game:HttpGet(
+                        "https://raw.githubusercontent.com/XVCHub/Games/main/GEF"
+                    )
+                )()
+
+            end)
+
+        if success then
+
+            notify(
+                "XVC Hub",
+                "Đã chạy menu!"
+            )
+
+        else
+
+            notify(
+                "XVC Hub",
+                "Lỗi: " .. tostring(err)
+            )
+
+        end
+
+    end
+})
+
+--==================================================
+-- RESPAWN SUPPORT
+--==================================================
+
+LocalPlayer.CharacterAdded:Connect(
+    function()
+
+        task.wait(0.5)
+
+        if noclipEnabled then
+            startNoclip()
+        end
+
+    end
+)
+
+--==================================================
+-- TELEPORT
+--==================================================
+
+TeleportTab:CreateButton({
+    name = "Set Point",
+
+    callback = function()
+
+        local _, root = getCharacter()
+
+        if not root then
+
+            notify(
+                "Teleport",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+
+        end
+
+        savedCFrame = root.CFrame
 
         notify(
-            "Fix Lag",
-            "Đã ẩn "
-            .. count
-            .. " cây/cỏ/lá."
+            "Teleport",
+            "Đã lưu điểm!"
         )
 
     end
 })
 
-LagTab:CreateButton({
-    name = "Tắt Particle / Effect",
+TeleportTab:CreateButton({
+    name = "Teleport về Point",
 
     callback = function()
 
-        local count =
-            disableEffects()
+        local _, root = getCharacter()
+
+        if not root then
+
+            notify(
+                "Teleport",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+
+        end
+
+        if not savedCFrame then
+
+            notify(
+                "Teleport",
+                "Bạn chưa Set Point!"
+            )
+
+            return
+
+        end
+
+        root.CFrame = savedCFrame
 
         notify(
-            "Fix Lag",
-            "Đã tắt "
-            .. count
-            .. " hiệu ứng."
-        )
-
-    end
-})
-
-LagTab:CreateButton({
-    name = "Khôi Phục Hiển Thị",
-
-    callback = function()
-
-        restoreVegetation()
-        restoreEffects()
-
-        notify(
-            "Fix Lag",
-            "Đã khôi phục."
+            "Teleport",
+            "Đã teleport về Point!"
         )
 
     end
 })
 
 --==================================================
--- TELEPORTS
+-- COORDINATES
+--==================================================
+
+local XInput = TeleportTab:CreateInput({
+    name = "X Tọa Độ",
+    placeholder = "Nhập X",
+    removeTextAfterFocusLost = false,
+
+    callback = function(value)
+        X = tonumber(value) or 0
+    end
+})
+
+local YInput = TeleportTab:CreateInput({
+    name = "Y Tọa Độ",
+    placeholder = "Nhập Y",
+    removeTextAfterFocusLost = false,
+
+    callback = function(value)
+        Y = tonumber(value) or 0
+    end
+})
+
+local ZInput = TeleportTab:CreateInput({
+    name = "Z Tọa Độ",
+    placeholder = "Nhập Z",
+    removeTextAfterFocusLost = false,
+
+    callback = function(value)
+        Z = tonumber(value) or 0
+    end
+})
+
+TeleportTab:CreateButton({
+    name = "Teleport Tọa Độ",
+
+    callback = function()
+
+        local _, root = getCharacter()
+
+        if not root then
+
+            notify(
+                "Teleport",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+
+        end
+
+        root.CFrame =
+            CFrame.new(X, Y, Z)
+
+        notify(
+            "Teleport",
+            string.format(
+                "%.2f, %.2f, %.2f",
+                X,
+                Y,
+                Z
+            )
+        )
+
+    end
+})
+
+--==================================================
+-- GET CURRENT COORDINATES
+--==================================================
+
+TeleportTab:CreateButton({
+    name = "Lấy Tọa Độ Hiện Tại",
+
+    callback = function()
+
+        local _, root = getCharacter()
+
+        if not root then
+
+            notify(
+                "Teleport",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+
+        end
+
+        local pos = root.Position
+
+        X = tonumber(
+            string.format("%.2f", pos.X)
+        )
+
+        Y = tonumber(
+            string.format("%.2f", pos.Y)
+        )
+
+        Z = tonumber(
+            string.format("%.2f", pos.Z)
+        )
+
+        pcall(function()
+
+            XInput:Set(
+                string.format("%.2f", X)
+            )
+
+            YInput:Set(
+                string.format("%.2f", Y)
+            )
+
+            ZInput:Set(
+                string.format("%.2f", Z)
+            )
+
+        end)
+
+        local coordinateText =
+            string.format(
+                "%.2f, %.2f, %.2f",
+                X,
+                Y,
+                Z
+            )
+
+        if setclipboard then
+
+            pcall(function()
+                setclipboard(coordinateText)
+            end)
+
+            notify(
+                "Teleport",
+                "Đã copy + nhập tọa độ!"
+            )
+
+        else
+
+            notify(
+                "Teleport",
+                "Đã nhập tọa độ!"
+            )
+
+        end
+
+    end
+})
+
+--==================================================
+-- HIGHEST FLOOR
+--==================================================
+
+local function findHighestFloor()
+
+    local highestPart = nil
+    local highestY = -math.huge
+
+    for _, obj in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if obj:IsA("BasePart")
+            and obj.CanCollide
+            and obj.Transparency < 1
+            and obj.Size.X >= 3
+            and obj.Size.Z >= 3
+        then
+
+            local topY =
+                obj.Position.Y
+                + obj.Size.Y / 2
+
+            if topY > highestY then
+
+                highestY = topY
+                highestPart = obj
+
+            end
+
+        end
+
+    end
+
+    return highestPart, highestY
+
+end
+
+TeleportTab:CreateButton({
+    name = "Teleport Sàn Cao Nhất",
+
+    callback = function()
+
+        local _, root = getCharacter()
+
+        if not root then
+
+            notify(
+                "Teleport",
+                "Không tìm thấy nhân vật!"
+            )
+
+            return
+
+        end
+
+        local floor, highestY =
+            findHighestFloor()
+
+        if not floor then
+
+            notify(
+                "Teleport",
+                "Không tìm thấy sàn!"
+            )
+
+            return
+
+        end
+
+        root.CFrame =
+            CFrame.new(
+                floor.Position.X,
+                highestY + 4,
+                floor.Position.Z
+            )
+
+        notify(
+            "Teleport",
+            "Đã đến sàn cao nhất!"
+        )
+
+    end
+})
+
+--==================================================
+-- SHOP
 --==================================================
 
 TeleportTab:CreateButton({
@@ -520,67 +743,56 @@ TeleportTab:CreateButton({
 
     callback = function()
 
-        local _, root =
-            getCharacter()
+        local _, root = getCharacter()
 
-        if not root then
+        if root then
 
-            notify(
-                "Teleport",
-                "Character not ready."
-            )
-
-            return
+            root.CFrame =
+                CFrame.new(
+                    -425,
+                    6,
+                    77
+                )
 
         end
 
-        root.CFrame =
-            CFrame.new(
-                -425,
-                6,
-                77
-            )
-
     end
 })
+
+--==================================================
+-- MAIN AREA
+--==================================================
 
 TeleportTab:CreateButton({
     name = "Main Area",
 
     callback = function()
 
-        local _, root =
-            getCharacter()
+        local _, root = getCharacter()
 
-        if not root then
+        if root then
 
-            notify(
-                "Teleport",
-                "Character not ready."
-            )
-
-            return
+            root.CFrame =
+                CFrame.new(
+                    -394,
+                    3,
+                    423
+                )
 
         end
-
-        root.CFrame =
-            CFrame.new(
-                -394,
-                3,
-                423
-            )
 
     end
 })
 
 --==================================================
--- RANDOM ITEM TELEPORT
+-- ITEMS
 --==================================================
 
-local function teleportToRandomAsset(searchName)
+local function teleportToRandomAsset(
+    searchName
+)
 
-    local _, root =
-        getCharacter()
+    local _, root = getCharacter()
 
     if not root then
 
@@ -627,8 +839,8 @@ local function teleportToRandomAsset(searchName)
     if #matches == 0 then
 
         notify(
-            "Item Not Found",
-            "Could not find: "
+            "Item",
+            "Không tìm thấy "
             .. searchName
         )
 
@@ -653,20 +865,15 @@ local function teleportToRandomAsset(searchName)
         )
 
     notify(
-        "Item Found",
-        "Teleported to: "
+        "Item",
+        "Đã đến "
         .. choice.Name
     )
 
 end
 
---==================================================
--- ITEM BUTTONS
---==================================================
-
 ItemsTab:CreateButton({
     name = "Hammer",
-
     callback = function()
         teleportToRandomAsset("hammer")
     end
@@ -674,7 +881,6 @@ ItemsTab:CreateButton({
 
 ItemsTab:CreateButton({
     name = "Food",
-
     callback = function()
         teleportToRandomAsset("food")
     end
@@ -682,7 +888,6 @@ ItemsTab:CreateButton({
 
 ItemsTab:CreateButton({
     name = "Money",
-
     callback = function()
         teleportToRandomAsset("money")
     end
@@ -690,7 +895,6 @@ ItemsTab:CreateButton({
 
 ItemsTab:CreateButton({
     name = "Crowbar",
-
     callback = function()
         teleportToRandomAsset("crowbar")
     end
@@ -698,7 +902,6 @@ ItemsTab:CreateButton({
 
 ItemsTab:CreateButton({
     name = "Bat",
-
     callback = function()
         teleportToRandomAsset("bat")
     end
@@ -706,11 +909,71 @@ ItemsTab:CreateButton({
 
 ItemsTab:CreateButton({
     name = "Lantern",
-
     callback = function()
         teleportToRandomAsset("lantern")
     end
 })
+
+--==================================================
+-- BUILDING
+--==================================================
+
+local previewFolder =
+    Instance.new("Folder")
+
+previewFolder.Name =
+    "MinhKhaHubPreview"
+
+previewFolder.Parent =
+    workspace
+
+local function clearPreview()
+
+    for _, object in ipairs(
+        previewFolder:GetChildren()
+    ) do
+
+        object:Destroy()
+
+    end
+
+end
+
+local function createPreviewPart(
+    size,
+    cframe
+)
+
+    local preview =
+        Instance.new("Part")
+
+    preview.Name = "PreviewPart"
+
+    preview.Anchored = true
+    preview.CanCollide = false
+    preview.CanTouch = false
+    preview.CanQuery = false
+    preview.CastShadow = false
+
+    preview.Transparency = 0.75
+
+    preview.Color =
+        Color3.fromRGB(
+            0,
+            255,
+            0
+        )
+
+    preview.Material =
+        Enum.Material.ForceField
+
+    preview.Size = size
+    preview.CFrame = cframe
+    preview.Parent = previewFolder
+
+    return preview
+
+end
 
 --==================================================
 -- BUILD DATA
@@ -721,12 +984,10 @@ local function getBuildData()
     local character, root =
         getCharacter()
 
-    if not character
-        or not root
-    then
+    if not character or not root then
 
         notify(
-            "Build Error",
+            "Build",
             "Character not ready."
         )
 
@@ -735,12 +996,14 @@ local function getBuildData()
     end
 
     local hammer =
-        character:FindFirstChild("Hammer")
+        character:FindFirstChild(
+            "Hammer"
+        )
 
     if not hammer then
 
         notify(
-            "Build Error",
+            "Build",
             "Hammer not found."
         )
 
@@ -749,12 +1012,14 @@ local function getBuildData()
     end
 
     local remote =
-        hammer:FindFirstChild("BuildPlank")
+        hammer:FindFirstChild(
+            "BuildPlank"
+        )
 
     if not remote then
 
         notify(
-            "Build Error",
+            "Build",
             "BuildPlank not found."
         )
 
@@ -789,28 +1054,14 @@ local function BuildHut()
         workspace:FindFirstChild("Road")
 
     if not road then
-
-        notify(
-            "Build Error",
-            "Road not found."
-        )
-
         return
-
     end
 
     local part =
         road:GetChildren()[33]
 
     if not part then
-
-        notify(
-            "Build Error",
-            "Road part #33 not found."
-        )
-
         return
-
     end
 
     local forward =
@@ -820,12 +1071,8 @@ local function BuildHut()
         root.CFrame.RightVector
 
     local origin =
-        root.Position +
-        Vector3.new(
-            0,
-            -3,
-            0
-        )
+        root.Position
+        + Vector3.new(0, -3, 0)
 
     local function fire(p1, p2)
 
@@ -834,20 +1081,14 @@ local function BuildHut()
             p2,
             part,
             part,
-            Vector3.new(
-                0,
-                1,
-                0
-            )
+            Vector3.new(0, 1, 0)
         )
 
     end
 
     for y = 0.5, 7, 0.5 do
 
-        if y < 1
-            or y > 5.5
-        then
+        if y < 1 or y > 5.5 then
 
             fire(
                 origin
@@ -974,28 +1215,14 @@ local function BuildWall()
         workspace:FindFirstChild("Ground")
 
     if not ground then
-
-        notify(
-            "Build Error",
-            "Ground not found."
-        )
-
         return
-
     end
 
     local part =
         ground:GetChildren()[9]
 
     if not part then
-
-        notify(
-            "Build Error",
-            "Ground part #9 not found."
-        )
-
         return
-
     end
 
     local forward =
@@ -1007,11 +1234,7 @@ local function BuildWall()
     local start =
         root.Position
         + forward * 2
-        + Vector3.new(
-            0,
-            -3,
-            0
-        )
+        + Vector3.new(0, -3, 0)
 
     local function fire(p1, p2)
 
@@ -1020,11 +1243,7 @@ local function BuildWall()
             p2,
             part,
             part,
-            Vector3.new(
-                0,
-                1,
-                0
-            )
+            Vector3.new(0, 1, 0)
         )
 
     end
@@ -1069,8 +1288,8 @@ local function BuildFloor()
     if not floorPreviewCFrame then
 
         notify(
-            "Build Error",
-            "Floor preview is not ready."
+            "Building",
+            "Floor preview chưa sẵn sàng."
         )
 
         return
@@ -1081,28 +1300,14 @@ local function BuildFloor()
         workspace:FindFirstChild("Road")
 
     if not road then
-
-        notify(
-            "Build Error",
-            "Road not found."
-        )
-
         return
-
     end
 
     local part =
         road:GetChildren()[33]
 
     if not part then
-
-        notify(
-            "Build Error",
-            "Road part #33 not found."
-        )
-
         return
-
     end
 
     local function fire(p1, p2)
@@ -1112,11 +1317,7 @@ local function BuildFloor()
             p2,
             part,
             part,
-            Vector3.new(
-                0,
-                1,
-                0
-            )
+            Vector3.new(0, 1, 0)
         )
 
     end
@@ -1126,25 +1327,18 @@ local function BuildFloor()
 
     for x = -6, 5.5, 0.5 do
 
-        local p1 =
-            cframe
-            * Vector3.new(
+        fire(
+            cframe * Vector3.new(
                 x,
                 0,
                 -6
-            )
+            ),
 
-        local p2 =
-            cframe
-            * Vector3.new(
+            cframe * Vector3.new(
                 x,
                 0,
                 6
             )
-
-        fire(
-            p1,
-            p2
         )
 
     end
@@ -1157,7 +1351,7 @@ local function BuildFloor()
 end
 
 --==================================================
--- BIG HOUSE 60 x 60 x 35
+-- BIG HOUSE
 --==================================================
 
 local function BuildBigHouse()
@@ -1176,32 +1370,18 @@ local function BuildBigHouse()
         workspace:FindFirstChild("Road")
 
     if not road then
-
-        notify(
-            "Build Error",
-            "Road not found."
-        )
-
         return
-
     end
 
     local part =
         road:GetChildren()[33]
 
     if not part then
-
-        notify(
-            "Build Error",
-            "Road part #33 not found."
-        )
-
         return
-
     end
 
     local SIZE = 60
-    local HEIGHT = 35
+    local HEIGHT = 10
     local MAX_PLANK = 11
     local BUILD_DELAY = 0.015
 
@@ -1212,12 +1392,8 @@ local function BuildBigHouse()
         root.CFrame.RightVector
 
     local origin =
-        root.Position +
-        Vector3.new(
-            0,
-            -3,
-            0
-        )
+        root.Position
+        + Vector3.new(0, -3, 0)
 
     local function fire(p1, p2)
 
@@ -1231,11 +1407,8 @@ local function BuildBigHouse()
         local direction =
             (p2 - p1).Unit
 
-        local current =
-            p1
-
-        local remaining =
-            distance
+        local current = p1
+        local remaining = distance
 
         while remaining > 0.01 do
 
@@ -1254,22 +1427,13 @@ local function BuildBigHouse()
                 nextPoint,
                 part,
                 part,
-                Vector3.new(
-                    0,
-                    1,
-                    0
-                )
+                Vector3.new(0, 1, 0)
             )
 
-            current =
-                nextPoint
+            current = nextPoint
+            remaining -= length
 
-            remaining -=
-                length
-
-            task.wait(
-                BUILD_DELAY
-            )
+            task.wait(BUILD_DELAY)
 
         end
 
@@ -1292,9 +1456,7 @@ local function BuildBigHouse()
             0.5
         do
 
-            if hasDoor
-                and y <= 8
-            then
+            if hasDoor and y <= 8 then
 
                 local center =
                     (p1 + p2) / 2
@@ -1310,11 +1472,8 @@ local function BuildBigHouse()
                     * (doorWidth / 2)
 
                 fire(
-                    p1
-                    + Vector3.new(0, y, 0),
-
-                    left
-                    + Vector3.new(0, y, 0)
+                    p1 + Vector3.new(0, y, 0),
+                    left + Vector3.new(0, y, 0)
                 )
 
                 fire(
@@ -1328,11 +1487,8 @@ local function BuildBigHouse()
             else
 
                 fire(
-                    p1
-                    + Vector3.new(0, y, 0),
-
-                    p2
-                    + Vector3.new(0, y, 0)
+                    p1 + Vector3.new(0, y, 0),
+                    p2 + Vector3.new(0, y, 0)
                 )
 
             end
@@ -1341,16 +1497,13 @@ local function BuildBigHouse()
 
     end
 
-    local half =
-        SIZE / 2
+    local half = SIZE / 2
 
     local corner1 =
-        origin
-        + right * -half
+        origin + right * -half
 
     local corner2 =
-        origin
-        + right * half
+        origin + right * half
 
     local corner3 =
         origin
@@ -1397,11 +1550,8 @@ local function BuildBigHouse()
 
         while z < SIZE do
 
-            local currentX =
-                -half
-
-            local remainingWidth =
-                SIZE
+            local currentX = -half
+            local remainingWidth = SIZE
 
             while remainingWidth > 0.01 do
 
@@ -1415,26 +1565,16 @@ local function BuildBigHouse()
                     origin
                     + right * currentX
                     + forward * z
-                    + Vector3.new(
-                        0,
-                        y,
-                        0
-                    )
+                    + Vector3.new(0, y, 0)
 
                 local p2 =
                     p1
                     + right * plankLength
 
-                fire(
-                    p1,
-                    p2
-                )
+                fire(p1, p2)
 
-                currentX +=
-                    plankLength
-
-                remainingWidth -=
-                    plankLength
+                currentX += plankLength
+                remainingWidth -= plankLength
 
             end
 
@@ -1449,13 +1589,13 @@ local function BuildBigHouse()
 
     notify(
         "Big House",
-        "Big House 60 x 60 x 35 completed."
+        "60 x 60 x 10 completed."
     )
 
 end
 
 --==================================================
--- BIG FLOOR 100 x 100
+-- BIG FLOOR
 --==================================================
 
 local function BuildBigFloor()
@@ -1474,28 +1614,14 @@ local function BuildBigFloor()
         workspace:FindFirstChild("Road")
 
     if not road then
-
-        notify(
-            "Big Floor Error",
-            "Road not found."
-        )
-
         return
-
     end
 
     local part =
         road:GetChildren()[33]
 
     if not part then
-
-        notify(
-            "Big Floor Error",
-            "Road part #33 not found."
-        )
-
         return
-
     end
 
     local SIZE = 100
@@ -1510,15 +1636,10 @@ local function BuildBigFloor()
         root.CFrame.RightVector
 
     local origin =
-        root.Position +
-        Vector3.new(
-            0,
-            -3,
-            0
-        )
+        root.Position
+        + Vector3.new(0, -3, 0)
 
-    local half =
-        SIZE / 2
+    local half = SIZE / 2
 
     local function fire(p1, p2)
 
@@ -1532,11 +1653,8 @@ local function BuildBigFloor()
         local direction =
             (p2 - p1).Unit
 
-        local current =
-            p1
-
-        local remaining =
-            distance
+        local current = p1
+        local remaining = distance
 
         while remaining > 0.01 do
 
@@ -1555,22 +1673,13 @@ local function BuildBigFloor()
                 nextPoint,
                 part,
                 part,
-                Vector3.new(
-                    0,
-                    1,
-                    0
-                )
+                Vector3.new(0, 1, 0)
             )
 
-            current =
-                nextPoint
+            current = nextPoint
+            remaining -= length
 
-            remaining -=
-                length
-
-            task.wait(
-                BUILD_DELAY
-            )
+            task.wait(BUILD_DELAY)
 
         end
 
@@ -1580,11 +1689,8 @@ local function BuildBigFloor()
 
     while z < SIZE do
 
-        local currentX =
-            -half
-
-        local remainingWidth =
-            SIZE
+        local currentX = -half
+        local remainingWidth = SIZE
 
         while remainingWidth > 0.01 do
 
@@ -1608,16 +1714,10 @@ local function BuildBigFloor()
                 p1
                 + right * plankLength
 
-            fire(
-                p1,
-                p2
-            )
+            fire(p1, p2)
 
-            currentX +=
-                plankLength
-
-            remainingWidth -=
-                plankLength
+            currentX += plankLength
+            remainingWidth -= plankLength
 
         end
 
@@ -1627,7 +1727,7 @@ local function BuildBigFloor()
 
     notify(
         "Big Floor",
-        "100 x 100 Big Floor completed."
+        "100 x 100 completed."
     )
 
 end
@@ -1642,8 +1742,7 @@ BuildTab:CreateInput({
     placeholder =
         "hut / wall / floor / big house / big floor / no",
 
-    removeTextAfterFocusLost =
-        false,
+    removeTextAfterFocusLost = false,
 
     callback = function(text)
 
@@ -1653,22 +1752,14 @@ BuildTab:CreateInput({
             :gsub("^%s+", "")
             :gsub("%s+$", "")
 
-        --==================================================
-        -- NO = TẮT PREVIEW
-        --==================================================
-
         if text == "no" then
 
-            selectedBuild =
-                "no"
+            selectedBuild = "no"
 
             clearPreview()
 
-            floorPreviewCFrame =
-                nil
-
-            bigFloorPreviewCFrame =
-                nil
+            floorPreviewCFrame = nil
+            bigFloorPreviewCFrame = nil
 
             notify(
                 "Build Preview",
@@ -1679,10 +1770,6 @@ BuildTab:CreateInput({
 
         end
 
-        --==================================================
-        -- BUILD TYPES
-        --==================================================
-
         if text == "hut"
             or text == "wall"
             or text == "floor"
@@ -1690,8 +1777,7 @@ BuildTab:CreateInput({
             or text == "big floor"
         then
 
-            selectedBuild =
-                text
+            selectedBuild = text
 
             notify(
                 "Build Selected",
@@ -1701,8 +1787,8 @@ BuildTab:CreateInput({
         else
 
             notify(
-                "Invalid Build",
-                "Use: hut, wall, floor, big house, big floor hoặc no"
+                "Build",
+                "Không hợp lệ."
             )
 
         end
@@ -1743,30 +1829,20 @@ local function buildSelected()
 
         BuildBigFloor()
 
-    else
-
-        notify(
-            "Build Error",
-            "Unknown build type."
-        )
-
     end
 
 end
 
 BuildTab:CreateButton({
-    name =
-        "Build Selected Structure",
+    name = "Build Selected Structure",
 
     callback = function()
-
         buildSelected()
-
     end
 })
 
 --==================================================
--- ON-SCREEN BUILD BUTTON
+-- BUILD BUTTON
 --==================================================
 
 BuildTab:CreateToggle({
@@ -1780,9 +1856,7 @@ BuildTab:CreateToggle({
             if buildUIButton then
 
                 buildUIButton:Destroy()
-
-                buildUIButton =
-                    nil
+                buildUIButton = nil
 
             end
 
@@ -1791,12 +1865,7 @@ BuildTab:CreateToggle({
         end
 
         if buildUIButton then
-
             buildUIButton:Destroy()
-
-            buildUIButton =
-                nil
-
         end
 
         local playerGui =
@@ -1805,26 +1874,16 @@ BuildTab:CreateToggle({
             )
 
         buildUIButton =
-            Instance.new(
-                "ScreenGui"
-            )
+            Instance.new("ScreenGui")
 
         buildUIButton.Name =
-            "KhaHubBuildButton"
+            "MinhKhaBuildButton"
 
-        buildUIButton.ResetOnSpawn =
-            false
-
-        buildUIButton.Parent =
-            playerGui
+        buildUIButton.ResetOnSpawn = false
+        buildUIButton.Parent = playerGui
 
         local button =
-            Instance.new(
-                "TextButton"
-            )
-
-        button.Name =
-            "Build"
+            Instance.new("TextButton")
 
         button.Size =
             UDim2.new(
@@ -1849,53 +1908,31 @@ BuildTab:CreateToggle({
                 0
             )
 
-        button.BorderSizePixel =
-            0
-
-        button.Text =
-            "Build"
+        button.BorderSizePixel = 0
+        button.Text = "Build"
 
         button.TextColor3 =
-            Color3.new(
-                1,
-                1,
-                1
-            )
+            Color3.new(1, 1, 1)
 
         button.Font =
             Enum.Font.SourceSansBold
 
-        button.TextSize =
-            24
-
-        button.Active =
-            true
-
-        button.Draggable =
-            true
-
-        button.Parent =
-            buildUIButton
+        button.TextSize = 24
+        button.Active = true
+        button.Draggable = true
+        button.Parent = buildUIButton
 
         local corner =
-            Instance.new(
-                "UICorner"
-            )
+            Instance.new("UICorner")
 
         corner.CornerRadius =
-            UDim.new(
-                0,
-                8
-            )
+            UDim.new(0, 8)
 
-        corner.Parent =
-            button
+        corner.Parent = button
 
         button.MouseButton1Click:Connect(
             function()
-
                 buildSelected()
-
             end
         )
 
@@ -1903,42 +1940,31 @@ BuildTab:CreateToggle({
 })
 
 --==================================================
--- PREVIEW
+-- BUILD PREVIEW
 --==================================================
 
 RunService.RenderStepped:Connect(
     function()
 
-        local _, root =
-            getCharacter()
+        local _, root = getCharacter()
 
         if not root then
 
             clearPreview()
 
-            floorPreviewCFrame =
-                nil
-
-            bigFloorPreviewCFrame =
-                nil
+            floorPreviewCFrame = nil
+            bigFloorPreviewCFrame = nil
 
             return
 
         end
 
-        --==================================================
-        -- NO = KHÔNG HIỆN VIỀN
-        --==================================================
-
         if selectedBuild == "no" then
 
             clearPreview()
 
-            floorPreviewCFrame =
-                nil
-
-            bigFloorPreviewCFrame =
-                nil
+            floorPreviewCFrame = nil
+            bigFloorPreviewCFrame = nil
 
             return
 
@@ -1950,16 +1976,8 @@ RunService.RenderStepped:Connect(
             root.CFrame.LookVector
 
         local origin =
-            root.Position +
-            Vector3.new(
-                0,
-                -3,
-                0
-            )
-
-        --==================================================
-        -- HUT PREVIEW
-        --==================================================
+            root.Position
+            + Vector3.new(0, -3, 0)
 
         if selectedBuild == "hut" then
 
@@ -1978,16 +1996,11 @@ RunService.RenderStepped:Connect(
                     7.5,
                     12
                 ),
-
                 CFrame.new(
                     center,
                     center + forward
                 )
             )
-
-        --==================================================
-        -- WALL PREVIEW
-        --==================================================
 
         elseif selectedBuild == "wall" then
 
@@ -2006,16 +2019,11 @@ RunService.RenderStepped:Connect(
                     6,
                     0.5
                 ),
-
                 CFrame.new(
                     center,
                     center + forward
                 )
             )
-
-        --==================================================
-        -- FLOOR PREVIEW
-        --==================================================
 
         elseif selectedBuild == "floor" then
 
@@ -2040,13 +2048,8 @@ RunService.RenderStepped:Connect(
                     0.5,
                     12
                 ),
-
                 floorPreviewCFrame
             )
-
-        --==================================================
-        -- BIG HOUSE 60 x 60 x 35 PREVIEW
-        --==================================================
 
         elseif selectedBuild == "big house" then
 
@@ -2055,26 +2058,21 @@ RunService.RenderStepped:Connect(
                 + forward * 30
                 + Vector3.new(
                     0,
-                    17.5,
+                    5,
                     0
                 )
 
             createPreviewPart(
                 Vector3.new(
                     60,
-                    35,
+                    10,
                     60
                 ),
-
                 CFrame.new(
                     center,
                     center + forward
                 )
             )
-
-        --==================================================
-        -- BIG FLOOR 100 x 100 PREVIEW
-        --==================================================
 
         elseif selectedBuild == "big floor" then
 
@@ -2099,7 +2097,6 @@ RunService.RenderStepped:Connect(
                     0.5,
                     100
                 ),
-
                 bigFloorPreviewCFrame
             )
 
@@ -2109,7 +2106,312 @@ RunService.RenderStepped:Connect(
 )
 
 --==================================================
--- AUTO HIDE NEW VEGETATION / EFFECTS
+-- FIX LAG
+--==================================================
+
+local vegetationKeywords = {
+    "tree",
+    "trees",
+    "plant",
+    "plants",
+    "grass",
+    "leaf",
+    "leaves",
+    "bush",
+    "bushes",
+    "flower",
+    "flowers",
+    "foliage",
+    "branch",
+    "branches"
+}
+
+local function isVegetation(object)
+
+    local name =
+        string.lower(object.Name)
+
+    for _, keyword in ipairs(
+        vegetationKeywords
+    ) do
+
+        if name:find(
+            keyword,
+            1,
+            true
+        ) then
+
+            return true
+
+        end
+
+    end
+
+    return false
+
+end
+
+--==================================================
+-- HIDE VEGETATION
+--==================================================
+
+local function hideVegetation()
+
+    local count = 0
+
+    for _, object in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if object == previewFolder then
+            continue
+        end
+
+        if LocalPlayer.Character
+            and object:IsDescendantOf(
+                LocalPlayer.Character
+            )
+        then
+            continue
+        end
+
+        if object:IsA("BasePart")
+            and isVegetation(object)
+        then
+
+            if hiddenObjects[object] == nil then
+
+                hiddenObjects[object] =
+                    object.LocalTransparencyModifier
+
+                pcall(function()
+
+                    object.LocalTransparencyModifier =
+                        1
+
+                end)
+
+                count += 1
+
+            end
+
+        end
+
+    end
+
+    return count
+
+end
+
+--==================================================
+-- DISABLE EFFECTS
+--==================================================
+
+local function disableEffects()
+
+    local count = 0
+
+    for _, object in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if object:IsA("ParticleEmitter")
+            or object:IsA("Trail")
+            or object:IsA("Beam")
+            or object:IsA("Smoke")
+            or object:IsA("Fire")
+            or object:IsA("Sparkles")
+        then
+
+            if disabledEffects[object] == nil then
+
+                disabledEffects[object] =
+                    object.Enabled
+
+                pcall(function()
+
+                    object.Enabled = false
+
+                end)
+
+                count += 1
+
+            end
+
+        end
+
+    end
+
+    return count
+
+end
+
+--==================================================
+-- RESTORE
+--==================================================
+
+local function restoreVegetation()
+
+    for object, oldValue in pairs(
+        hiddenObjects
+    ) do
+
+        if object and object.Parent then
+
+            pcall(function()
+
+                object.LocalTransparencyModifier =
+                    oldValue
+
+            end)
+
+        end
+
+    end
+
+    table.clear(hiddenObjects)
+
+end
+
+local function restoreEffects()
+
+    for object, oldValue in pairs(
+        disabledEffects
+    ) do
+
+        if object and object.Parent then
+
+            pcall(function()
+
+                object.Enabled = oldValue
+
+            end)
+
+        end
+
+    end
+
+    table.clear(disabledEffects)
+
+end
+
+--==================================================
+-- FIX LAG
+--==================================================
+
+local function enableFixLag()
+
+    local treeCount =
+        hideVegetation()
+
+    local effectCount =
+        disableEffects()
+
+    pcall(function()
+
+        settings().Rendering.QualityLevel =
+            Enum.QualityLevel.Level01
+
+    end)
+
+    notify(
+        "Fix Lag",
+        "Đã tối ưu "
+        .. treeCount
+        .. " cây/cỏ và "
+        .. effectCount
+        .. " hiệu ứng."
+    )
+
+end
+
+local function disableFixLag()
+
+    restoreVegetation()
+    restoreEffects()
+
+    notify(
+        "Fix Lag",
+        "Đã khôi phục."
+    )
+
+end
+
+--==================================================
+-- FIX LAG MENU
+--==================================================
+
+LagTab:CreateToggle({
+    name = "Fix Lag",
+    currentValue = false,
+
+    callback = function(value)
+
+        fixLagEnabled = value
+
+        if value then
+            enableFixLag()
+        else
+            disableFixLag()
+        end
+
+    end
+})
+
+LagTab:CreateButton({
+    name = "Xóa Cây / Cỏ / Lá",
+
+    callback = function()
+
+        local count =
+            hideVegetation()
+
+        notify(
+            "Fix Lag",
+            "Đã ẩn "
+            .. count
+            .. " cây/cỏ/lá."
+        )
+
+    end
+})
+
+LagTab:CreateButton({
+    name = "Tắt Particle / Effect",
+
+    callback = function()
+
+        local count =
+            disableEffects()
+
+        notify(
+            "Fix Lag",
+            "Đã tắt "
+            .. count
+            .. " hiệu ứng."
+        )
+
+    end
+})
+
+LagTab:CreateButton({
+    name = "Khôi Phục Hiển Thị",
+
+    callback = function()
+
+        restoreVegetation()
+        restoreEffects()
+
+        notify(
+            "Fix Lag",
+            "Đã khôi phục."
+        )
+
+    end
+})
+
+--==================================================
+-- AUTO FIX NEW OBJECTS
 --==================================================
 
 workspace.DescendantAdded:Connect(
@@ -2172,8 +2474,7 @@ workspace.DescendantAdded:Connect(
 
                         pcall(function()
 
-                            object.Enabled =
-                                false
+                            object.Enabled = false
 
                         end)
 
@@ -2192,6 +2493,6 @@ workspace.DescendantAdded:Connect(
 --==================================================
 
 notify(
-    "khaHub",
-    "Rayfield Gen2 loaded successfully."
+    "Minh Kha Hub",
+    "Full Menu loaded successfully!"
 )
