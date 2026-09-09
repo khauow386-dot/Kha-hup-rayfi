@@ -54,25 +54,27 @@ local GRAY = Color3.fromRGB(150,150,155)
 --========================================================
 
 local function getCharacter()
-    local character = LocalPlayer.Character
+local character = LocalPlayer.Character
 
-    if not character then
-        return nil,nil
-    end
+if not character then  
+    return nil,nil  
+end  
 
-    local root = character:FindFirstChild("HumanoidRootPart")
+local root = character:FindFirstChild("HumanoidRootPart")  
 
-    return character,root
+return character,root
+
 end
 
 local function getHumanoid()
-    local character = LocalPlayer.Character
+local character = LocalPlayer.Character
 
-    if not character then
-        return nil
-    end
+if not character then  
+    return nil  
+end  
 
-    return character:FindFirstChildOfClass("Humanoid")
+return character:FindFirstChildOfClass("Humanoid")
+
 end
 
 --========================================================
@@ -82,13 +84,13 @@ end
 local old = PlayerGui:FindFirstChild("MINH_KHA_HUP")
 
 if old then
-    old:Destroy()
+old:Destroy()
 end
 
 local oldCore = CoreGui:FindFirstChild("MINH_KHA_HUP")
 
 if oldCore then
-    oldCore:Destroy()
+oldCore:Destroy()
 end
 
 --========================================================
@@ -107,33 +109,34 @@ ScreenGui.Parent = PlayerGui
 --========================================================
 
 local function corner(obj,radius)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0,radius or 8)
-    c.Parent = obj
-    return c
+local c = Instance.new("UICorner")
+c.CornerRadius = UDim.new(0,radius or 8)
+c.Parent = obj
+return c
 end
 
 local function stroke(obj,color,thickness)
-    local s = Instance.new("UIStroke")
-    s.Color = color or RED
-    s.Thickness = thickness or 1
-    s.Parent = obj
-    return s
+local s = Instance.new("UIStroke")
+s.Color = color or RED
+s.Thickness = thickness or 1
+s.Parent = obj
+return s
 end
 
 local function notify(title,text)
-    print("[MINH KHA HUP]",title,text)
+print("[MINH KHA HUP]",title,text)
 
-    pcall(function()
-        game:GetService("StarterGui"):SetCore(
-            "SendNotification",
-            {
-                Title = "MINH KHA HUP • "..tostring(title),
-                Text = tostring(text),
-                Duration = 3
-            }
-        )
-    end)
+pcall(function()  
+    game:GetService("StarterGui"):SetCore(  
+        "SendNotification",  
+        {  
+            Title = "MINH KHA HUP • "..tostring(title),  
+            Text = tostring(text),  
+            Duration = 3  
+        }  
+    )  
+end)
+
 end
 
 --========================================================
@@ -209,48 +212,49 @@ corner(Close,8)
 --========================================================
 
 do
-    local dragging = false
-    local dragStart
-    local startPos
+local dragging = false
+local dragStart
+local startPos
 
-    TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+TopBar.InputBegan:Connect(function(input)  
+    if input.UserInputType == Enum.UserInputType.MouseButton1  
+    or input.UserInputType == Enum.UserInputType.Touch then  
 
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
+        dragging = true  
+        dragStart = input.Position  
+        startPos = Main.Position  
 
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
+        input.Changed:Connect(function()  
+            if input.UserInputState == Enum.UserInputState.End then  
+                dragging = false  
+            end  
+        end)  
+    end  
+end)  
 
-    UserInputService.InputChanged:Connect(function(input)
-        if not dragging then
-            return
-        end
+UserInputService.InputChanged:Connect(function(input)  
+    if not dragging then  
+        return  
+    end  
 
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseMovement  
+    or input.UserInputType == Enum.UserInputType.Touch then  
 
-            local delta = input.Position - dragStart
+        local delta = input.Position - dragStart  
 
-            Main.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
+        Main.Position = UDim2.new(  
+            startPos.X.Scale,  
+            startPos.X.Offset + delta.X,  
+            startPos.Y.Scale,  
+            startPos.Y.Offset + delta.Y  
+        )  
+    end  
+end)
+
 end
 
 Close.Activated:Connect(function()
-    Main.Visible = false
+Main.Visible = false
 end)
 
 --========================================================
@@ -296,12 +300,12 @@ TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 TabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    TabScroll.CanvasSize = UDim2.new(
-        0,
-        0,
-        0,
-        TabLayout.AbsoluteContentSize.Y + 15
-    )
+TabScroll.CanvasSize = UDim2.new(
+0,
+0,
+0,
+TabLayout.AbsoluteContentSize.Y + 15
+)
 end)
 
 local TabHeader = Instance.new("TextLabel")
@@ -334,100 +338,103 @@ local PageObjects = {}
 
 local function CreatePage(name)
 
-    local page = Instance.new("ScrollingFrame")
-    page.Name = name
-    page.Parent = Pages
-    page.Size = UDim2.new(1,0,1,0)
-    page.BackgroundTransparency = 1
-    page.BorderSizePixel = 0
-    page.Active = true
-    page.ScrollingEnabled = true
-    page.ScrollingDirection = Enum.ScrollingDirection.Y
-    page.ScrollBarThickness = 5
-    page.ScrollBarImageColor3 = RED
-    page.CanvasSize = UDim2.new(0,0,0,0)
-    page.Visible = false
-    page.ZIndex = 13
+local page = Instance.new("ScrollingFrame")  
+page.Name = name  
+page.Parent = Pages  
+page.Size = UDim2.new(1,0,1,0)  
+page.BackgroundTransparency = 1  
+page.BorderSizePixel = 0  
+page.Active = true  
+page.ScrollingEnabled = true  
+page.ScrollingDirection = Enum.ScrollingDirection.Y  
+page.ScrollBarThickness = 5  
+page.ScrollBarImageColor3 = RED  
+page.CanvasSize = UDim2.new(0,0,0,0)  
+page.Visible = false  
+page.ZIndex = 13  
 
-    local padding = Instance.new("UIPadding")
-    padding.Parent = page
-    padding.PaddingTop = UDim.new(0,12)
-    padding.PaddingBottom = UDim.new(0,20)
-    padding.PaddingLeft = UDim.new(0,12)
-    padding.PaddingRight = UDim.new(0,12)
+local padding = Instance.new("UIPadding")  
+padding.Parent = page  
+padding.PaddingTop = UDim.new(0,12)  
+padding.PaddingBottom = UDim.new(0,20)  
+padding.PaddingLeft = UDim.new(0,12)  
+padding.PaddingRight = UDim.new(0,12)  
 
-    local layout = Instance.new("UIListLayout")
-    layout.Parent = page
-    layout.FillDirection = Enum.FillDirection.Vertical
-    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    layout.VerticalAlignment = Enum.VerticalAlignment.Top
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0,8)
+local layout = Instance.new("UIListLayout")  
+layout.Parent = page  
+layout.FillDirection = Enum.FillDirection.Vertical  
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center  
+layout.VerticalAlignment = Enum.VerticalAlignment.Top  
+layout.SortOrder = Enum.SortOrder.LayoutOrder  
+layout.Padding = UDim.new(0,8)  
 
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(
-            0,
-            0,
-            0,
-            layout.AbsoluteContentSize.Y + 45
-        )
-    end)
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()  
+    page.CanvasSize = UDim2.new(  
+        0,  
+        0,  
+        0,  
+        layout.AbsoluteContentSize.Y + 45  
+    )  
+end)  
 
-    PageObjects[name] = page
+PageObjects[name] = page  
 
-    return page
+return page
+
 end
 
 local PagesList = {
-    "Players",
-    "Items",
-    "Building",
-    "Teleport",
-    "Fix Lag"
+"Players",
+"Items",
+"Building",
+"Teleport",
+"Fix Lag"
 }
 
 local Tabs = {}
 
 for _,name in ipairs(PagesList) do
 
-    local page = CreatePage(name)
+local page = CreatePage(name)  
 
-    local tab = Instance.new("TextButton")
-    tab.Parent = TabContainer
-    tab.Size = UDim2.new(1,-10,0,42)
-    tab.BackgroundColor3 = PANEL
-    tab.BorderSizePixel = 0
-    tab.Text = name
-    tab.TextColor3 = WHITE
-    tab.TextSize = 13
-    tab.Font = Enum.Font.GothamBold
-    tab.ZIndex = 13
-    tab.AutoButtonColor = false
+local tab = Instance.new("TextButton")  
+tab.Parent = TabContainer  
+tab.Size = UDim2.new(1,-10,0,42)  
+tab.BackgroundColor3 = PANEL  
+tab.BorderSizePixel = 0  
+tab.Text = name  
+tab.TextColor3 = WHITE  
+tab.TextSize = 13  
+tab.Font = Enum.Font.GothamBold  
+tab.ZIndex = 13  
+tab.AutoButtonColor = false  
 
-    corner(tab,8)
+corner(tab,8)  
 
-    Tabs[name] = tab
+Tabs[name] = tab
+
 end
 
 local function showPage(name)
 
-    for pageName,page in pairs(PageObjects) do
-        page.Visible = pageName == name
-    end
+for pageName,page in pairs(PageObjects) do  
+    page.Visible = pageName == name  
+end  
 
-    for tabName,tab in pairs(Tabs) do
-        if tabName == name then
-            tab.BackgroundColor3 = RED
-        else
-            tab.BackgroundColor3 = PANEL
-        end
-    end
+for tabName,tab in pairs(Tabs) do  
+    if tabName == name then  
+        tab.BackgroundColor3 = RED  
+    else  
+        tab.BackgroundColor3 = PANEL  
+    end  
+end
+
 end
 
 for name,tab in pairs(Tabs) do
-    tab.Activated:Connect(function()
-        showPage(name)
-    end)
+tab.Activated:Connect(function()
+showPage(name)
+end)
 end
 
 showPage("Players")
@@ -438,110 +445,113 @@ showPage("Players")
 
 local function AddButton(parent,text,callback)
 
-    local button = Instance.new("TextButton")
-    button.Parent = parent
-    button.Size = UDim2.new(1,0,0,45)
-    button.BackgroundColor3 = PANEL
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = WHITE
-    button.TextSize = 13
-    button.Font = Enum.Font.GothamBold
-    button.AutoButtonColor = false
-    button.ZIndex = 15
+local button = Instance.new("TextButton")  
+button.Parent = parent  
+button.Size = UDim2.new(1,0,0,45)  
+button.BackgroundColor3 = PANEL  
+button.BorderSizePixel = 0  
+button.Text = text  
+button.TextColor3 = WHITE  
+button.TextSize = 13  
+button.Font = Enum.Font.GothamBold  
+button.AutoButtonColor = false  
+button.ZIndex = 15  
 
-    corner(button,8)
-    stroke(button,Color3.fromRGB(55,55,65),1)
+corner(button,8)  
+stroke(button,Color3.fromRGB(55,55,65),1)  
 
-    button.Activated:Connect(function()
-        pcall(callback)
-    end)
+button.Activated:Connect(function()  
+    pcall(callback)  
+end)  
 
-    return button
+return button
+
 end
 
 local function AddToggle(parent,text,default,callback)
 
-    local enabled = default
+local enabled = default  
 
-    local button = Instance.new("TextButton")
-    button.Parent = parent
-    button.Size = UDim2.new(1,0,0,45)
-    button.BackgroundColor3 = enabled and RED or PANEL
-    button.BorderSizePixel = 0
-    button.TextColor3 = WHITE
-    button.TextSize = 13
-    button.Font = Enum.Font.GothamBold
-    button.AutoButtonColor = false
-    button.ZIndex = 15
+local button = Instance.new("TextButton")  
+button.Parent = parent  
+button.Size = UDim2.new(1,0,0,45)  
+button.BackgroundColor3 = enabled and RED or PANEL  
+button.BorderSizePixel = 0  
+button.TextColor3 = WHITE  
+button.TextSize = 13  
+button.Font = Enum.Font.GothamBold  
+button.AutoButtonColor = false  
+button.ZIndex = 15  
 
-    corner(button,8)
-    stroke(button,Color3.fromRGB(55,55,65),1)
+corner(button,8)  
+stroke(button,Color3.fromRGB(55,55,65),1)  
 
-    local function update()
+local function update()  
 
-        button.Text = text.."  ["..(enabled and "ON" or "OFF").."]"
-        button.BackgroundColor3 = enabled and RED or PANEL
+    button.Text = text.."  ["..(enabled and "ON" or "OFF").."]"  
+    button.BackgroundColor3 = enabled and RED or PANEL  
 
-        pcall(function()
-            callback(enabled)
-        end)
-    end
+    pcall(function()  
+        callback(enabled)  
+    end)  
+end  
 
-    button.Activated:Connect(function()
-        enabled = not enabled
-        update()
-    end)
+button.Activated:Connect(function()  
+    enabled = not enabled  
+    update()  
+end)  
 
-    update()
+update()  
 
-    return button
+return button
+
 end
 
 local function AddInput(parent,text,default,callback)
 
-    local holder = Instance.new("Frame")
-    holder.Parent = parent
-    holder.Size = UDim2.new(1,0,0,67)
-    holder.BackgroundTransparency = 1
-    holder.ZIndex = 15
+local holder = Instance.new("Frame")  
+holder.Parent = parent  
+holder.Size = UDim2.new(1,0,0,67)  
+holder.BackgroundTransparency = 1  
+holder.ZIndex = 15  
 
-    local label = Instance.new("TextLabel")
-    label.Parent = holder
-    label.Size = UDim2.new(0.35,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = WHITE
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.ZIndex = 16
+local label = Instance.new("TextLabel")  
+label.Parent = holder  
+label.Size = UDim2.new(0.35,0,1,0)  
+label.BackgroundTransparency = 1  
+label.Text = text  
+label.TextColor3 = WHITE  
+label.TextSize = 13  
+label.Font = Enum.Font.GothamBold  
+label.TextXAlignment = Enum.TextXAlignment.Left  
+label.ZIndex = 16  
 
-    local box = Instance.new("TextBox")
-    box.Parent = holder
-    box.Position = UDim2.new(0.37,0,0.12,0)
-    box.Size = UDim2.new(0.63,0,0.76,0)
-    box.BackgroundColor3 = PANEL
-    box.BorderSizePixel = 0
-    box.Text = tostring(default)
-    box.TextColor3 = WHITE
-    box.TextSize = 13
-    box.Font = Enum.Font.Gotham
-    box.ClearTextOnFocus = false
-    box.ZIndex = 16
+local box = Instance.new("TextBox")  
+box.Parent = holder  
+box.Position = UDim2.new(0.37,0,0.12,0)  
+box.Size = UDim2.new(0.63,0,0.76,0)  
+box.BackgroundColor3 = PANEL  
+box.BorderSizePixel = 0  
+box.Text = tostring(default)  
+box.TextColor3 = WHITE  
+box.TextSize = 13  
+box.Font = Enum.Font.Gotham  
+box.ClearTextOnFocus = false  
+box.ZIndex = 16  
 
-    corner(box,7)
-    stroke(box,Color3.fromRGB(55,55,65),1)
+corner(box,7)  
+stroke(box,Color3.fromRGB(55,55,65),1)  
 
-    box.FocusLost:Connect(function()
-        local value = tonumber(box.Text)
+box.FocusLost:Connect(function()  
+    local value = tonumber(box.Text)  
 
-        if value then
-            callback(value)
-        end
-    end)
+    if value then  
+        callback(value)  
+    end  
+end)  
 
-    return box
+return box
+
 end
 
 --========================================================
@@ -551,139 +561,143 @@ end
 local PlayersPage = PageObjects["Players"]
 
 AddToggle(
-    PlayersPage,
-    "Infinite Jump",
-    false,
-    function(value)
+PlayersPage,
+"Infinite Jump",
+false,
+function(value)
 
-        infiniteJumpEnabled = value
+infiniteJumpEnabled = value  
 
-    end
+end
+
 )
 
 UserInputService.JumpRequest:Connect(function()
 
-    if not infiniteJumpEnabled then
-        return
-    end
+if not infiniteJumpEnabled then  
+    return  
+end  
 
-    local humanoid = getHumanoid()
+local humanoid = getHumanoid()  
 
-    if humanoid then
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
+if humanoid then  
+    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)  
+end
 
 end)
 
 AddToggle(
-    PlayersPage,
-    "Noclip",
-    false,
-    function(value)
+PlayersPage,
+"Noclip",
+false,
+function(value)
 
-        noclipEnabled = value
+noclipEnabled = value  
 
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
-        end
+    if noclipConnection then  
+        noclipConnection:Disconnect()  
+        noclipConnection = nil  
+    end  
 
-        if value then
+    if value then  
 
-            noclipConnection = RunService.Stepped:Connect(function()
+        noclipConnection = RunService.Stepped:Connect(function()  
 
-                local character = LocalPlayer.Character
+            local character = LocalPlayer.Character  
 
-                if not character then
-                    return
-                end
+            if not character then  
+                return  
+            end  
 
-                for _,obj in ipairs(character:GetDescendants()) do
+            for _,obj in ipairs(character:GetDescendants()) do  
 
-                    if obj:IsA("BasePart") then
-                        obj.CanCollide = false
-                    end
+                if obj:IsA("BasePart") then  
+                    obj.CanCollide = false  
+                end  
 
-                end
+            end  
 
-            end)
+        end)  
 
-        end
+    end  
 
-    end
+end
+
 )
 
 AddToggle(
-    PlayersPage,
-    "Anti Gameplay Paused",
-    false,
-    function(value)
+PlayersPage,
+"Anti Gameplay Paused",
+false,
+function(value)
 
-        antiPausedEnabled = value
+antiPausedEnabled = value  
 
-        pcall(function()
-            GuiService:SetGameplayPausedNotificationEnabled(not value)
-        end)
+    pcall(function()  
+        GuiService:SetGameplayPausedNotificationEnabled(not value)  
+    end)  
 
-        if value then
+    if value then  
 
-            task.spawn(function()
+        task.spawn(function()  
 
-                while antiPausedEnabled do
+            while antiPausedEnabled do  
 
-                    pcall(function()
+                pcall(function()  
 
-                        local robloxGui = CoreGui:FindFirstChild("RobloxGui")
+                    local robloxGui = CoreGui:FindFirstChild("RobloxGui")  
 
-                        if robloxGui then
+                    if robloxGui then  
 
-                            local networkPause =
-                                robloxGui:FindFirstChild(
-                                    "CoreScripts/NetworkPause",
-                                    true
-                                )
+                        local networkPause =  
+                            robloxGui:FindFirstChild(  
+                                "CoreScripts/NetworkPause",  
+                                true  
+                            )  
 
-                            if networkPause then
-                                networkPause:Destroy()
-                            end
+                        if networkPause then  
+                            networkPause:Destroy()  
+                        end  
 
-                        end
+                    end  
 
-                    end)
+                end)  
 
-                    task.wait(1)
+                task.wait(1)  
 
-                end
+            end  
 
-            end)
+        end)  
 
-        end
+    end  
 
-    end
+end
+
 )
 
 AddButton(
-    PlayersPage,
-    "XVC Hub",
-    function()
+PlayersPage,
+"XVC Hub",
+function()
 
-        local success,err = pcall(function()
+local success,err = pcall(function()  
 
-            loadstring(
-                game:HttpGet(
-                    "https://raw.githubusercontent.com/XVCHub/Games/main/GEF"
-                )
-            )()
+        loadstring(  
+            game:HttpGet(  
+                "https://raw.githubusercontent.com/XVCHub/Games/main/GEF"  
+            )  
+        )()  
 
-        end)
+    end)  
 
-        if success then
-            notify("XVC Hub","Đã chạy.")
-        else
-            notify("XVC Hub","Lỗi: "..tostring(err))
-        end
+    if success then  
+        notify("XVC Hub","Đã chạy.")  
+    else  
+        notify("XVC Hub","Lỗi: "..tostring(err))  
+    end  
 
-    end
+end
+
 )
 
 --========================================================
@@ -693,182 +707,190 @@ AddButton(
 local TeleportPage = PageObjects["Teleport"]
 
 AddButton(
-    TeleportPage,
-    "Đặt Điểm",
-    function()
+TeleportPage,
+"Đặt Điểm",
+function()
 
-        local character,root = getCharacter()
+local character,root = getCharacter()  
 
-        if root then
-            savedCFrame = root.CFrame
-            notify("Teleport","Đã lưu điểm.")
-        end
+    if root then  
+        savedCFrame = root.CFrame  
+        notify("Teleport","Đã lưu điểm.")  
+    end  
 
-    end
+end
+
 )
 
 AddButton(
-    TeleportPage,
-    "Teleport Về Điểm",
-    function()
+TeleportPage,
+"Teleport Về Điểm",
+function()
 
-        local character,root = getCharacter()
+local character,root = getCharacter()  
 
-        if root and savedCFrame then
+    if root and savedCFrame then  
 
-            root.CFrame = savedCFrame
-            notify("Teleport","Đã quay về điểm.")
+        root.CFrame = savedCFrame  
+        notify("Teleport","Đã quay về điểm.")  
 
-        else
-            notify("Teleport","Chưa có điểm đã lưu.")
-        end
+    else  
+        notify("Teleport","Chưa có điểm đã lưu.")  
+    end  
 
-    end
+end
+
 )
 
 AddInput(TeleportPage,"X",0,function(v)
-    X = v
+X = v
 end)
 
 AddInput(TeleportPage,"Y",0,function(v)
-    Y = v
+Y = v
 end)
 
 AddInput(TeleportPage,"Z",0,function(v)
-    Z = v
+Z = v
 end)
 
 AddButton(
-    TeleportPage,
-    "Teleport Tọa Độ",
-    function()
+TeleportPage,
+"Teleport Tọa Độ",
+function()
 
-        local character,root = getCharacter()
+local character,root = getCharacter()  
 
-        if root then
-            root.CFrame = CFrame.new(X,Y,Z)
-        end
+    if root then  
+        root.CFrame = CFrame.new(X,Y,Z)  
+    end  
 
-    end
+end
+
 )
 
 AddButton(
-    TeleportPage,
-    "Lấy Tọa Độ Hiện Tại",
-    function()
+TeleportPage,
+"Lấy Tọa Độ Hiện Tại",
+function()
 
-        local character,root = getCharacter()
+local character,root = getCharacter()  
 
-        if not root then
-            return
-        end
+    if not root then  
+        return  
+    end  
 
-        local p = root.Position
+    local p = root.Position  
 
-        X = math.round(p.X * 100) / 100
-        Y = math.round(p.Y * 100) / 100
-        Z = math.round(p.Z * 100) / 100
+    X = math.round(p.X * 100) / 100  
+    Y = math.round(p.Y * 100) / 100  
+    Z = math.round(p.Z * 100) / 100  
 
-        notify(
-            "Tọa Độ",
-            string.format("%.2f, %.2f, %.2f",X,Y,Z)
-        )
+    notify(  
+        "Tọa Độ",  
+        string.format("%.2f, %.2f, %.2f",X,Y,Z)  
+    )  
 
-        pcall(function()
+    pcall(function()  
 
-            if setclipboard then
-                setclipboard(
-                    string.format("%.2f, %.2f, %.2f",X,Y,Z)
-                )
-            end
+        if setclipboard then  
+            setclipboard(  
+                string.format("%.2f, %.2f, %.2f",X,Y,Z)  
+            )  
+        end  
 
-        end)
+    end)  
 
-    end
+end
+
 )
 
 local function findHighestFloor()
 
-    local highestPart = nil
-    local highestY = -math.huge
+local highestPart = nil  
+local highestY = -math.huge  
 
-    for _,obj in ipairs(workspace:GetDescendants()) do
+for _,obj in ipairs(workspace:GetDescendants()) do  
 
-        if obj:IsA("BasePart")
-        and obj.CanCollide
-        and obj.Transparency < 1
-        and obj.Size.X >= 3
-        and obj.Size.Z >= 3 then
+    if obj:IsA("BasePart")  
+    and obj.CanCollide  
+    and obj.Transparency < 1  
+    and obj.Size.X >= 3  
+    and obj.Size.Z >= 3 then  
 
-            local topY =
-                obj.Position.Y +
-                obj.Size.Y / 2
+        local topY =  
+            obj.Position.Y +  
+            obj.Size.Y / 2  
 
-            if topY > highestY then
+        if topY > highestY then  
 
-                highestY = topY
-                highestPart = obj
+            highestY = topY  
+            highestPart = obj  
 
-            end
+        end  
 
-        end
+    end  
 
-    end
+end  
 
-    return highestPart,highestY
+return highestPart,highestY
+
 end
 
 AddButton(
-    TeleportPage,
-    "Teleport Sàn Cao Nhất",
-    function()
+TeleportPage,
+"Teleport Sàn Cao Nhất",
+function()
 
-        local floor,highestY = findHighestFloor()
+local floor,highestY = findHighestFloor()  
 
-        local character,root = getCharacter()
+    local character,root = getCharacter()  
 
-        if floor and root then
+    if floor and root then  
 
-            root.CFrame = CFrame.new(
-                floor.Position.X,
-                highestY + 4,
-                floor.Position.Z
-            )
+        root.CFrame = CFrame.new(  
+            floor.Position.X,  
+            highestY + 4,  
+            floor.Position.Z  
+        )  
 
-            notify("Teleport","Đã tới sàn cao nhất.")
-        else
-            notify("Teleport","Không tìm thấy sàn.")
-        end
+        notify("Teleport","Đã tới sàn cao nhất.")  
+    else  
+        notify("Teleport","Không tìm thấy sàn.")  
+    end  
 
-    end
+end
+
 )
 
 AddButton(
-    TeleportPage,
-    "Teleport Shop",
-    function()
+TeleportPage,
+"Teleport Shop",
+function()
 
-        local character,root = getCharacter()
+local character,root = getCharacter()  
 
-        if root then
-            root.CFrame = CFrame.new(-425,6,77)
-        end
+    if root then  
+        root.CFrame = CFrame.new(-425,6,77)  
+    end  
 
-    end
+end
+
 )
 
 AddButton(
-    TeleportPage,
-    "Teleport Main Area",
-    function()
+TeleportPage,
+"Teleport Main Area",
+function()
 
-        local character,root = getCharacter()
+local character,root = getCharacter()  
 
-        if root then
-            root.CFrame = CFrame.new(-394,3,423)
-        end
+    if root then  
+        root.CFrame = CFrame.new(-394,3,423)  
+    end  
 
-    end
+end
+
 )
 
 --========================================================
@@ -879,74 +901,74 @@ local ItemsPage = PageObjects["Items"]
 
 local function teleportToRandomAsset(searchName)
 
-    local character,root = getCharacter()
+local character,root = getCharacter()  
 
-    if not root then
-        return
-    end
+if not root then  
+    return  
+end  
 
-    local matches = {}
-    local target = string.lower(searchName)
+local matches = {}  
+local target = string.lower(searchName)  
 
-    for _,obj in ipairs(workspace:GetDescendants()) do
+for _,obj in ipairs(workspace:GetDescendants()) do  
 
-        if obj:IsA("BasePart") then
+    if obj:IsA("BasePart") then  
 
-            if string.find(
-                string.lower(obj.Name),
-                target,
-                1,
-                true
-            ) then
+        if string.find(  
+            string.lower(obj.Name),  
+            target,  
+            1,  
+            true  
+        ) then  
 
-                table.insert(matches,obj)
+            table.insert(matches,obj)  
 
-            end
+        end  
 
-        end
+    end  
 
-    end
+end  
 
-    if #matches == 0 then
+if #matches == 0 then  
 
-        notify("Items","Không tìm thấy "..searchName)
-        return
+    notify("Items","Không tìm thấy "..searchName)  
+    return  
 
-    end
+end  
 
-    local choice =
-        matches[math.random(1,#matches)]
+local choice =  
+    matches[math.random(1,#matches)]  
 
-    root.CFrame =
-        choice.CFrame +
-        Vector3.new(0,3,0)
+root.CFrame =  
+    choice.CFrame +  
+    Vector3.new(0,3,0)  
 
-    notify("Items","Đã tới "..searchName)
+notify("Items","Đã tới "..searchName)
 
 end
 
 AddButton(ItemsPage,"Hammer",function()
-    teleportToRandomAsset("Hammer")
+teleportToRandomAsset("Hammer")
 end)
 
 AddButton(ItemsPage,"Food",function()
-    teleportToRandomAsset("Food")
+teleportToRandomAsset("Food")
 end)
 
 AddButton(ItemsPage,"Money",function()
-    teleportToRandomAsset("Money")
+teleportToRandomAsset("Money")
 end)
 
 AddButton(ItemsPage,"Crowbar",function()
-    teleportToRandomAsset("Crowbar")
+teleportToRandomAsset("Crowbar")
 end)
 
 AddButton(ItemsPage,"Bat",function()
-    teleportToRandomAsset("Bat")
+teleportToRandomAsset("Bat")
 end)
 
 AddButton(ItemsPage,"Lantern",function()
-    teleportToRandomAsset("Lantern")
+teleportToRandomAsset("Lantern")
 end)
 
 --========================================================
@@ -958,7 +980,7 @@ local BuildingPage = PageObjects["Building"]
 local previewFolder = workspace:FindFirstChild("MinhKhaHubPreview")
 
 if previewFolder then
-    previewFolder:Destroy()
+previewFolder:Destroy()
 end
 
 previewFolder = Instance.new("Folder")
@@ -967,54 +989,56 @@ previewFolder.Parent = workspace
 
 local function clearPreview()
 
-    for _,obj in ipairs(previewFolder:GetChildren()) do
-        obj:Destroy()
-    end
+for _,obj in ipairs(previewFolder:GetChildren()) do  
+    obj:Destroy()  
+end
 
 end
 
 local function createPreviewPart(size,cframe)
 
-    local part = Instance.new("Part")
+local part = Instance.new("Part")  
 
-    part.Size = size
-    part.CFrame = cframe
-    part.Anchored = true
-    part.CanCollide = false
-    part.CanTouch = false
-    part.CanQuery = false
-    part.Transparency = 0.75
-    part.Material = Enum.Material.ForceField
-    part.Color = Color3.fromRGB(0,255,0)
-    part.Parent = previewFolder
+part.Size = size  
+part.CFrame = cframe  
+part.Anchored = true  
+part.CanCollide = false  
+part.CanTouch = false  
+part.CanQuery = false  
+part.Transparency = 0.75  
+part.Material = Enum.Material.ForceField  
+part.Color = Color3.fromRGB(0,255,0)  
+part.Parent = previewFolder  
 
-    return part
+return part
+
 end
 
 local function getBuildData()
 
-    local character,root = getCharacter()
+local character,root = getCharacter()  
 
-    if not character or not root then
-        notify("Build","Không tìm thấy nhân vật.")
-        return
-    end
+if not character or not root then  
+    notify("Build","Không tìm thấy nhân vật.")  
+    return  
+end  
 
-    local hammer = character:FindFirstChild("Hammer")
+local hammer = character:FindFirstChild("Hammer")  
 
-    if not hammer then
-        notify("Build","Hãy cầm Hammer.")
-        return
-    end
+if not hammer then  
+    notify("Build","Hãy cầm Hammer.")  
+    return  
+end  
 
-    local remote = hammer:FindFirstChild("BuildPlank")
+local remote = hammer:FindFirstChild("BuildPlank")  
 
-    if not remote then
-        notify("Build","Không tìm thấy BuildPlank.")
-        return
-    end
+if not remote then  
+    notify("Build","Không tìm thấy BuildPlank.")  
+    return  
+end  
 
-    return character,root,hammer,remote
+return character,root,hammer,remote
+
 end
 
 --========================================================
@@ -1023,99 +1047,99 @@ end
 
 local function BuildHut()
 
-    local character,root,hammer,remote = getBuildData()
+local character,root,hammer,remote = getBuildData()  
 
-    if not remote then
-        return
-    end
+if not remote then  
+    return  
+end  
 
-    local Road = workspace:FindFirstChild("Road")
+local Road = workspace:FindFirstChild("Road")  
 
-    if not Road then
-        notify("Build","Không tìm thấy Road.")
-        return
-    end
+if not Road then  
+    notify("Build","Không tìm thấy Road.")  
+    return  
+end  
 
-    local part = Road:GetChildren()[33]
+local part = Road:GetChildren()[33]  
 
-    if not part or not part:IsA("BasePart") then
-        notify("Build","Không tìm thấy plank.")
-        return
-    end
+if not part or not part:IsA("BasePart") then  
+    notify("Build","Không tìm thấy plank.")  
+    return  
+end  
 
-    local forward = root.CFrame.LookVector
-    local right = root.CFrame.RightVector
+local forward = root.CFrame.LookVector  
+local right = root.CFrame.RightVector  
 
-    local origin =
-        root.Position +
-        Vector3.new(0,-3,0)
+local origin =  
+    root.Position +  
+    Vector3.new(0,-3,0)  
 
-    local function fire(p1,p2)
+local function fire(p1,p2)  
 
-        remote:FireServer(
-            p1,
-            p2,
-            part,
-            part,
-            Vector3.new(0,1,0)
-        )
+    remote:FireServer(  
+        p1,  
+        p2,  
+        part,  
+        part,  
+        Vector3.new(0,1,0)  
+    )  
 
-    end
+end  
 
-    for y=.5,7,.5 do
+for y=.5,7,.5 do  
 
-        if y < 1 or y > 5.5 then
+    if y < 1 or y > 5.5 then  
 
-            fire(
-                origin + right*-6 + Vector3.new(0,y,0),
-                origin + right*6 + Vector3.new(0,y,0)
-            )
+        fire(  
+            origin + right*-6 + Vector3.new(0,y,0),  
+            origin + right*6 + Vector3.new(0,y,0)  
+        )  
 
-        else
+    else  
 
-            fire(
-                origin + right*-6 + Vector3.new(0,y,0),
-                origin + right*-2 + Vector3.new(0,y,0)
-            )
+        fire(  
+            origin + right*-6 + Vector3.new(0,y,0),  
+            origin + right*-2 + Vector3.new(0,y,0)  
+        )  
 
-            fire(
-                origin + right*2 + Vector3.new(0,y,0),
-                origin + right*6 + Vector3.new(0,y,0)
-            )
+        fire(  
+            origin + right*2 + Vector3.new(0,y,0),  
+            origin + right*6 + Vector3.new(0,y,0)  
+        )  
 
-        end
+    end  
 
-    end
+end  
 
-    for y=.5,7,.5 do
+for y=.5,7,.5 do  
 
-        fire(
-            origin + right*6 + Vector3.new(0,y,0),
-            origin + right*6 + forward*12 + Vector3.new(0,y,0)
-        )
+    fire(  
+        origin + right*6 + Vector3.new(0,y,0),  
+        origin + right*6 + forward*12 + Vector3.new(0,y,0)  
+    )  
 
-        fire(
-            origin + right*-6 + Vector3.new(0,y,0),
-            origin + right*-6 + forward*12 + Vector3.new(0,y,0)
-        )
+    fire(  
+        origin + right*-6 + Vector3.new(0,y,0),  
+        origin + right*-6 + forward*12 + Vector3.new(0,y,0)  
+    )  
 
-        fire(
-            origin + right*-6 + forward*12 + Vector3.new(0,y,0),
-            origin + right*6 + forward*12 + Vector3.new(0,y,0)
-        )
+    fire(  
+        origin + right*-6 + forward*12 + Vector3.new(0,y,0),  
+        origin + right*6 + forward*12 + Vector3.new(0,y,0)  
+    )  
 
-    end
+end  
 
-    for z=0,12,2 do
+for z=0,12,2 do  
 
-        fire(
-            origin + right*-6 + forward*z + Vector3.new(0,7.5,0),
-            origin + right*6 + forward*z + Vector3.new(0,7.5,0)
-        )
+    fire(  
+        origin + right*-6 + forward*z + Vector3.new(0,7.5,0),  
+        origin + right*6 + forward*z + Vector3.new(0,7.5,0)  
+    )  
 
-    end
+end  
 
-    notify("Build","Hut complete.")
+notify("Build","Hut complete.")
 
 end
 
@@ -1125,47 +1149,47 @@ end
 
 local function BuildWall()
 
-    local character,root,hammer,remote = getBuildData()
+local character,root,hammer,remote = getBuildData()  
 
-    if not remote then
-        return
-    end
+if not remote then  
+    return  
+end  
 
-    local Ground = workspace:FindFirstChild("Ground")
+local Ground = workspace:FindFirstChild("Ground")  
 
-    if not Ground then
-        notify("Build","Không tìm thấy Ground.")
-        return
-    end
+if not Ground then  
+    notify("Build","Không tìm thấy Ground.")  
+    return  
+end  
 
-    local part = Ground:GetChildren()[9]
+local part = Ground:GetChildren()[9]  
 
-    if not part or not part:IsA("BasePart") then
-        notify("Build","Không tìm thấy plank.")
-        return
-    end
+if not part or not part:IsA("BasePart") then  
+    notify("Build","Không tìm thấy plank.")  
+    return  
+end  
 
-    local forward = root.CFrame.LookVector
-    local right = root.CFrame.RightVector
+local forward = root.CFrame.LookVector  
+local right = root.CFrame.RightVector  
 
-    local start =
-        root.Position +
-        forward*2 +
-        Vector3.new(0,-3,0)
+local start =  
+    root.Position +  
+    forward*2 +  
+    Vector3.new(0,-3,0)  
 
-    for y=.5,6,.5 do
+for y=.5,6,.5 do  
 
-        remote:FireServer(
-            start + right*-6 + Vector3.new(0,y,0),
-            start + right*6 + Vector3.new(0,y,0),
-            part,
-            part,
-            Vector3.new(0,1,0)
-        )
+    remote:FireServer(  
+        start + right*-6 + Vector3.new(0,y,0),  
+        start + right*6 + Vector3.new(0,y,0),  
+        part,  
+        part,  
+        Vector3.new(0,1,0)  
+    )  
 
-    end
+end  
 
-    notify("Build","Wall complete.")
+notify("Build","Wall complete.")
 
 end
 
@@ -1175,52 +1199,52 @@ end
 
 local function BuildFloor()
 
-    local character,root,hammer,remote = getBuildData()
+local character,root,hammer,remote = getBuildData()  
 
-    if not remote then
-        return
-    end
+if not remote then  
+    return  
+end  
 
-    if not floorPreviewCFrame then
+if not floorPreviewCFrame then  
 
-        notify("Build","Chưa có vị trí Floor.")
-        return
+    notify("Build","Chưa có vị trí Floor.")  
+    return  
 
-    end
+end  
 
-    local Road = workspace:FindFirstChild("Road")
+local Road = workspace:FindFirstChild("Road")  
 
-    if not Road then
-        return
-    end
+if not Road then  
+    return  
+end  
 
-    local part = Road:GetChildren()[33]
+local part = Road:GetChildren()[33]  
 
-    if not part or not part:IsA("BasePart") then
-        return
-    end
+if not part or not part:IsA("BasePart") then  
+    return  
+end  
 
-    for x=-6,5.5,.5 do
+for x=-6,5.5,.5 do  
 
-        local p1 =
-            floorPreviewCFrame *
-            Vector3.new(x,0,-6)
+    local p1 =  
+        floorPreviewCFrame *  
+        Vector3.new(x,0,-6)  
 
-        local p2 =
-            floorPreviewCFrame *
-            Vector3.new(x,0,6)
+    local p2 =  
+        floorPreviewCFrame *  
+        Vector3.new(x,0,6)  
 
-        remote:FireServer(
-            p1,
-            p2,
-            part,
-            part,
-            Vector3.new(0,1,0)
-        )
+    remote:FireServer(  
+        p1,  
+        p2,  
+        part,  
+        part,  
+        Vector3.new(0,1,0)  
+    )  
 
-    end
+end  
 
-    notify("Build","Floor complete.")
+notify("Build","Floor complete.")
 
 end
 
@@ -1231,202 +1255,202 @@ end
 
 local function BuildBigHouse()
 
-    local character,root,hammer,remote = getBuildData()
+local character,root,hammer,remote = getBuildData()  
 
-    if not remote then
-        return
-    end
+if not remote then  
+    return  
+end  
 
-    local Road = workspace:FindFirstChild("Road")
+local Road = workspace:FindFirstChild("Road")  
 
-    if not Road then
-        notify("Big House","Không tìm thấy Road.")
-        return
-    end
+if not Road then  
+    notify("Big House","Không tìm thấy Road.")  
+    return  
+end  
 
-    local part = Road:GetChildren()[33]
+local part = Road:GetChildren()[33]  
 
-    if not part or not part:IsA("BasePart") then
-        notify("Big House","Không tìm thấy plank.")
-        return
-    end
+if not part or not part:IsA("BasePart") then  
+    notify("Big House","Không tìm thấy plank.")  
+    return  
+end  
 
-    local SIZE = 60
-    local HEIGHT = 10
-    local MAX_PLANK = 11
-    local BUILD_DELAY = .015
+local SIZE = 60  
+local HEIGHT = 10  
+local MAX_PLANK = 11  
+local BUILD_DELAY = .015  
 
-    local forward = root.CFrame.LookVector
-    local right = root.CFrame.RightVector
+local forward = root.CFrame.LookVector  
+local right = root.CFrame.RightVector  
 
-    local origin =
-        root.Position +
-        Vector3.new(0,-3,0)
+local origin =  
+    root.Position +  
+    Vector3.new(0,-3,0)  
 
-    local function fireSegment(p1,p2)
+local function fireSegment(p1,p2)  
 
-        local distance = (p2-p1).Magnitude
+    local distance = (p2-p1).Magnitude  
 
-        if distance <= 0.05 then
-            return
-        end
+    if distance <= 0.05 then  
+        return  
+    end  
 
-        local direction = (p2-p1).Unit
+    local direction = (p2-p1).Unit  
 
-        local current = p1
-        local remaining = distance
+    local current = p1  
+    local remaining = distance  
 
-        while remaining > 0.05 do
+    while remaining > 0.05 do  
 
-            local length =
-                math.min(
-                    MAX_PLANK,
-                    remaining
-                )
+        local length =  
+            math.min(  
+                MAX_PLANK,  
+                remaining  
+            )  
 
-            local nextPoint =
-                current +
-                direction*length
+        local nextPoint =  
+            current +  
+            direction*length  
 
-            remote:FireServer(
-                current,
-                nextPoint,
-                part,
-                part,
-                Vector3.new(0,1,0)
-            )
+        remote:FireServer(  
+            current,  
+            nextPoint,  
+            part,  
+            part,  
+            Vector3.new(0,1,0)  
+        )  
 
-            task.wait(BUILD_DELAY)
+        task.wait(BUILD_DELAY)  
 
-            current = nextPoint
-            remaining = remaining-length
+        current = nextPoint  
+        remaining = remaining-length  
 
-        end
+    end  
 
-    end
+end  
 
-    --====================================================
-    -- CORNERS
-    --====================================================
+--====================================================  
+-- CORNERS  
+--====================================================  
 
-    local c1 =
-        origin +
-        right*-30
+local c1 =  
+    origin +  
+    right*-30  
 
-    local c2 =
-        origin +
-        right*30
+local c2 =  
+    origin +  
+    right*30  
 
-    local c3 =
-        origin +
-        right*30 +
-        forward*60
+local c3 =  
+    origin +  
+    right*30 +  
+    forward*60  
 
-    local c4 =
-        origin +
-        right*-30 +
-        forward*60
+local c4 =  
+    origin +  
+    right*-30 +  
+    forward*60  
 
-    --====================================================
-    -- WALL WITH CENTER DOOR
-    --====================================================
+--====================================================  
+-- WALL WITH CENTER DOOR  
+--====================================================  
 
-    local function buildWall(p1,p2,wallHeight,hasDoor)
+local function buildWall(p1,p2,wallHeight,hasDoor)  
 
-        local wallDirection =
-            (p2-p1).Unit
+    local wallDirection =  
+        (p2-p1).Unit  
 
-        local wallLength =
-            (p2-p1).Magnitude
+    local wallLength =  
+        (p2-p1).Magnitude  
 
-        local middle =
-            p1 +
-            wallDirection*(wallLength/2)
+    local middle =  
+        p1 +  
+        wallDirection*(wallLength/2)  
 
-        local doorWidth = 5
-        local halfDoor = doorWidth/2
+    local doorWidth = 5  
+    local halfDoor = doorWidth/2  
 
-        local doorLeft =
-            middle -
-            wallDirection*halfDoor
+    local doorLeft =  
+        middle -  
+        wallDirection*halfDoor  
 
-        local doorRight =
-            middle +
-            wallDirection*halfDoor
+    local doorRight =  
+        middle +  
+        wallDirection*halfDoor  
 
-        for y=.5,wallHeight,.5 do
+    for y=.5,wallHeight,.5 do  
 
-            if hasDoor and y <= 8 then
+        if hasDoor and y <= 8 then  
 
-                fireSegment(
-                    p1 + Vector3.new(0,y,0),
-                    doorLeft + Vector3.new(0,y,0)
-                )
+            fireSegment(  
+                p1 + Vector3.new(0,y,0),  
+                doorLeft + Vector3.new(0,y,0)  
+            )  
 
-                fireSegment(
-                    doorRight + Vector3.new(0,y,0),
-                    p2 + Vector3.new(0,y,0)
-                )
+            fireSegment(  
+                doorRight + Vector3.new(0,y,0),  
+                p2 + Vector3.new(0,y,0)  
+            )  
 
-            else
+        else  
 
-                fireSegment(
-                    p1 + Vector3.new(0,y,0),
-                    p2 + Vector3.new(0,y,0)
-                )
+            fireSegment(  
+                p1 + Vector3.new(0,y,0),  
+                p2 + Vector3.new(0,y,0)  
+            )  
 
-            end
+        end  
 
-        end
+    end  
 
-    end
+end  
 
-    -- Front wall = door
-    buildWall(c1,c2,HEIGHT,true)
+-- Front wall = door  
+buildWall(c1,c2,HEIGHT,true)  
 
-    -- Right wall
-    buildWall(c2,c3,HEIGHT,false)
+-- Right wall  
+buildWall(c2,c3,HEIGHT,false)  
 
-    -- Back wall
-    buildWall(c3,c4,HEIGHT,false)
+-- Back wall  
+buildWall(c3,c4,HEIGHT,false)  
 
-    -- Left wall
-    buildWall(c4,c1,HEIGHT,false)
+-- Left wall  
+buildWall(c4,c1,HEIGHT,false)  
 
-    --====================================================
-    -- FLOOR / CEILING
-    --====================================================
+--====================================================  
+-- FLOOR / CEILING  
+--====================================================  
 
-    local function buildSurface(y)
+local function buildSurface(y)  
 
-        for z=0,SIZE-0.01,2 do
+    for z=0,SIZE-0.01,2 do  
 
-            local start =
-                origin +
-                forward*z +
-                right*-30 +
-                Vector3.new(0,y,0)
+        local start =  
+            origin +  
+            forward*z +  
+            right*-30 +  
+            Vector3.new(0,y,0)  
 
-            local finish =
-                origin +
-                forward*z +
-                right*30 +
-                Vector3.new(0,y,0)
+        local finish =  
+            origin +  
+            forward*z +  
+            right*30 +  
+            Vector3.new(0,y,0)  
 
-            fireSegment(start,finish)
+        fireSegment(start,finish)  
 
-        end
+    end  
 
-    end
+end  
 
-    buildSurface(.25)
+buildSurface(.25)  
 
-    buildSurface(HEIGHT+.5)
+buildSurface(HEIGHT+.5)  
 
-    notify(
-        "Big House",
-        "60 x 60 x 10 hoàn thành. Cửa giữa tường trước."
-    )
+notify(  
+    "Big House",  
+    "60 x 60 x 10 hoàn thành. Cửa giữa tường trước."  
+)
 
 end
 
@@ -1436,102 +1460,102 @@ end
 
 local function BuildBigFloor()
 
-    local character,root,hammer,remote = getBuildData()
+local character,root,hammer,remote = getBuildData()  
 
-    if not remote then
-        return
-    end
+if not remote then  
+    return  
+end  
 
-    local Road = workspace:FindFirstChild("Road")
+local Road = workspace:FindFirstChild("Road")  
 
-    if not Road then
-        notify("Big Floor","Không tìm thấy Road.")
-        return
-    end
+if not Road then  
+    notify("Big Floor","Không tìm thấy Road.")  
+    return  
+end  
 
-    local part = Road:GetChildren()[33]
+local part = Road:GetChildren()[33]  
 
-    if not part or not part:IsA("BasePart") then
-        return
-    end
+if not part or not part:IsA("BasePart") then  
+    return  
+end  
 
-    local SIZE = 100
-    local MAX_PLANK = 11
-    local ROW_STEP = 2
-    local BUILD_DELAY = .015
+local SIZE = 100  
+local MAX_PLANK = 11  
+local ROW_STEP = 2  
+local BUILD_DELAY = .015  
 
-    local forward = root.CFrame.LookVector
-    local right = root.CFrame.RightVector
+local forward = root.CFrame.LookVector  
+local right = root.CFrame.RightVector  
 
-    local origin =
-        root.Position +
-        Vector3.new(0,-3,0)
+local origin =  
+    root.Position +  
+    Vector3.new(0,-3,0)  
 
-    local function fireSegment(p1,p2)
+local function fireSegment(p1,p2)  
 
-        local distance =
-            (p2-p1).Magnitude
+    local distance =  
+        (p2-p1).Magnitude  
 
-        if distance <= 0.05 then
-            return
-        end
+    if distance <= 0.05 then  
+        return  
+    end  
 
-        local direction =
-            (p2-p1).Unit
+    local direction =  
+        (p2-p1).Unit  
 
-        local current = p1
-        local remaining = distance
+    local current = p1  
+    local remaining = distance  
 
-        while remaining > .05 do
+    while remaining > .05 do  
 
-            local length =
-                math.min(
-                    MAX_PLANK,
-                    remaining
-                )
+        local length =  
+            math.min(  
+                MAX_PLANK,  
+                remaining  
+            )  
 
-            local nextPoint =
-                current +
-                direction*length
+        local nextPoint =  
+            current +  
+            direction*length  
 
-            remote:FireServer(
-                current,
-                nextPoint,
-                part,
-                part,
-                Vector3.new(0,1,0)
-            )
+        remote:FireServer(  
+            current,  
+            nextPoint,  
+            part,  
+            part,  
+            Vector3.new(0,1,0)  
+        )  
 
-            task.wait(BUILD_DELAY)
+        task.wait(BUILD_DELAY)  
 
-            current = nextPoint
-            remaining = remaining-length
+        current = nextPoint  
+        remaining = remaining-length  
 
-        end
+    end  
 
-    end
+end  
 
-    local half = SIZE/2
+local half = SIZE/2  
 
-    for z=0,SIZE-0.01,ROW_STEP do
+for z=0,SIZE-0.01,ROW_STEP do  
 
-        local p1 =
-            origin +
-            forward*z +
-            right*(-half) +
-            Vector3.new(0,.25,0)
+    local p1 =  
+        origin +  
+        forward*z +  
+        right*(-half) +  
+        Vector3.new(0,.25,0)  
 
-        local p2 =
-            origin +
-            forward*z +
-            right*half +
-            Vector3.new(0,.25,0)
+    local p2 =  
+        origin +  
+        forward*z +  
+        right*half +  
+        Vector3.new(0,.25,0)  
 
-        fireSegment(p1,p2)
+    fireSegment(p1,p2)  
 
-    end
+end  
 
-    notify("Big Floor","100 x 100 hoàn thành.")
+notify("Big Floor","100 x 100 hoàn thành.")
 
 end
 
@@ -1540,128 +1564,135 @@ end
 --========================================================
 
 AddButton(
-    BuildingPage,
-    "Build: Hut",
-    function()
+BuildingPage,
+"Build: Hut",
+function()
 
-        selectedBuild = "hut"
-        clearPreview()
+selectedBuild = "hut"  
+    clearPreview()  
 
-        notify("Build","Đã chọn Hut.")
+    notify("Build","Đã chọn Hut.")  
 
-    end
+end
+
 )
 
 AddButton(
-    BuildingPage,
-    "Build: Wall",
-    function()
+BuildingPage,
+"Build: Wall",
+function()
 
-        selectedBuild = "wall"
-        clearPreview()
+selectedBuild = "wall"  
+    clearPreview()  
 
-        notify("Build","Đã chọn Wall.")
+    notify("Build","Đã chọn Wall.")  
 
-    end
+end
+
 )
 
 AddButton(
-    BuildingPage,
-    "Build: Floor",
-    function()
+BuildingPage,
+"Build: Floor",
+function()
 
-        selectedBuild = "floor"
-        clearPreview()
+selectedBuild = "floor"  
+    clearPreview()  
 
-        notify("Build","Đã chọn Floor.")
+    notify("Build","Đã chọn Floor.")  
 
-    end
+end
+
 )
 
 AddButton(
-    BuildingPage,
-    "Build: Big House",
-    function()
+BuildingPage,
+"Build: Big House",
+function()
 
-        selectedBuild = "big house"
-        clearPreview()
+selectedBuild = "big house"  
+    clearPreview()  
 
-        notify("Build","Đã chọn Big House.")
+    notify("Build","Đã chọn Big House.")  
 
-    end
+end
+
 )
 
 AddButton(
-    BuildingPage,
-    "Build: Big Floor 100x100",
-    function()
+BuildingPage,
+"Build: Big Floor 100x100",
+function()
 
-        selectedBuild = "big floor"
-        clearPreview()
+selectedBuild = "big floor"  
+    clearPreview()  
 
-        notify("Build","Đã chọn Big Floor 100x100.")
+    notify("Build","Đã chọn Big Floor 100x100.")  
 
-    end
+end
+
 )
 
 AddButton(
-    BuildingPage,
-    "Build: No",
-    function()
+BuildingPage,
+"Build: No",
+function()
 
-        selectedBuild = "no"
+selectedBuild = "no"  
 
-        floorPreviewCFrame = nil
-        bigFloorPreviewCFrame = nil
+    floorPreviewCFrame = nil  
+    bigFloorPreviewCFrame = nil  
 
-        clearPreview()
+    clearPreview()  
 
-        notify("Build","Đã tắt Build.")
+    notify("Build","Đã tắt Build.")  
 
-    end
+end
+
 )
 
 local function BuildSelected()
 
-    if selectedBuild == "hut" then
+if selectedBuild == "hut" then  
 
-        BuildHut()
+    BuildHut()  
 
-    elseif selectedBuild == "wall" then
+elseif selectedBuild == "wall" then  
 
-        BuildWall()
+    BuildWall()  
 
-    elseif selectedBuild == "floor" then
+elseif selectedBuild == "floor" then  
 
-        BuildFloor()
+    BuildFloor()  
 
-    elseif selectedBuild == "big house" then
+elseif selectedBuild == "big house" then  
 
-        BuildBigHouse()
+    BuildBigHouse()  
 
-    elseif selectedBuild == "big floor" then
+elseif selectedBuild == "big floor" then  
 
-        BuildBigFloor()
+    BuildBigFloor()  
 
-    else
+else  
 
-        notify(
-            "Build",
-            "Hãy chọn Hut / Wall / Floor / Big House / Big Floor."
-        )
+    notify(  
+        "Build",  
+        "Hãy chọn Hut / Wall / Floor / Big House / Big Floor."  
+    )  
 
-    end
+end
 
 end
 
 AddButton(
-    BuildingPage,
-    "BUILD SELECTED",
-    function()
+BuildingPage,
+"BUILD SELECTED",
+function()
 
-        task.spawn(BuildSelected)
+task.spawn(BuildSelected)  
 
-    end
+end
+
 )
 
 --========================================================
@@ -1669,149 +1700,150 @@ AddButton(
 --========================================================
 
 AddToggle(
-    BuildingPage,
-    "Build Button",
-    false,
-    function(value)
+BuildingPage,
+"Build Button",
+false,
+function(value)
 
-        if not value then
+if not value then  
 
-            if buildUIButton then
-                buildUIButton:Destroy()
-                buildUIButton = nil
-            end
+        if buildUIButton then  
+            buildUIButton:Destroy()  
+            buildUIButton = nil  
+        end  
 
-            return
-        end
+        return  
+    end  
 
-        if buildUIButton then
-            buildUIButton:Destroy()
-            buildUIButton = nil
-        end
+    if buildUIButton then  
+        buildUIButton:Destroy()  
+        buildUIButton = nil  
+    end  
 
-        buildUIButton = Instance.new("ScreenGui")
-        buildUIButton.Name = "MinhKhaBuildButton"
-        buildUIButton.ResetOnSpawn = false
-        buildUIButton.IgnoreGuiInset = true
-        buildUIButton.DisplayOrder = 999998
-        buildUIButton.Parent = PlayerGui
+    buildUIButton = Instance.new("ScreenGui")  
+    buildUIButton.Name = "MinhKhaBuildButton"  
+    buildUIButton.ResetOnSpawn = false  
+    buildUIButton.IgnoreGuiInset = true  
+    buildUIButton.DisplayOrder = 999998  
+    buildUIButton.Parent = PlayerGui  
 
-        local button = Instance.new("TextButton")
-        button.Parent = buildUIButton
-        button.Size = UDim2.new(0,150,0,50)
-        button.Position = UDim2.new(0.5,-75,0.82,0)
-        button.BackgroundColor3 = Color3.fromRGB(0,200,0)
-        button.BorderSizePixel = 0
-        button.Text = "BUILD"
-        button.TextColor3 = WHITE
-        button.TextSize = 20
-        button.Font = Enum.Font.GothamBlack
-        button.AutoButtonColor = false
-        button.Active = true
-        button.ZIndex = 999999
+    local button = Instance.new("TextButton")  
+    button.Parent = buildUIButton  
+    button.Size = UDim2.new(0,150,0,50)  
+    button.Position = UDim2.new(0.5,-75,0.82,0)  
+    button.BackgroundColor3 = Color3.fromRGB(0,200,0)  
+    button.BorderSizePixel = 0  
+    button.Text = "BUILD"  
+    button.TextColor3 = WHITE  
+    button.TextSize = 20  
+    button.Font = Enum.Font.GothamBlack  
+    button.AutoButtonColor = false  
+    button.Active = true  
+    button.ZIndex = 999999  
 
-        corner(button,10)
+    corner(button,10)  
 
-        local buttonStroke = Instance.new("UIStroke")
-        buttonStroke.Color = Color3.fromRGB(120,255,120)
-        buttonStroke.Thickness = 2
-        buttonStroke.Parent = button
+    local buttonStroke = Instance.new("UIStroke")  
+    buttonStroke.Color = Color3.fromRGB(120,255,120)  
+    buttonStroke.Thickness = 2  
+    buttonStroke.Parent = button  
 
-        --================================================
-        -- DRAG
-        --================================================
+    --================================================  
+    -- DRAG  
+    --================================================  
 
-        local dragging = false
-        local dragStart = nil
-        local startPosition = nil
-        local dragMoved = false
+    local dragging = false  
+    local dragStart = nil  
+    local startPosition = nil  
+    local dragMoved = false  
 
-        button.InputBegan:Connect(function(input)
+    button.InputBegan:Connect(function(input)  
 
-            if input.UserInputType ==
-                Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-                Enum.UserInputType.Touch then
+        if input.UserInputType ==  
+            Enum.UserInputType.MouseButton1  
+        or input.UserInputType ==  
+            Enum.UserInputType.Touch then  
 
-                dragging = true
-                dragMoved = false
-                dragStart = input.Position
-                startPosition = button.Position
+            dragging = true  
+            dragMoved = false  
+            dragStart = input.Position  
+            startPosition = button.Position  
 
-                input.Changed:Connect(function()
+            input.Changed:Connect(function()  
 
-                    if input.UserInputState ==
-                        Enum.UserInputState.End then
+                if input.UserInputState ==  
+                    Enum.UserInputState.End then  
 
-                        dragging = false
+                    dragging = false  
 
-                    end
+                end  
 
-                end)
+            end)  
 
-            end
+        end  
 
-        end)
+    end)  
 
-        UserInputService.InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)  
 
-            if not dragging then
-                return
-            end
+        if not dragging then  
+            return  
+        end  
 
-            if input.UserInputType ==
-                Enum.UserInputType.MouseMovement
-            or input.UserInputType ==
-                Enum.UserInputType.Touch then
+        if input.UserInputType ==  
+            Enum.UserInputType.MouseMovement  
+        or input.UserInputType ==  
+            Enum.UserInputType.Touch then  
 
-                local delta =
-                    input.Position -
-                    dragStart
+            local delta =  
+                input.Position -  
+                dragStart  
 
-                if math.abs(delta.X) > 5
-                or math.abs(delta.Y) > 5 then
+            if math.abs(delta.X) > 5  
+            or math.abs(delta.Y) > 5 then  
 
-                    dragMoved = true
+                dragMoved = true  
 
-                end
+            end  
 
-                button.Position = UDim2.new(
-                    startPosition.X.Scale,
-                    startPosition.X.Offset + delta.X,
-                    startPosition.Y.Scale,
-                    startPosition.Y.Offset + delta.Y
-                )
+            button.Position = UDim2.new(  
+                startPosition.X.Scale,  
+                startPosition.X.Offset + delta.X,  
+                startPosition.Y.Scale,  
+                startPosition.Y.Offset + delta.Y  
+            )  
 
-            end
+        end  
 
-        end)
+    end)  
 
-        button.Activated:Connect(function()
+    button.Activated:Connect(function()  
 
-            if dragMoved then
+        if dragMoved then  
 
-                dragMoved = false
-                return
+            dragMoved = false  
+            return  
 
-            end
+        end  
 
-            if selectedBuild == "no" then
+        if selectedBuild == "no" then  
 
-                notify(
-                    "Build",
-                    "Hãy chọn loại Build trước."
-                )
+            notify(  
+                "Build",  
+                "Hãy chọn loại Build trước."  
+            )  
 
-                return
-            end
+            return  
+        end  
 
-            task.spawn(function()
-                BuildSelected()
-            end)
+        task.spawn(function()  
+            BuildSelected()  
+        end)  
 
-        end)
+    end)  
 
-    end
+end
+
 )
 
 --========================================================
@@ -1820,118 +1852,118 @@ AddToggle(
 
 RunService.RenderStepped:Connect(function()
 
-    local character,root = getCharacter()
+local character,root = getCharacter()  
 
-    if not root then
+if not root then  
 
-        clearPreview()
+    clearPreview()  
 
-        floorPreviewCFrame = nil
-        bigFloorPreviewCFrame = nil
+    floorPreviewCFrame = nil  
+    bigFloorPreviewCFrame = nil  
 
-        return
-    end
+    return  
+end  
 
-    if selectedBuild == "no" then
+if selectedBuild == "no" then  
 
-        clearPreview()
+    clearPreview()  
 
-        floorPreviewCFrame = nil
-        bigFloorPreviewCFrame = nil
+    floorPreviewCFrame = nil  
+    bigFloorPreviewCFrame = nil  
 
-        return
-    end
+    return  
+end  
 
-    clearPreview()
+clearPreview()  
 
-    local forward = root.CFrame.LookVector
+local forward = root.CFrame.LookVector  
 
-    local origin =
-        root.Position +
-        Vector3.new(0,-3,0)
+local origin =  
+    root.Position +  
+    Vector3.new(0,-3,0)  
 
-    if selectedBuild == "hut" then
+if selectedBuild == "hut" then  
 
-        local center =
-            origin +
-            forward*6 +
-            Vector3.new(0,3.75,0)
+    local center =  
+        origin +  
+        forward*6 +  
+        Vector3.new(0,3.75,0)  
 
-        createPreviewPart(
-            Vector3.new(12,7.5,12),
-            CFrame.new(
-                center,
-                center+forward
-            )
-        )
+    createPreviewPart(  
+        Vector3.new(12,7.5,12),  
+        CFrame.new(  
+            center,  
+            center+forward  
+        )  
+    )  
 
-    elseif selectedBuild == "wall" then
+elseif selectedBuild == "wall" then  
 
-        local center =
-            origin +
-            forward*2 +
-            Vector3.new(0,3,0)
+    local center =  
+        origin +  
+        forward*2 +  
+        Vector3.new(0,3,0)  
 
-        createPreviewPart(
-            Vector3.new(12,6,.5),
-            CFrame.new(
-                center,
-                center+forward
-            )
-        )
+    createPreviewPart(  
+        Vector3.new(12,6,.5),  
+        CFrame.new(  
+            center,  
+            center+forward  
+        )  
+    )  
 
-    elseif selectedBuild == "floor" then
+elseif selectedBuild == "floor" then  
 
-        local center =
-            origin +
-            forward*6 +
-            Vector3.new(0,.25,0)
+    local center =  
+        origin +  
+        forward*6 +  
+        Vector3.new(0,.25,0)  
 
-        floorPreviewCFrame =
-            CFrame.new(
-                center,
-                center+forward
-            )
+    floorPreviewCFrame =  
+        CFrame.new(  
+            center,  
+            center+forward  
+        )  
 
-        createPreviewPart(
-            Vector3.new(12,.5,12),
-            floorPreviewCFrame
-        )
+    createPreviewPart(  
+        Vector3.new(12,.5,12),  
+        floorPreviewCFrame  
+    )  
 
-    elseif selectedBuild == "big house" then
+elseif selectedBuild == "big house" then  
 
-        local center =
-            origin +
-            forward*30 +
-            Vector3.new(0,5,0)
+    local center =  
+        origin +  
+        forward*30 +  
+        Vector3.new(0,5,0)  
 
-        createPreviewPart(
-            Vector3.new(60,10,60),
-            CFrame.new(
-                center,
-                center+forward
-            )
-        )
+    createPreviewPart(  
+        Vector3.new(60,10,60),  
+        CFrame.new(  
+            center,  
+            center+forward  
+        )  
+    )  
 
-    elseif selectedBuild == "big floor" then
+elseif selectedBuild == "big floor" then  
 
-        local center =
-            origin +
-            forward*50 +
-            Vector3.new(0,.25,0)
+    local center =  
+        origin +  
+        forward*50 +  
+        Vector3.new(0,.25,0)  
 
-        bigFloorPreviewCFrame =
-            CFrame.new(
-                center,
-                center+forward
-            )
+    bigFloorPreviewCFrame =  
+        CFrame.new(  
+            center,  
+            center+forward  
+        )  
 
-        createPreviewPart(
-            Vector3.new(100,.5,100),
-            bigFloorPreviewCFrame
-        )
+    createPreviewPart(  
+        Vector3.new(100,.5,100),  
+        bigFloorPreviewCFrame  
+    )  
 
-    end
+end
 
 end)
 
@@ -1942,234 +1974,238 @@ end)
 local LagPage = PageObjects["Fix Lag"]
 
 local vegetationKeywords = {
-    "tree",
-    "trees",
-    "plant",
-    "plants",
-    "grass",
-    "leaf",
-    "leaves",
-    "bush",
-    "bushes",
-    "flower",
-    "flowers",
-    "foliage",
-    "branch",
-    "branches"
+"tree",
+"trees",
+"plant",
+"plants",
+"grass",
+"leaf",
+"leaves",
+"bush",
+"bushes",
+"flower",
+"flowers",
+"foliage",
+"branch",
+"branches"
 }
 
 local function isVegetation(object)
 
-    local name =
-        string.lower(object.Name)
+local name =  
+    string.lower(object.Name)  
 
-    for _,keyword in ipairs(vegetationKeywords) do
+for _,keyword in ipairs(vegetationKeywords) do  
 
-        if string.find(
-            name,
-            keyword,
-            1,
-            true
-        ) then
+    if string.find(  
+        name,  
+        keyword,  
+        1,  
+        true  
+    ) then  
 
-            return true
+        return true  
 
-        end
+    end  
 
-    end
+end  
 
-    return false
+return false
 
 end
 
 local function hideVegetation()
 
-    local count = 0
+local count = 0  
 
-    for _,obj in ipairs(workspace:GetDescendants()) do
+for _,obj in ipairs(workspace:GetDescendants()) do  
 
-        if obj:IsA("BasePart")
-        and not obj:IsDescendantOf(previewFolder)
-        and not (
-            LocalPlayer.Character
-            and obj:IsDescendantOf(LocalPlayer.Character)
-        )
-        and isVegetation(obj) then
+    if obj:IsA("BasePart")  
+    and not obj:IsDescendantOf(previewFolder)  
+    and not (  
+        LocalPlayer.Character  
+        and obj:IsDescendantOf(LocalPlayer.Character)  
+    )  
+    and isVegetation(obj) then  
 
-            if hiddenObjects[obj] == nil then
+        if hiddenObjects[obj] == nil then  
 
-                hiddenObjects[obj] =
-                    obj.LocalTransparencyModifier
+            hiddenObjects[obj] =  
+                obj.LocalTransparencyModifier  
 
-                obj.LocalTransparencyModifier = 1
+            obj.LocalTransparencyModifier = 1  
 
-                count += 1
+            count += 1  
 
-            end
+        end  
 
-        end
+    end  
 
-    end
+end  
 
-    notify(
-        "Fix Lag",
-        "Đã ẩn "..count.." object cây/cỏ/lá."
-    )
+notify(  
+    "Fix Lag",  
+    "Đã ẩn "..count.." object cây/cỏ/lá."  
+)
 
 end
 
 local function disableEffects()
 
-    local count = 0
+local count = 0  
 
-    for _,obj in ipairs(workspace:GetDescendants()) do
+for _,obj in ipairs(workspace:GetDescendants()) do  
 
-        if obj:IsA("ParticleEmitter")
-        or obj:IsA("Trail")
-        or obj:IsA("Beam")
-        or obj:IsA("Smoke")
-        or obj:IsA("Fire")
-        or obj:IsA("Sparkles") then
+    if obj:IsA("ParticleEmitter")  
+    or obj:IsA("Trail")  
+    or obj:IsA("Beam")  
+    or obj:IsA("Smoke")  
+    or obj:IsA("Fire")  
+    or obj:IsA("Sparkles") then  
 
-            if disabledEffects[obj] == nil then
+        if disabledEffects[obj] == nil then  
 
-                disabledEffects[obj] =
-                    obj.Enabled
+            disabledEffects[obj] =  
+                obj.Enabled  
 
-                obj.Enabled = false
+            obj.Enabled = false  
 
-                count += 1
+            count += 1  
 
-            end
+        end  
 
-        end
+    end  
 
-    end
+end  
 
-    notify(
-        "Fix Lag",
-        "Đã tắt "..count.." Particle/Effect."
-    )
+notify(  
+    "Fix Lag",  
+    "Đã tắt "..count.." Particle/Effect."  
+)
 
 end
 
 local function restoreVegetation()
 
-    for obj,oldValue in pairs(hiddenObjects) do
+for obj,oldValue in pairs(hiddenObjects) do  
 
-        if obj and obj.Parent then
+    if obj and obj.Parent then  
 
-            obj.LocalTransparencyModifier =
-                oldValue
+        obj.LocalTransparencyModifier =  
+            oldValue  
 
-        end
+    end  
 
-    end
+end  
 
-    table.clear(hiddenObjects)
+table.clear(hiddenObjects)
 
 end
 
 local function restoreEffects()
 
-    for obj,oldValue in pairs(disabledEffects) do
+for obj,oldValue in pairs(disabledEffects) do  
 
-        if obj and obj.Parent then
+    if obj and obj.Parent then  
 
-            obj.Enabled = oldValue
+        obj.Enabled = oldValue  
 
-        end
+    end  
 
-    end
+end  
 
-    table.clear(disabledEffects)
+table.clear(disabledEffects)
 
 end
 
 local function enableFixLag()
 
-    fixLagEnabled = true
+fixLagEnabled = true  
 
-    hideVegetation()
-    disableEffects()
+hideVegetation()  
+disableEffects()  
 
-    pcall(function()
-        settings().Rendering.QualityLevel =
-            Enum.QualityLevel.Level01
-    end)
+pcall(function()  
+    settings().Rendering.QualityLevel =  
+        Enum.QualityLevel.Level01  
+end)  
 
-    notify(
-        "Fix Lag",
-        "Fix Lag đã bật."
-    )
+notify(  
+    "Fix Lag",  
+    "Fix Lag đã bật."  
+)
 
 end
 
 local function disableFixLag()
 
-    fixLagEnabled = false
+fixLagEnabled = false  
 
-    restoreVegetation()
-    restoreEffects()
+restoreVegetation()  
+restoreEffects()  
 
-    notify(
-        "Fix Lag",
-        "Đã khôi phục hiển thị."
-    )
+notify(  
+    "Fix Lag",  
+    "Đã khôi phục hiển thị."  
+)
 
 end
 
 AddToggle(
-    LagPage,
-    "Fix Lag",
-    false,
-    function(value)
+LagPage,
+"Fix Lag",
+false,
+function(value)
 
-        if value then
-            enableFixLag()
-        else
-            disableFixLag()
-        end
+if value then  
+        enableFixLag()  
+    else  
+        disableFixLag()  
+    end  
 
-    end
+end
+
 )
 
 AddButton(
-    LagPage,
-    "Xóa Cây / Cỏ / Lá",
-    function()
+LagPage,
+"Xóa Cây / Cỏ / Lá",
+function()
 
-        hideVegetation()
+hideVegetation()  
 
-    end
+end
+
 )
 
 AddButton(
-    LagPage,
-    "Tắt Particle / Effect",
-    function()
+LagPage,
+"Tắt Particle / Effect",
+function()
 
-        disableEffects()
+disableEffects()  
 
-    end
+end
+
 )
 
 AddButton(
-    LagPage,
-    "Khôi Phục Hiển Thị",
-    function()
+LagPage,
+"Khôi Phục Hiển Thị",
+function()
 
-        fixLagEnabled = false
+fixLagEnabled = false  
 
-        restoreVegetation()
-        restoreEffects()
+    restoreVegetation()  
+    restoreEffects()  
 
-        notify(
-            "Fix Lag",
-            "Đã khôi phục."
-        )
+    notify(  
+        "Fix Lag",  
+        "Đã khôi phục."  
+    )  
 
-    end
+end
+
 )
 
 --========================================================
@@ -2178,52 +2214,52 @@ AddButton(
 
 workspace.DescendantAdded:Connect(function(obj)
 
-    if not fixLagEnabled then
-        return
-    end
+if not fixLagEnabled then  
+    return  
+end  
 
-    task.defer(function()
+task.defer(function()  
 
-        if not obj or not obj.Parent then
-            return
-        end
+    if not obj or not obj.Parent then  
+        return  
+    end  
 
-        if obj:IsA("BasePart")
-        and not obj:IsDescendantOf(previewFolder)
-        and not (
-            LocalPlayer.Character
-            and obj:IsDescendantOf(LocalPlayer.Character)
-        )
-        and isVegetation(obj) then
+    if obj:IsA("BasePart")  
+    and not obj:IsDescendantOf(previewFolder)  
+    and not (  
+        LocalPlayer.Character  
+        and obj:IsDescendantOf(LocalPlayer.Character)  
+    )  
+    and isVegetation(obj) then  
 
-            if hiddenObjects[obj] == nil then
+        if hiddenObjects[obj] == nil then  
 
-                hiddenObjects[obj] =
-                    obj.LocalTransparencyModifier
+            hiddenObjects[obj] =  
+                obj.LocalTransparencyModifier  
 
-                obj.LocalTransparencyModifier = 1
+            obj.LocalTransparencyModifier = 1  
 
-            end
+        end  
 
-        elseif obj:IsA("ParticleEmitter")
-        or obj:IsA("Trail")
-        or obj:IsA("Beam")
-        or obj:IsA("Smoke")
-        or obj:IsA("Fire")
-        or obj:IsA("Sparkles") then
+    elseif obj:IsA("ParticleEmitter")  
+    or obj:IsA("Trail")  
+    or obj:IsA("Beam")  
+    or obj:IsA("Smoke")  
+    or obj:IsA("Fire")  
+    or obj:IsA("Sparkles") then  
 
-            if disabledEffects[obj] == nil then
+        if disabledEffects[obj] == nil then  
 
-                disabledEffects[obj] =
-                    obj.Enabled
+            disabledEffects[obj] =  
+                obj.Enabled  
 
-                obj.Enabled = false
+            obj.Enabled = false  
 
-            end
+        end  
 
-        end
+    end  
 
-    end)
+end)
 
 end)
 
@@ -2254,83 +2290,83 @@ stroke(MKButton,Color3.fromRGB(255,80,90),2)
 
 do
 
-    local dragging = false
-    local dragStart
-    local startPosition
-    local dragMoved = false
+local dragging = false  
+local dragStart  
+local startPosition  
+local dragMoved = false  
 
-    MKButton.InputBegan:Connect(function(input)
+MKButton.InputBegan:Connect(function(input)  
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-        or input.UserInputType ==
-            Enum.UserInputType.Touch then
+    if input.UserInputType ==  
+        Enum.UserInputType.MouseButton1  
+    or input.UserInputType ==  
+        Enum.UserInputType.Touch then  
 
-            dragging = true
-            dragMoved = false
-            dragStart = input.Position
-            startPosition = MKButton.Position
+        dragging = true  
+        dragMoved = false  
+        dragStart = input.Position  
+        startPosition = MKButton.Position  
 
-            input.Changed:Connect(function()
+        input.Changed:Connect(function()  
 
-                if input.UserInputState ==
-                    Enum.UserInputState.End then
+            if input.UserInputState ==  
+                Enum.UserInputState.End then  
 
-                    dragging = false
+                dragging = false  
 
-                end
+            end  
 
-            end)
+        end)  
 
-        end
+    end  
 
-    end)
+end)  
 
-    UserInputService.InputChanged:Connect(function(input)
+UserInputService.InputChanged:Connect(function(input)  
 
-        if not dragging then
-            return
-        end
+    if not dragging then  
+        return  
+    end  
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseMovement
-        or input.UserInputType ==
-            Enum.UserInputType.Touch then
+    if input.UserInputType ==  
+        Enum.UserInputType.MouseMovement  
+    or input.UserInputType ==  
+        Enum.UserInputType.Touch then  
 
-            local delta =
-                input.Position -
-                dragStart
+        local delta =  
+            input.Position -  
+            dragStart  
 
-            if math.abs(delta.X) > 5
-            or math.abs(delta.Y) > 5 then
+        if math.abs(delta.X) > 5  
+        or math.abs(delta.Y) > 5 then  
 
-                dragMoved = true
+            dragMoved = true  
 
-            end
+        end  
 
-            MKButton.Position = UDim2.new(
-                startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
-                startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
-            )
+        MKButton.Position = UDim2.new(  
+            startPosition.X.Scale,  
+            startPosition.X.Offset + delta.X,  
+            startPosition.Y.Scale,  
+            startPosition.Y.Offset + delta.Y  
+        )  
 
-        end
+    end  
 
-    end)
+end)  
 
-    MKButton.Activated:Connect(function()
+MKButton.Activated:Connect(function()  
 
-        if dragMoved then
+    if dragMoved then  
 
-            dragMoved = false
-            return
+        dragMoved = false  
+        return  
 
-        end
+    end  
 
-        Main.Visible = not Main.Visible
+    Main.Visible = not Main.Visible  
 
-    end)
+end)
 
 end
 
@@ -2340,15 +2376,41 @@ end
 
 UserInputService.InputBegan:Connect(function(input,gameProcessed)
 
-    if gameProcessed then
-        return
-    end
+if gameProcessed then  
+    return  
+end  
 
-    if input.KeyCode == Enum.KeyCode.RightShift then
+if input.KeyCode == Enum.KeyCode.RightShift then  
 
-        Main.Visible = not Main.Visible
+    Main.Visible = not Main.Visible  
 
-    end
+end
+
+end)
+
+--========================================================
+-- FINISH
+--========================================================
+-- AUTO NOTIFICATION - EVERY 2 MINUTES
+--========================================================
+
+task.spawn(function()
+while ScreenGui and ScreenGui.Parent do
+task.wait(120)
+
+if ScreenGui and ScreenGui.Parent then  
+        pcall(function()  
+            game:GetService("StarterGui"):SetCore(  
+                "SendNotification",  
+                {  
+                    Title = "MINH KHA HUP",  
+                    Text = "Địt mẹ mày",  
+                    Duration = 5  
+                }  
+            )  
+        end)  
+    end  
+end
 
 end)
 
@@ -2357,6 +2419,6 @@ end)
 --========================================================
 
 notify(
-    "MINH KHA HUP",
-    "Full Custom Menu đã sẵn sàng!"
+"MINH KHA HUP",
+"Full Custom Menu đã sẵn sàng!"
 )
