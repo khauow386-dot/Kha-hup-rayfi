@@ -1,0 +1,6055 @@
+-- ============================================================
+-- MINH KHA HUB v3 ULTIMATE
+-- ONE FILE / MOBILE / FULL CUSTOM
+--
+-- FULL MENU
+-- MAIN
+-- FARM
+-- BUILD
+-- COMBAT
+-- BRING ITEM
+-- PLAYERS
+-- TELEPORTS
+-- ESP
+-- MISC
+-- SETTINGS
+--
+-- GEF SYSTEM:
+--   GEF Detector
+--   GEF ESP
+--   GEF Alert
+--   GEF Counter
+--   Nearest GEF
+--   GEF Name
+--   GEF Health
+--   GEF Distance
+--
+-- BUILD CODE:
+--   Update Build
+--   Preview Imported Build
+--   Build Imported
+--   Clear Build Code
+--   Load Sample
+--
+-- NO RAYFIELD
+-- NO DATASTORE
+-- NO ANTI-CHEAT BYPASS
+-- ============================================================
+
+
+-- ============================================================
+-- SERVICES
+-- ============================================================
+
+local Players =
+    game:GetService("Players")
+
+local UIS =
+    game:GetService("UserInputService")
+
+local RunService =
+    game:GetService("RunService")
+
+local TweenService =
+    game:GetService("TweenService")
+
+local Lighting =
+    game:GetService("Lighting")
+
+local HttpService =
+    game:GetService("HttpService")
+
+local Workspace =
+    game:GetService("Workspace")
+
+local StarterGui =
+    game:GetService("StarterGui")
+
+
+local LocalPlayer =
+    Players.LocalPlayer
+
+
+-- ============================================================
+-- COLORS
+-- ============================================================
+
+local C = {
+
+    BG =
+        Color3.fromRGB(
+            8,8,10
+        ),
+
+    SIDEBAR =
+        Color3.fromRGB(
+            14,14,18
+        ),
+
+    PANEL =
+        Color3.fromRGB(
+            20,20,25
+        ),
+
+    PANEL2 =
+        Color3.fromRGB(
+            27,27,33
+        ),
+
+    RED =
+        Color3.fromRGB(
+            220,25,45
+        ),
+
+    DARK_RED =
+        Color3.fromRGB(
+            120,10,25
+        ),
+
+    WHITE =
+        Color3.fromRGB(
+            245,245,245
+        ),
+
+    GRAY =
+        Color3.fromRGB(
+            150,150,155
+        ),
+
+    GREEN =
+        Color3.fromRGB(
+            50,200,100
+        ),
+
+    BLUE =
+        Color3.fromRGB(
+            60,130,255
+        )
+}
+
+
+-- ============================================================
+-- CONFIG
+-- ============================================================
+
+local Config = {
+
+    -- FARM
+    AutoFarmMoney = false,
+    AutoSellItem = false,
+
+    -- COMBAT
+    KillAura = false,
+    KillAllGEFs = false,
+    AutoBuy = false,
+
+    -- ITEM
+    BringItem = false,
+
+    -- PLAYERS
+    GodMode = false,
+    InfiniteStamina = false,
+    SpeedHack = false,
+    JumpHack = false,
+    Noclip = false,
+    Fly = false,
+
+    -- LIGHTING
+    Fullbright = false,
+
+    -- PLAYER ESP
+    ESPBox = false,
+    ESPName = false,
+    ESPHealth = false,
+
+    -- GEF
+    GEFDetector = false,
+    GEFESP = false,
+    GEFAlert = false,
+    GEFName = true,
+    GEFHealth = true,
+    GEFDistance = true,
+    GEFMaxDistance = 1000,
+
+    -- BUILD
+    SelectedBuildPreset = "None",
+    ImportedBuild = nil,
+    ImportedBuildCode = "",
+
+    -- MENU
+    MenuVisible = true
+}
+
+
+-- ============================================================
+-- CONNECTIONS
+-- ============================================================
+
+local Connections = {}
+
+local ESPObjects = {}
+
+local GEFObjects = {}
+
+local KnownGEFs = {}
+
+local OriginalCollision = {}
+
+local OriginalLighting = {
+
+    Brightness =
+        Lighting.Brightness,
+
+    ClockTime =
+        Lighting.ClockTime,
+
+    GlobalShadows =
+        Lighting.GlobalShadows,
+
+    FogEnd =
+        Lighting.FogEnd
+}
+
+
+-- ============================================================
+-- DISCONNECT HELPER
+-- ============================================================
+
+local function Disconnect(name)
+
+    if Connections[name] then
+
+        pcall(function()
+            Connections[name]:Disconnect()
+        end)
+
+        Connections[name] = nil
+
+    end
+
+end
+
+
+-- ============================================================
+-- NOTIFY
+-- ============================================================
+
+local function Notify(text)
+
+    pcall(function()
+
+        StarterGui:SetCore(
+            "SendNotification",
+            {
+                Title =
+                    "MINH KHA HUB",
+
+                Text =
+                    tostring(text),
+
+                Duration = 3
+            }
+        )
+
+    end)
+
+end
+
+
+-- ============================================================
+-- REMOVE OLD GUI
+-- ============================================================
+
+pcall(function()
+
+    local CoreGui =
+        game:GetService("CoreGui")
+
+    local old =
+        CoreGui:FindFirstChild(
+            "MinhKhaHub_v3_Ultimate"
+        )
+
+    if old then
+        old:Destroy()
+    end
+
+end)
+
+
+pcall(function()
+
+    local PlayerGui =
+        LocalPlayer:FindFirstChild(
+            "PlayerGui"
+        )
+
+    if PlayerGui then
+
+        local old =
+            PlayerGui:FindFirstChild(
+                "MinhKhaHub_v3_Ultimate"
+            )
+
+        if old then
+            old:Destroy()
+        end
+
+    end
+
+end)
+
+
+-- ============================================================
+-- SCREEN GUI
+-- ============================================================
+
+local ScreenGui =
+    Instance.new("ScreenGui")
+
+ScreenGui.Name =
+    "MinhKhaHub_v3_Ultimate"
+
+ScreenGui.ResetOnSpawn =
+    false
+
+ScreenGui.IgnoreGuiInset =
+    true
+
+ScreenGui.ZIndexBehavior =
+    Enum.ZIndexBehavior.Sibling
+
+
+pcall(function()
+
+    ScreenGui.Parent =
+        game:GetService("CoreGui")
+
+end)
+
+
+if not ScreenGui.Parent then
+
+    ScreenGui.Parent =
+        LocalPlayer:WaitForChild(
+            "PlayerGui"
+        )
+
+end
+
+
+-- ============================================================
+-- UI SCALE
+-- ============================================================
+
+local UIScale =
+    Instance.new("UIScale")
+
+UIScale.Scale = 1
+
+UIScale.Parent =
+    ScreenGui
+
+
+-- ============================================================
+-- UI HELPERS
+-- ============================================================
+
+local function Corner(obj,radius)
+
+    local c =
+        Instance.new("UICorner")
+
+    c.CornerRadius =
+        UDim.new(
+            0,
+            radius or 8
+        )
+
+    c.Parent = obj
+
+    return c
+
+end
+
+
+local function Stroke(
+    obj,
+    color,
+    thickness
+)
+
+    local s =
+        Instance.new("UIStroke")
+
+    s.Color =
+        color or C.PANEL2
+
+    s.Thickness =
+        thickness or 1
+
+    s.Transparency = 0
+
+    s.Parent = obj
+
+    return s
+
+end
+
+
+local function Padding(
+    obj,
+    amount
+)
+
+    local p =
+        Instance.new("UIPadding")
+
+    p.PaddingTop =
+        UDim.new(0,amount)
+
+    p.PaddingBottom =
+        UDim.new(0,amount)
+
+    p.PaddingLeft =
+        UDim.new(0,amount)
+
+    p.PaddingRight =
+        UDim.new(0,amount)
+
+    p.Parent = obj
+
+end
+
+
+local function CreateLabel(
+    parent,
+    text,
+    size,
+    pos
+)
+
+    local l =
+        Instance.new("TextLabel")
+
+    l.BackgroundTransparency = 1
+
+    l.Text =
+        text
+
+    l.TextColor3 =
+        C.WHITE
+
+    l.TextSize =
+        size or 14
+
+    l.Font =
+        Enum.Font.Gotham
+
+    l.TextXAlignment =
+        Enum.TextXAlignment.Left
+
+    l.Position =
+        pos or UDim2.new()
+
+    l.Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            24
+        )
+
+    l.Parent =
+        parent
+
+    return l
+
+end
+
+
+local function CreateButton(
+    parent,
+    text,
+    height
+)
+
+    local b =
+        Instance.new("TextButton")
+
+    b.Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            height or 40
+        )
+
+    b.BackgroundColor3 =
+        C.PANEL2
+
+    b.BorderSizePixel = 0
+
+    b.Text =
+        text
+
+    b.TextColor3 =
+        C.WHITE
+
+    b.TextSize = 13
+
+    b.Font =
+        Enum.Font.GothamBold
+
+    b.AutoButtonColor = false
+
+    b.Parent =
+        parent
+
+    Corner(b,8)
+
+    Stroke(
+        b,
+        C.PANEL2,
+        1
+    )
+
+
+    b.MouseEnter:Connect(function()
+
+        TweenService:Create(
+            b,
+            TweenInfo.new(0.15),
+            {
+                BackgroundColor3 =
+                    C.DARK_RED
+            }
+        ):Play()
+
+    end)
+
+
+    b.MouseLeave:Connect(function()
+
+        TweenService:Create(
+            b,
+            TweenInfo.new(0.15),
+            {
+                BackgroundColor3 =
+                    C.PANEL2
+            }
+        ):Play()
+
+    end)
+
+
+    return b
+
+end
+
+
+-- ============================================================
+-- FLOATING MK
+-- ============================================================
+
+local Floating =
+    Instance.new("TextButton")
+
+Floating.Name =
+    "MK"
+
+Floating.Size =
+    UDim2.new(
+        0,
+        52,
+        0,
+        52
+    )
+
+Floating.Position =
+    UDim2.new(
+        0,
+        18,
+        0.5,
+        -26
+    )
+
+Floating.BackgroundColor3 =
+    C.RED
+
+Floating.Text =
+    "MK"
+
+Floating.TextColor3 =
+    C.WHITE
+
+Floating.TextSize = 16
+
+Floating.Font =
+    Enum.Font.GothamBold
+
+Floating.BorderSizePixel = 0
+
+Floating.Parent =
+    ScreenGui
+
+Corner(Floating,18)
+
+Stroke(
+    Floating,
+    C.DARK_RED,
+    2
+)
+
+
+local floatingDragging =
+    false
+
+local floatingDragStart
+
+local floatingStartPos
+
+
+Floating.InputBegan:Connect(function(input)
+
+    if input.UserInputType ==
+        Enum.UserInputType.MouseButton1
+
+        or
+
+        input.UserInputType ==
+        Enum.UserInputType.Touch
+    then
+
+        floatingDragging = true
+
+        floatingDragStart =
+            input.Position
+
+        floatingStartPos =
+            Floating.Position
+
+        input.Changed:Connect(
+            function()
+
+                if input.UserInputState ==
+                    Enum.UserInputState.End
+                then
+
+                    floatingDragging =
+                        false
+
+                end
+
+            end
+        )
+
+    end
+
+end)
+
+
+UIS.InputChanged:Connect(function(input)
+
+    if floatingDragging
+    and
+    (
+        input.UserInputType ==
+            Enum.UserInputType.MouseMovement
+
+        or
+
+        input.UserInputType ==
+            Enum.UserInputType.Touch
+    )
+    then
+
+        local delta =
+            input.Position -
+            floatingDragStart
+
+        Floating.Position =
+            UDim2.new(
+                floatingStartPos.X.Scale,
+                floatingStartPos.X.Offset
+                    + delta.X,
+
+                floatingStartPos.Y.Scale,
+                floatingStartPos.Y.Offset
+                    + delta.Y
+            )
+
+    end
+
+end)
+
+
+-- ============================================================
+-- MAIN FRAME
+-- ============================================================
+
+local MainFrame =
+    Instance.new("Frame")
+
+MainFrame.Name =
+    "MainFrame"
+
+MainFrame.Size =
+    UDim2.new(
+        0,
+        700,
+        0,
+        430
+    )
+
+MainFrame.Position =
+    UDim2.new(
+        0.5,
+        -350,
+        0.5,
+        -215
+    )
+
+MainFrame.BackgroundColor3 =
+    C.BG
+
+MainFrame.BorderSizePixel = 0
+
+MainFrame.Parent =
+    ScreenGui
+
+Corner(MainFrame,12)
+
+Stroke(
+    MainFrame,
+    C.DARK_RED,
+    1
+)
+
+
+-- ============================================================
+-- DRAG
+-- ============================================================
+
+local dragging = false
+local dragStart
+local startPos
+
+
+local function MakeDraggable(obj)
+
+    obj.InputBegan:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+
+                or
+
+                input.UserInputType ==
+                Enum.UserInputType.Touch
+            then
+
+                dragging = true
+
+                dragStart =
+                    input.Position
+
+                startPos =
+                    MainFrame.Position
+
+                input.Changed:Connect(
+                    function()
+
+                        if input.UserInputState ==
+                            Enum.UserInputState.End
+                        then
+
+                            dragging = false
+
+                        end
+
+                    end
+                )
+
+            end
+
+        end
+    )
+
+
+    UIS.InputChanged:Connect(
+        function(input)
+
+            if dragging
+            and
+            (
+                input.UserInputType ==
+                    Enum.UserInputType.MouseMovement
+
+                or
+
+                input.UserInputType ==
+                    Enum.UserInputType.Touch
+            )
+            then
+
+                local delta =
+                    input.Position -
+                    dragStart
+
+                MainFrame.Position =
+                    UDim2.new(
+
+                        startPos.X.Scale,
+
+                        startPos.X.Offset
+                            + delta.X,
+
+                        startPos.Y.Scale,
+
+                        startPos.Y.Offset
+                            + delta.Y
+                    )
+
+            end
+
+        end
+    )
+
+end
+
+
+MakeDraggable(MainFrame)
+
+
+-- ============================================================
+-- SIDEBAR
+-- ============================================================
+
+local Sidebar =
+    Instance.new("Frame")
+
+Sidebar.Size =
+    UDim2.new(
+        0,
+        165,
+        1,
+        0
+    )
+
+Sidebar.BackgroundColor3 =
+    C.SIDEBAR
+
+Sidebar.BorderSizePixel = 0
+
+Sidebar.Parent =
+    MainFrame
+
+Corner(Sidebar,12)
+
+
+local Logo =
+    CreateLabel(
+        Sidebar,
+        "MINH KHA HUB",
+        18,
+        UDim2.new(
+            0,
+            16,
+            0,
+            15
+        )
+    )
+
+Logo.Font =
+    Enum.Font.GothamBold
+
+Logo.TextColor3 =
+    C.RED
+
+Logo.Size =
+    UDim2.new(
+        1,
+        -32,
+        0,
+        28
+    )
+
+
+local SubLogo =
+    CreateLabel(
+        Sidebar,
+        "ULTIMATE",
+        10,
+        UDim2.new(
+            0,
+            17,
+            0,
+            41
+        )
+    )
+
+SubLogo.TextColor3 =
+    C.GRAY
+
+SubLogo.Size =
+    UDim2.new(
+        1,
+        -32,
+        0,
+        18
+    )
+
+
+local Nav =
+    Instance.new("ScrollingFrame")
+
+Nav.Position =
+    UDim2.new(
+        0,
+        8,
+        0,
+        72
+    )
+
+Nav.Size =
+    UDim2.new(
+        1,
+        -16,
+        1,
+        -125
+    )
+
+Nav.BackgroundTransparency = 1
+
+Nav.BorderSizePixel = 0
+
+Nav.ScrollBarThickness = 3
+
+Nav.ScrollBarImageColor3 =
+    C.RED
+
+Nav.CanvasSize =
+    UDim2.new()
+
+Nav.AutomaticCanvasSize =
+    Enum.AutomaticSize.Y
+
+Nav.Parent =
+    Sidebar
+
+
+local NavLayout =
+    Instance.new("UIListLayout")
+
+NavLayout.Padding =
+    UDim.new(0,5)
+
+NavLayout.Parent =
+    Nav
+
+
+-- ============================================================
+-- CONTENT
+-- ============================================================
+
+local Content =
+    Instance.new("Frame")
+
+Content.Position =
+    UDim2.new(
+        0,
+        165,
+        0,
+        0
+    )
+
+Content.Size =
+    UDim2.new(
+        1,
+        -165,
+        1,
+        0
+    )
+
+Content.BackgroundTransparency = 1
+
+Content.Parent =
+    MainFrame
+
+
+-- ============================================================
+-- HEADER
+-- ============================================================
+
+local Header =
+    Instance.new("Frame")
+
+Header.Size =
+    UDim2.new(
+        1,
+        0,
+        0,
+        55
+    )
+
+Header.BackgroundColor3 =
+    C.BG
+
+Header.BorderSizePixel = 0
+
+Header.Parent =
+    Content
+
+
+local PageTitle =
+    CreateLabel(
+        Header,
+        "MAIN",
+        18,
+        UDim2.new(
+            0,
+            20,
+            0,
+            10
+        )
+    )
+
+PageTitle.Font =
+    Enum.Font.GothamBold
+
+PageTitle.Size =
+    UDim2.new(
+        1,
+        -100,
+        0,
+        24
+    )
+
+
+local PageSubtitle =
+    CreateLabel(
+        Header,
+        "MINH KHA HUB • FULL CUSTOM",
+        10,
+        UDim2.new(
+            0,
+            20,
+            0,
+            32
+        )
+    )
+
+PageSubtitle.TextColor3 =
+    C.GRAY
+
+PageSubtitle.Size =
+    UDim2.new(
+        1,
+        -100,
+        0,
+        16
+    )
+
+
+local MinButton =
+    Instance.new("TextButton")
+
+MinButton.Size =
+    UDim2.new(
+        0,
+        35,
+        0,
+        35
+    )
+
+MinButton.Position =
+    UDim2.new(
+        1,
+        -80,
+        0,
+        10
+    )
+
+MinButton.BackgroundColor3 =
+    C.PANEL2
+
+MinButton.Text =
+    "—"
+
+MinButton.TextColor3 =
+    C.WHITE
+
+MinButton.TextSize = 18
+
+MinButton.Font =
+    Enum.Font.GothamBold
+
+MinButton.BorderSizePixel = 0
+
+MinButton.Parent =
+    Header
+
+Corner(MinButton,8)
+
+
+local CloseButton =
+    Instance.new("TextButton")
+
+CloseButton.Size =
+    UDim2.new(
+        0,
+        35,
+        0,
+        35
+    )
+
+CloseButton.Position =
+    UDim2.new(
+        1,
+        -40,
+        0,
+        10
+    )
+
+CloseButton.BackgroundColor3 =
+    C.DARK_RED
+
+CloseButton.Text =
+    "×"
+
+CloseButton.TextColor3 =
+    C.WHITE
+
+CloseButton.TextSize = 20
+
+CloseButton.Font =
+    Enum.Font.GothamBold
+
+CloseButton.BorderSizePixel = 0
+
+CloseButton.Parent =
+    Header
+
+Corner(CloseButton,8)
+
+
+-- ============================================================
+-- PAGE HOLDER
+-- ============================================================
+
+local PageHolder =
+    Instance.new("Frame")
+
+PageHolder.Position =
+    UDim2.new(
+        0,
+        10,
+        0,
+        55
+    )
+
+PageHolder.Size =
+    UDim2.new(
+        1,
+        -20,
+        1,
+        -65
+    )
+
+PageHolder.BackgroundTransparency = 1
+
+PageHolder.Parent =
+    Content
+
+
+local Pages = {}
+
+local NavButtons = {}
+
+
+local function CreatePage(name)
+
+    local page =
+        Instance.new("ScrollingFrame")
+
+    page.Name =
+        name
+
+    page.Size =
+        UDim2.new(
+            1,
+            0,
+            1,
+            0
+        )
+
+    page.BackgroundTransparency = 1
+
+    page.BorderSizePixel = 0
+
+    page.ScrollBarThickness = 4
+
+    page.ScrollBarImageColor3 =
+        C.RED
+
+    page.CanvasSize =
+        UDim2.new()
+
+    page.AutomaticCanvasSize =
+        Enum.AutomaticSize.Y
+
+    page.Visible = false
+
+    page.Parent =
+        PageHolder
+
+
+    local layout =
+        Instance.new("UIListLayout")
+
+    layout.Padding =
+        UDim.new(
+            0,
+            8
+        )
+
+    layout.Parent =
+        page
+
+
+    Padding(page,5)
+
+
+    Pages[name] =
+        page
+
+    return page
+
+end
+
+
+-- ============================================================
+-- NAV BUTTON
+-- ============================================================
+
+local function CreateNav(
+    name,
+    icon
+)
+
+    local button =
+        Instance.new("TextButton")
+
+    button.Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            38
+        )
+
+    button.BackgroundColor3 =
+        C.SIDEBAR
+
+    button.Text =
+        "  "
+        ..icon
+        .."   "
+        ..name
+
+    button.TextColor3 =
+        C.GRAY
+
+    button.TextSize = 12
+
+    button.Font =
+        Enum.Font.GothamSemibold
+
+    button.TextXAlignment =
+        Enum.TextXAlignment.Left
+
+    button.BorderSizePixel = 0
+
+    button.AutoButtonColor = false
+
+    button.Parent =
+        Nav
+
+    Corner(button,7)
+
+    NavButtons[name] =
+        button
+
+
+    button.MouseButton1Click:Connect(
+        function()
+
+            for _,b in pairs(
+                NavButtons
+            ) do
+
+                b.BackgroundColor3 =
+                    C.SIDEBAR
+
+                b.TextColor3 =
+                    C.GRAY
+
+            end
+
+
+            button.BackgroundColor3 =
+                C.DARK_RED
+
+            button.TextColor3 =
+                C.WHITE
+
+
+            for _,p in pairs(
+                Pages
+            ) do
+
+                p.Visible = false
+
+            end
+
+
+            if Pages[name] then
+
+                Pages[name].Visible =
+                    true
+
+            end
+
+
+            PageTitle.Text =
+                string.upper(name)
+
+            PageSubtitle.Text =
+                "MINH KHA HUB • "
+                ..string.upper(name)
+
+        end
+    )
+
+
+    return button
+
+end
+
+
+-- ============================================================
+-- TOGGLE
+-- ============================================================
+
+local function CreateToggle(
+    parent,
+    title,
+    description,
+    key
+)
+
+    local holder =
+        Instance.new("Frame")
+
+    holder.Size =
+        UDim2.new(
+            1,
+            -10,
+            0,
+            55
+        )
+
+    holder.BackgroundColor3 =
+        C.PANEL
+
+    holder.BorderSizePixel = 0
+
+    holder.Parent =
+        parent
+
+    Corner(holder,8)
+
+    Stroke(
+        holder,
+        C.PANEL2,
+        1
+    )
+
+
+    local titleLabel =
+        CreateLabel(
+            holder,
+            title,
+            13,
+            UDim2.new(
+                0,
+                12,
+                0,
+                7
+            )
+        )
+
+    titleLabel.Font =
+        Enum.Font.GothamBold
+
+    titleLabel.Size =
+        UDim2.new(
+            1,
+            -75,
+            0,
+            20
+        )
+
+
+    local desc =
+        CreateLabel(
+            holder,
+            description or "",
+            9,
+            UDim2.new(
+                0,
+                12,
+                0,
+                28
+            )
+        )
+
+    desc.TextColor3 =
+        C.GRAY
+
+    desc.Size =
+        UDim2.new(
+            1,
+            -75,
+            0,
+            18
+        )
+
+
+    local toggle =
+        Instance.new("TextButton")
+
+    toggle.Size =
+        UDim2.new(
+            0,
+            45,
+            0,
+            24
+        )
+
+    toggle.Position =
+        UDim2.new(
+            1,
+            -58,
+            0.5,
+            -12
+        )
+
+    toggle.BackgroundColor3 =
+        Config[key]
+        and C.RED
+        or C.PANEL2
+
+    toggle.Text = ""
+
+    toggle.BorderSizePixel = 0
+
+    toggle.Parent =
+        holder
+
+    Corner(toggle,12)
+
+
+    local dot =
+        Instance.new("Frame")
+
+    dot.Size =
+        UDim2.new(
+            0,
+            18,
+            0,
+            18
+        )
+
+    dot.Position =
+        Config[key]
+        and UDim2.new(
+            1,
+            -21,
+            0.5,
+            -9
+        )
+        or UDim2.new(
+            0,
+            3,
+            0.5,
+            -9
+        )
+
+    dot.BackgroundColor3 =
+        C.WHITE
+
+    dot.BorderSizePixel = 0
+
+    dot.Parent =
+        toggle
+
+    Corner(dot,10)
+
+
+    local function Refresh()
+
+        toggle.BackgroundColor3 =
+            Config[key]
+            and C.RED
+            or C.PANEL2
+
+        dot.Position =
+            Config[key]
+            and UDim2.new(
+                1,
+                -21,
+                0.5,
+                -9
+            )
+            or UDim2.new(
+                0,
+                3,
+                0.5,
+                -9
+            )
+
+    end
+
+
+    toggle.MouseButton1Click:Connect(
+        function()
+
+            Config[key] =
+                not Config[key]
+
+            Refresh()
+
+        end
+    )
+
+
+    return holder,Refresh
+
+end
+
+
+-- ============================================================
+-- CREATE PAGES
+-- ============================================================
+
+local MainPage =
+    CreatePage("Main")
+
+local FarmPage =
+    CreatePage("Farm")
+
+local BuildPage =
+    CreatePage("Build")
+
+local CombatPage =
+    CreatePage("Combat")
+
+local BringPage =
+    CreatePage("Bring Item")
+
+local PlayersPage =
+    CreatePage("Players")
+
+local TeleportPage =
+    CreatePage("Teleports")
+
+local ESPPage =
+    CreatePage("ESP")
+
+local MiscPage =
+    CreatePage("Misc")
+
+local SettingsPage =
+    CreatePage("Settings")
+
+
+-- ============================================================
+-- NAVIGATION
+-- ============================================================
+
+CreateNav("Main","◆")
+CreateNav("Farm","♨")
+CreateNav("Build","▣")
+CreateNav("Combat","⚔")
+CreateNav("Bring Item","◆")
+CreateNav("Players","♟")
+CreateNav("Teleports","⌖")
+CreateNav("ESP","◎")
+CreateNav("Misc","⚙")
+CreateNav("Settings","☰")
+
+
+-- ============================================================
+-- MAIN PAGE
+-- ============================================================
+
+do
+
+    local info =
+        Instance.new("Frame")
+
+    info.Size =
+        UDim2.new(
+            1,
+            -10,
+            0,
+            120
+        )
+
+    info.BackgroundColor3 =
+        C.PANEL
+
+    info.BorderSizePixel = 0
+
+    info.Parent =
+        MainPage
+
+    Corner(info,10)
+
+    Stroke(
+        info,
+        C.PANEL2,
+        1
+    )
+
+
+    local title =
+        CreateLabel(
+            info,
+            "MINH KHA HUB v3 ULTIMATE",
+            20,
+            UDim2.new(
+                0,
+                16,
+                0,
+                15
+            )
+        )
+
+    title.Font =
+        Enum.Font.GothamBold
+
+    title.TextColor3 =
+        C.RED
+
+
+    local text =
+        CreateLabel(
+            info,
+            "Full Custom Mobile Menu",
+            12,
+            UDim2.new(
+                0,
+                16,
+                0,
+                47
+            )
+        )
+
+    text.TextColor3 =
+        C.WHITE
+
+
+    local desc =
+        CreateLabel(
+            info,
+            "GEF System + Build + Teleport + Players + ESP.",
+            10,
+            UDim2.new(
+                0,
+                16,
+                0,
+                72
+            )
+        )
+
+    desc.TextColor3 =
+        C.GRAY
+
+end
+
+
+local mainStatus =
+    CreateLabel(
+        MainPage,
+        "Status: Ready",
+        11,
+        UDim2.new()
+    )
+
+mainStatus.TextColor3 =
+    C.GREEN
+
+
+-- ============================================================
+-- FARM
+-- ============================================================
+
+CreateToggle(
+    FarmPage,
+    "Auto Farm Money",
+    "Bật/tắt trạng thái Auto Farm.",
+    "AutoFarmMoney"
+)
+
+
+CreateToggle(
+    FarmPage,
+    "Auto Sell Item",
+    "Bật/tắt trạng thái Auto Sell.",
+    "AutoSellItem"
+)
+
+
+local farmInfo =
+    Instance.new("Frame")
+
+farmInfo.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        75
+    )
+
+farmInfo.BackgroundColor3 =
+    C.PANEL
+
+farmInfo.BorderSizePixel = 0
+
+farmInfo.Parent =
+    FarmPage
+
+Corner(farmInfo,8)
+
+Stroke(
+    farmInfo,
+    C.PANEL2,
+    1
+)
+
+
+local farmText =
+    CreateLabel(
+        farmInfo,
+        "FARM SYSTEM",
+        14,
+        UDim2.new(
+            0,
+            12,
+            0,
+            10
+        )
+    )
+
+farmText.Font =
+    Enum.Font.GothamBold
+
+farmText.TextColor3 =
+    C.RED
+
+
+local farmDesc =
+    CreateLabel(
+        farmInfo,
+        "Các API farm cụ thể phụ thuộc game.",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            36
+        )
+    )
+
+farmDesc.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- BUILD
+-- ============================================================
+
+local buildInfo =
+    Instance.new("Frame")
+
+buildInfo.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        75
+    )
+
+buildInfo.BackgroundColor3 =
+    C.PANEL
+
+buildInfo.BorderSizePixel = 0
+
+buildInfo.Parent =
+    BuildPage
+
+Corner(buildInfo,8)
+
+Stroke(
+    buildInfo,
+    C.PANEL2,
+    1
+)
+
+
+local buildTitle =
+    CreateLabel(
+        buildInfo,
+        "BUILD SYSTEM",
+        14,
+        UDim2.new(
+            0,
+            12,
+            0,
+            10
+        )
+    )
+
+buildTitle.Font =
+    Enum.Font.GothamBold
+
+buildTitle.TextColor3 =
+    C.RED
+
+
+local buildStatus =
+    CreateLabel(
+        buildInfo,
+        "Selected: None",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            37
+        )
+    )
+
+buildStatus.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- BUILD PREVIEW
+-- ============================================================
+
+local PreviewFolder =
+    Workspace:FindFirstChild(
+        "MinhKhaHubPreview"
+    )
+
+
+if PreviewFolder then
+    PreviewFolder:Destroy()
+end
+
+
+PreviewFolder =
+    Instance.new("Folder")
+
+PreviewFolder.Name =
+    "MinhKhaHubPreview"
+
+PreviewFolder.Parent =
+    Workspace
+
+
+local function ClearPreview()
+
+    for _,obj in ipairs(
+        PreviewFolder:GetChildren()
+    ) do
+
+        obj:Destroy()
+
+    end
+
+end
+
+
+local function GetCharacterRoot()
+
+    local char =
+        LocalPlayer.Character
+
+    if not char then
+        return nil
+    end
+
+    return char:FindFirstChild(
+        "HumanoidRootPart"
+    )
+
+end
+
+
+local function MaterialFromName(name)
+
+    if typeof(name) ~= "string" then
+        return Enum.Material.Plastic
+    end
+
+
+    local ok,result =
+        pcall(
+            function()
+
+                return Enum.Material[name]
+
+            end
+        )
+
+
+    if ok and result then
+        return result
+    end
+
+
+    return Enum.Material.Plastic
+
+end
+
+
+local function MakeBuildPart(
+    data,
+    parent,
+    preview
+)
+
+    if type(data) ~= "table" then
+        return nil
+    end
+
+
+    local part =
+        Instance.new("Part")
+
+
+    part.Name =
+        tostring(
+            data.Name
+            or "Part"
+        )
+
+
+    part.Anchored = true
+
+    part.CanCollide =
+        not preview
+
+    part.Size =
+        Vector3.new(
+            4,
+            4,
+            4
+        )
+
+
+    if type(data.Size) ==
+        "table"
+
+        and
+        #data.Size >= 3
+    then
+
+        local x =
+            tonumber(
+                data.Size[1]
+            )
+
+        local y =
+            tonumber(
+                data.Size[2]
+            )
+
+        local z =
+            tonumber(
+                data.Size[3]
+            )
+
+
+        if x and y and z then
+
+            part.Size =
+                Vector3.new(
+
+                    math.clamp(
+                        x,
+                        0.1,
+                        1000
+                    ),
+
+                    math.clamp(
+                        y,
+                        0.1,
+                        1000
+                    ),
+
+                    math.clamp(
+                        z,
+                        0.1,
+                        1000
+                    )
+
+                )
+
+        end
+
+    end
+
+
+    local pos =
+        Vector3.zero
+
+
+    if type(data.Position) ==
+        "table"
+
+        and
+        #data.Position >= 3
+    then
+
+        local x =
+            tonumber(
+                data.Position[1]
+            )
+
+        local y =
+            tonumber(
+                data.Position[2]
+            )
+
+        local z =
+            tonumber(
+                data.Position[3]
+            )
+
+
+        if x and y and z then
+
+            pos =
+                Vector3.new(
+                    x,
+                    y,
+                    z
+                )
+
+        end
+
+    end
+
+
+    local rot =
+        Vector3.zero
+
+
+    if type(data.Rotation) ==
+        "table"
+
+        and
+        #data.Rotation >= 3
+    then
+
+        local x =
+            tonumber(
+                data.Rotation[1]
+            )
+
+        local y =
+            tonumber(
+                data.Rotation[2]
+            )
+
+        local z =
+            tonumber(
+                data.Rotation[3]
+            )
+
+
+        if x and y and z then
+
+            rot =
+                Vector3.new(
+                    x,
+                    y,
+                    z
+                )
+
+        end
+
+    end
+
+
+    part.CFrame =
+        CFrame.new(pos)
+        *
+        CFrame.Angles(
+
+            math.rad(rot.X),
+            math.rad(rot.Y),
+            math.rad(rot.Z)
+
+        )
+
+
+    part.Material =
+        MaterialFromName(
+            data.Material
+        )
+
+
+    if preview then
+
+        part.Transparency =
+            0.45
+
+        part.Color =
+            C.RED
+
+    else
+
+        part.Transparency =
+            0
+
+    end
+
+
+    part.Parent =
+        parent
+
+
+    if preview then
+
+        local highlight =
+            Instance.new("Highlight")
+
+        highlight.FillColor =
+            C.RED
+
+        highlight.FillTransparency =
+            0.75
+
+        highlight.OutlineColor =
+            C.WHITE
+
+        highlight.OutlineTransparency =
+            0
+
+        highlight.Parent =
+            part
+
+    end
+
+
+    return part
+
+end
+
+
+local function ValidateBuild(build)
+
+    if type(build) ~= "table" then
+
+        return false,
+            "Build phải là object."
+
+    end
+
+
+    if type(build.Parts) ~= "table" then
+
+        return false,
+            "Thiếu Parts."
+
+    end
+
+
+    if #build.Parts > 500 then
+
+        return false,
+            "Tối đa 500 Parts."
+
+    end
+
+
+    for i,part in ipairs(
+        build.Parts
+    ) do
+
+        if type(part) ~= "table" then
+
+            return false,
+                "Part "..i
+                .." không hợp lệ."
+
+        end
+
+
+        if type(part.Size) ~=
+            "table"
+
+            or
+            #part.Size < 3
+        then
+
+            return false,
+                "Part "..i
+                .." thiếu Size."
+
+        end
+
+
+        if type(part.Position) ~=
+            "table"
+
+            or
+            #part.Position < 3
+        then
+
+            return false,
+                "Part "..i
+                .." thiếu Position."
+
+        end
+
+    end
+
+
+    return true
+
+end
+
+
+local function PreviewBuild(build)
+
+    ClearPreview()
+
+
+    local root =
+        GetCharacterRoot()
+
+
+    if not root then
+
+        Notify(
+            "Không tìm thấy nhân vật."
+        )
+
+        return
+
+    end
+
+
+    local count = 0
+
+
+    for _,partData in ipairs(
+        build.Parts
+    ) do
+
+        MakeBuildPart(
+            partData,
+            PreviewFolder,
+            true
+        )
+
+        count += 1
+
+    end
+
+
+    local origin =
+        root.CFrame
+
+
+    for _,part in ipairs(
+        PreviewFolder:GetChildren()
+    ) do
+
+        if part:IsA("BasePart") then
+
+            part.CFrame =
+                origin
+                *
+                part.CFrame
+
+        end
+
+    end
+
+
+    Notify(
+        "Preview "
+        ..count
+        .." Parts."
+    )
+
+end
+
+
+local function BuildImported(build)
+
+    ClearPreview()
+
+
+    local root =
+        GetCharacterRoot()
+
+
+    if not root then
+
+        Notify(
+            "Không tìm thấy nhân vật."
+        )
+
+        return
+
+    end
+
+
+    local folder =
+        Instance.new("Folder")
+
+
+    folder.Name =
+        "MinhKhaImportedBuild"
+
+
+    folder.Parent =
+        Workspace
+
+
+    local origin =
+        root.CFrame
+
+
+    local count = 0
+
+
+    for _,partData in ipairs(
+        build.Parts
+    ) do
+
+        local part =
+            MakeBuildPart(
+                partData,
+                folder,
+                false
+            )
+
+
+        if part then
+
+            part.CFrame =
+                origin
+                *
+                part.CFrame
+
+            count += 1
+
+        end
+
+    end
+
+
+    Notify(
+        "Đã tạo "
+        ..count
+        .." Parts."
+    )
+
+
+    task.delay(
+        5,
+        function()
+
+            if folder
+            and
+            folder.Parent
+            then
+
+                folder:Destroy()
+
+            end
+
+        end
+    )
+
+end
+
+
+-- ============================================================
+-- PRESETS
+-- ============================================================
+
+local Presets = {
+
+    ["Big House"] = {
+
+        Name =
+            "Big House",
+
+        Parts = {
+
+            {
+                Name = "Floor",
+                Size = {
+                    20,1,20
+                },
+                Position = {
+                    0,0,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "BackWall",
+                Size = {
+                    20,8,1
+                },
+                Position = {
+                    0,4,-10
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "FrontWall",
+                Size = {
+                    20,8,1
+                },
+                Position = {
+                    0,4,10
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "LeftWall",
+                Size = {
+                    1,8,20
+                },
+                Position = {
+                    -10,4,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "RightWall",
+                Size = {
+                    1,8,20
+                },
+                Position = {
+                    10,4,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "Roof",
+                Size = {
+                    22,1,22
+                },
+                Position = {
+                    0,8,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            }
+
+        }
+
+    },
+
+
+    ["Small Base"] = {
+
+        Name =
+            "Small Base",
+
+        Parts = {
+
+            {
+                Name = "Floor",
+                Size = {
+                    14,1,14
+                },
+                Position = {
+                    0,0,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Concrete"
+            },
+
+            {
+                Name = "Wall1",
+                Size = {
+                    14,6,1
+                },
+                Position = {
+                    0,3,-7
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Concrete"
+            },
+
+            {
+                Name = "Wall2",
+                Size = {
+                    14,6,1
+                },
+                Position = {
+                    0,3,7
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Concrete"
+            },
+
+            {
+                Name = "Wall3",
+                Size = {
+                    1,6,14
+                },
+                Position = {
+                    -7,3,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Concrete"
+            },
+
+            {
+                Name = "Wall4",
+                Size = {
+                    1,6,14
+                },
+                Position = {
+                    7,3,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Concrete"
+            }
+
+        }
+
+    },
+
+
+    ["Strong Wall"] = {
+
+        Name =
+            "Strong Wall",
+
+        Parts = {
+
+            {
+                Name = "Wall",
+                Size = {
+                    25,10,2
+                },
+                Position = {
+                    0,5,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            }
+
+        }
+
+    },
+
+
+    ["Safe Zone"] = {
+
+        Name =
+            "Safe Zone",
+
+        Parts = {
+
+            {
+                Name = "Floor",
+                Size = {
+                    30,1,30
+                },
+                Position = {
+                    0,0,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Concrete"
+            },
+
+            {
+                Name = "WallA",
+                Size = {
+                    30,6,1
+                },
+                Position = {
+                    0,3,-15
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            },
+
+            {
+                Name = "WallB",
+                Size = {
+                    30,6,1
+                },
+                Position = {
+                    0,3,15
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            }
+
+        }
+
+    },
+
+
+    ["Watch Tower"] = {
+
+        Name =
+            "Watch Tower",
+
+        Parts = {
+
+            {
+                Name = "Base",
+                Size = {
+                    8,1,8
+                },
+                Position = {
+                    0,0,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "Tower",
+                Size = {
+                    5,15,5
+                },
+                Position = {
+                    0,7.5,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            },
+
+            {
+                Name = "Top",
+                Size = {
+                    10,1,10
+                },
+                Position = {
+                    0,15.5,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Wood"
+            }
+
+        }
+
+    },
+
+
+    ["Storage Depot"] = {
+
+        Name =
+            "Storage Depot",
+
+        Parts = {
+
+            {
+                Name = "Floor",
+                Size = {
+                    24,1,18
+                },
+                Position = {
+                    0,0,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            },
+
+            {
+                Name = "Back",
+                Size = {
+                    24,8,1
+                },
+                Position = {
+                    0,4,-9
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            },
+
+            {
+                Name = "Left",
+                Size = {
+                    1,8,18
+                },
+                Position = {
+                    -12,4,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            },
+
+            {
+                Name = "Right",
+                Size = {
+                    1,8,18
+                },
+                Position = {
+                    12,4,0
+                },
+                Rotation = {
+                    0,0,0
+                },
+                Material = "Metal"
+            }
+
+        }
+
+    }
+
+}
+
+
+for name,preset in pairs(
+    Presets
+) do
+
+    local button =
+        CreateButton(
+            BuildPage,
+            name,
+            40
+        )
+
+
+    button.MouseButton1Click:Connect(
+        function()
+
+            Config.SelectedBuildPreset =
+                name
+
+            buildStatus.Text =
+                "Selected: "
+                ..name
+
+            PreviewBuild(
+                preset
+            )
+
+            Notify(
+                "Đã chọn "
+                ..name
+            )
+
+        end
+    )
+
+end
+
+
+local buildPreviewButton =
+    CreateButton(
+        BuildPage,
+        "PREVIEW SELECTED BUILD",
+        42
+    )
+
+
+buildPreviewButton.MouseButton1Click:Connect(
+    function()
+
+        local build =
+            Presets[
+                Config.SelectedBuildPreset
+            ]
+
+
+        if not build then
+
+            Notify(
+                "Chưa chọn Build."
+            )
+
+            return
+
+        end
+
+
+        PreviewBuild(build)
+
+    end
+)
+
+
+local buildButton =
+    CreateButton(
+        BuildPage,
+        "BUILD SELECTED",
+        42
+    )
+
+
+buildButton.MouseButton1Click:Connect(
+    function()
+
+        local build =
+            Presets[
+                Config.SelectedBuildPreset
+            ]
+
+
+        if not build then
+
+            Notify(
+                "Chưa chọn Build."
+            )
+
+            return
+
+        end
+
+
+        BuildImported(build)
+
+    end
+)
+
+
+local clearPreviewButton =
+    CreateButton(
+        BuildPage,
+        "CLEAR PREVIEW",
+        42
+    )
+
+
+clearPreviewButton.MouseButton1Click:Connect(
+    function()
+
+        ClearPreview()
+
+        Notify(
+            "Đã xóa preview."
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- COMBAT
+-- ============================================================
+
+CreateToggle(
+    CombatPage,
+    "Kill Aura",
+    "Quản lý trạng thái combat.",
+    "KillAura"
+)
+
+
+CreateToggle(
+    CombatPage,
+    "Kill All GEFs",
+    "Trạng thái chức năng GEF.",
+    "KillAllGEFs"
+)
+
+
+CreateToggle(
+    CombatPage,
+    "Auto Buy",
+    "Quản lý trạng thái mua.",
+    "AutoBuy"
+)
+
+
+local combatInfo =
+    Instance.new("Frame")
+
+combatInfo.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        75
+    )
+
+combatInfo.BackgroundColor3 =
+    C.PANEL
+
+combatInfo.BorderSizePixel = 0
+
+combatInfo.Parent =
+    CombatPage
+
+Corner(combatInfo,8)
+
+Stroke(
+    combatInfo,
+    C.PANEL2,
+    1
+)
+
+
+local combatText =
+    CreateLabel(
+        combatInfo,
+        "GEF SYSTEM",
+        14,
+        UDim2.new(
+            0,
+            12,
+            0,
+            10
+        )
+    )
+
+combatText.Font =
+    Enum.Font.GothamBold
+
+combatText.TextColor3 =
+    C.RED
+
+
+local combatDesc =
+    CreateLabel(
+        combatInfo,
+        "Detector + ESP + Health + Distance + Alert.",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            36
+        )
+    )
+
+combatDesc.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- GEF FUNCTIONS
+-- ============================================================
+
+local GEFKeywords = {
+
+    "gef",
+    "monster",
+    "enemy",
+    "zombie",
+    "boss"
+
+}
+
+
+local function IsGEF(obj)
+
+    if not obj then
+        return false
+    end
+
+
+    if not obj:IsA("Model") then
+        return false
+    end
+
+
+    if obj ==
+        LocalPlayer.Character
+    then
+
+        return false
+
+    end
+
+
+    local name =
+        string.lower(
+            obj.Name
+        )
+
+
+    for _,keyword in ipairs(
+        GEFKeywords
+    ) do
+
+        if string.find(
+            name,
+            keyword,
+            1,
+            true
+        ) then
+
+            return true
+
+        end
+
+    end
+
+
+    return false
+
+end
+
+
+local function GetGEFRoot(gef)
+
+    if not gef then
+        return nil
+    end
+
+
+    return
+
+        gef:FindFirstChild(
+            "HumanoidRootPart"
+        )
+
+        or
+
+        gef.PrimaryPart
+
+        or
+
+        gef:FindFirstChildWhichIsA(
+            "BasePart",
+            true
+        )
+
+end
+
+
+local function GetGEFHumanoid(gef)
+
+    if not gef then
+        return nil
+    end
+
+
+    return
+        gef:FindFirstChildOfClass(
+            "Humanoid"
+        )
+
+end
+
+
+local function GetAllGEFs()
+
+    local result = {}
+
+
+    for _,obj in ipairs(
+        Workspace:GetDescendants()
+    ) do
+
+        if IsGEF(obj) then
+
+            table.insert(
+                result,
+                obj
+            )
+
+        end
+
+    end
+
+
+    return result
+
+end
+
+
+local function GetGEFDistance(gef)
+
+    local playerRoot =
+        GetCharacterRoot()
+
+
+    local gefRoot =
+        GetGEFRoot(gef)
+
+
+    if not playerRoot
+    or not gefRoot
+    then
+
+        return math.huge
+
+    end
+
+
+    return (
+        playerRoot.Position
+        -
+        gefRoot.Position
+    ).Magnitude
+
+end
+
+
+local function GetNearestGEF()
+
+    local nearest = nil
+
+    local nearestDistance =
+        math.huge
+
+
+    for _,gef in ipairs(
+        GetAllGEFs()
+    ) do
+
+        local distance =
+            GetGEFDistance(gef)
+
+
+        if distance <=
+            Config.GEFMaxDistance
+
+            and
+
+            distance <
+            nearestDistance
+        then
+
+            nearest =
+                gef
+
+            nearestDistance =
+                distance
+
+        end
+
+    end
+
+
+    return
+        nearest,
+        nearestDistance
+
+end
+
+
+-- ============================================================
+-- GEF ESP
+-- ============================================================
+
+local function RemoveGEFESP(gef)
+
+    local object =
+        GEFObjects[gef]
+
+
+    if object then
+
+        pcall(function()
+            object:Destroy()
+        end)
+
+        GEFObjects[gef] =
+            nil
+
+    end
+
+end
+
+
+local function ClearGEFESP()
+
+    for gef,object in pairs(
+        GEFObjects
+    ) do
+
+        pcall(function()
+
+            if object then
+                object:Destroy()
+            end
+
+        end)
+
+        GEFObjects[gef] =
+            nil
+
+    end
+
+end
+
+
+local function CreateGEFESP(gef)
+
+    if not gef then
+        return
+    end
+
+
+    if GEFObjects[gef] then
+        return
+    end
+
+
+    local root =
+        GetGEFRoot(gef)
+
+
+    if not root then
+        return
+    end
+
+
+    local container =
+        Instance.new("Folder")
+
+
+    container.Name =
+        "MK_GEF_ESP"
+
+
+    container.Parent =
+        Workspace
+
+
+    GEFObjects[gef] =
+        container
+
+
+    local highlight =
+        Instance.new("Highlight")
+
+
+    highlight.Name =
+        "GEFHighlight"
+
+
+    highlight.Adornee =
+        gef
+
+
+    highlight.DepthMode =
+        Enum.HighlightDepthMode.AlwaysOnTop
+
+
+    highlight.FillColor =
+        C.RED
+
+
+    highlight.FillTransparency =
+        0.65
+
+
+    highlight.OutlineColor =
+        C.WHITE
+
+
+    highlight.OutlineTransparency =
+        0
+
+
+    highlight.Parent =
+        container
+
+
+    local billboard =
+        Instance.new("BillboardGui")
+
+
+    billboard.Name =
+        "GEFInfo"
+
+
+    billboard.Adornee =
+        root
+
+
+    billboard.Size =
+        UDim2.new(
+            0,
+            190,
+            0,
+            75
+        )
+
+
+    billboard.StudsOffset =
+        Vector3.new(
+            0,
+            4,
+            0
+        )
+
+
+    billboard.AlwaysOnTop =
+        true
+
+
+    billboard.Parent =
+        container
+
+
+    local label =
+        Instance.new("TextLabel")
+
+
+    label.Size =
+        UDim2.new(
+            1,
+            0,
+            1,
+            0
+        )
+
+
+    label.BackgroundTransparency =
+        1
+
+
+    label.TextColor3 =
+        C.WHITE
+
+
+    label.TextStrokeTransparency =
+        0
+
+
+    label.Font =
+        Enum.Font.GothamBold
+
+
+    label.TextSize =
+        12
+
+
+    label.TextWrapped =
+        true
+
+
+    label.Parent =
+        billboard
+
+
+    local connection
+
+
+    connection =
+        RunService.RenderStepped:Connect(
+            function()
+
+                if not Config.GEFESP then
+
+                    connection:Disconnect()
+
+                    RemoveGEFESP(
+                        gef
+                    )
+
+                    return
+
+                end
+
+
+                if not gef
+                or not gef.Parent
+                then
+
+                    connection:Disconnect()
+
+                    RemoveGEFESP(
+                        gef
+                    )
+
+                    return
+
+                end
+
+
+                local currentRoot =
+                    GetGEFRoot(gef)
+
+
+                if not currentRoot then
+                    return
+                end
+
+
+                local distance =
+                    GetGEFDistance(
+                        gef
+                    )
+
+
+                if distance >
+                    Config.GEFMaxDistance
+                then
+
+                    container.Parent =
+                        nil
+
+                    return
+
+                end
+
+
+                if not container.Parent then
+
+                    container.Parent =
+                        Workspace
+
+                end
+
+
+                local text = ""
+
+
+                if Config.GEFName then
+
+                    text =
+                        text
+                        ..
+                        gef.Name
+
+                end
+
+
+                if Config.GEFHealth then
+
+                    local humanoid =
+                        GetGEFHumanoid(
+                            gef
+                        )
+
+
+                    if humanoid then
+
+                        text =
+                            text
+                            ..
+                            "\nHP: "
+                            ..
+                            math.floor(
+                                humanoid.Health
+                            )
+                            ..
+                            " / "
+                            ..
+                            math.floor(
+                                humanoid.MaxHealth
+                            )
+
+                    end
+
+                end
+
+
+                if Config.GEFDistance then
+
+                    text =
+                        text
+                        ..
+                        "\nDistance: "
+                        ..
+                        math.floor(
+                            distance
+                        )
+                        ..
+                        " studs"
+
+                end
+
+
+                label.Text =
+                    text
+
+            end
+        )
+
+end
+
+
+local function UpdateGEFESP()
+
+    if not Config.GEFESP then
+
+        ClearGEFESP()
+
+        return
+
+    end
+
+
+    local current = {}
+
+
+    for _,gef in ipairs(
+        GetAllGEFs()
+    ) do
+
+        current[gef] =
+            true
+
+
+        local distance =
+            GetGEFDistance(
+                gef
+            )
+
+
+        if distance <=
+            Config.GEFMaxDistance
+        then
+
+            CreateGEFESP(
+                gef
+            )
+
+        end
+
+    end
+
+
+    for gef in pairs(
+        GEFObjects
+    ) do
+
+        if not current[gef] then
+
+            RemoveGEFESP(
+                gef
+            )
+
+        end
+
+    end
+
+end
+
+
+local function UpdateGEFAlert()
+
+    if not Config.GEFAlert then
+        return
+    end
+
+
+    local current = {}
+
+
+    for _,gef in ipairs(
+        GetAllGEFs()
+    ) do
+
+        current[gef] =
+            true
+
+
+        if not KnownGEFs[gef] then
+
+            KnownGEFs[gef] =
+                true
+
+            Notify(
+                "GEF detected: "
+                ..
+                gef.Name
+            )
+
+        end
+
+    end
+
+
+    for gef in pairs(
+        KnownGEFs
+    ) do
+
+        if not current[gef] then
+
+            KnownGEFs[gef] =
+                nil
+
+        end
+
+    end
+
+end
+
+
+-- ============================================================
+-- GEF STATUS UI
+-- ============================================================
+
+local GEFStatus =
+    CreateLabel(
+        CombatPage,
+        "GEF Detector: OFF",
+        11,
+        UDim2.new()
+    )
+
+GEFStatus.TextColor3 =
+    C.GRAY
+
+
+local GEFCount =
+    CreateLabel(
+        CombatPage,
+        "GEF Count: 0",
+        11,
+        UDim2.new()
+    )
+
+GEFCount.TextColor3 =
+    C.GRAY
+
+
+local GEFNearest =
+    CreateLabel(
+        CombatPage,
+        "Nearest GEF: None",
+        11,
+        UDim2.new()
+    )
+
+GEFNearest.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- GEF DETECTOR TOGGLE
+-- ============================================================
+
+local gefDetectorHolder =
+    Instance.new("Frame")
+
+gefDetectorHolder.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        55
+    )
+
+gefDetectorHolder.BackgroundColor3 =
+    C.PANEL
+
+gefDetectorHolder.BorderSizePixel = 0
+
+gefDetectorHolder.Parent =
+    CombatPage
+
+Corner(
+    gefDetectorHolder,
+    8
+)
+
+Stroke(
+    gefDetectorHolder,
+    C.PANEL2,
+    1
+)
+
+
+local gefDetectorTitle =
+    CreateLabel(
+        gefDetectorHolder,
+        "GEF Detector",
+        13,
+        UDim2.new(
+            0,
+            12,
+            0,
+            7
+        )
+    )
+
+gefDetectorTitle.Font =
+    Enum.Font.GothamBold
+
+gefDetectorTitle.Size =
+    UDim2.new(
+        1,
+        -75,
+        0,
+        20
+    )
+
+
+local gefDetectorDesc =
+    CreateLabel(
+        gefDetectorHolder,
+        "Phát hiện GEF trên map.",
+        9,
+        UDim2.new(
+            0,
+            12,
+            0,
+            28
+        )
+    )
+
+gefDetectorDesc.TextColor3 =
+    C.GRAY
+
+gefDetectorDesc.Size =
+    UDim2.new(
+        1,
+        -75,
+        0,
+        18
+    )
+
+
+local gefDetectorButton =
+    Instance.new("TextButton")
+
+gefDetectorButton.Size =
+    UDim2.new(
+        0,
+        45,
+        0,
+        24
+    )
+
+gefDetectorButton.Position =
+    UDim2.new(
+        1,
+        -58,
+        0.5,
+        -12
+    )
+
+gefDetectorButton.BackgroundColor3 =
+    C.PANEL2
+
+gefDetectorButton.Text = ""
+
+gefDetectorButton.BorderSizePixel = 0
+
+gefDetectorButton.Parent =
+    gefDetectorHolder
+
+Corner(
+    gefDetectorButton,
+    12
+)
+
+
+local gefDetectorDot =
+    Instance.new("Frame")
+
+gefDetectorDot.Size =
+    UDim2.new(
+        0,
+        18,
+        0,
+        18
+    )
+
+gefDetectorDot.Position =
+    UDim2.new(
+        0,
+        3,
+        0.5,
+        -9
+    )
+
+gefDetectorDot.BackgroundColor3 =
+    C.WHITE
+
+gefDetectorDot.BorderSizePixel = 0
+
+gefDetectorDot.Parent =
+    gefDetectorButton
+
+Corner(
+    gefDetectorDot,
+    10
+)
+
+
+gefDetectorButton.MouseButton1Click:Connect(
+    function()
+
+        Config.GEFDetector =
+            not Config.GEFDetector
+
+
+        if Config.GEFDetector then
+
+            gefDetectorButton.BackgroundColor3 =
+                C.RED
+
+            gefDetectorDot.Position =
+                UDim2.new(
+                    1,
+                    -21,
+                    0.5,
+                    -9
+                )
+
+            GEFStatus.Text =
+                "GEF Detector: ON"
+
+            GEFStatus.TextColor3 =
+                C.GREEN
+
+        else
+
+            gefDetectorButton.BackgroundColor3 =
+                C.PANEL2
+
+            gefDetectorDot.Position =
+                UDim2.new(
+                    0,
+                    3,
+                    0.5,
+                    -9
+                )
+
+            GEFStatus.Text =
+                "GEF Detector: OFF"
+
+            GEFStatus.TextColor3 =
+                C.GRAY
+
+            ClearGEFESP()
+
+            table.clear(
+                KnownGEFs
+            )
+
+        end
+
+    end
+)
+
+
+-- ============================================================
+-- GEF ESP TOGGLE
+-- ============================================================
+
+local gefESPHolder =
+    Instance.new("Frame")
+
+gefESPHolder.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        55
+    )
+
+gefESPHolder.BackgroundColor3 =
+    C.PANEL
+
+gefESPHolder.BorderSizePixel = 0
+
+gefESPHolder.Parent =
+    CombatPage
+
+Corner(
+    gefESPHolder,
+    8
+)
+
+Stroke(
+    gefESPHolder,
+    C.PANEL2,
+    1
+)
+
+
+local gefESPTitle =
+    CreateLabel(
+        gefESPHolder,
+        "GEF ESP",
+        13,
+        UDim2.new(
+            0,
+            12,
+            0,
+            7
+        )
+    )
+
+gefESPTitle.Font =
+    Enum.Font.GothamBold
+
+gefESPTitle.Size =
+    UDim2.new(
+        1,
+        -75,
+        0,
+        20
+    )
+
+
+local gefESPDesc =
+    CreateLabel(
+        gefESPHolder,
+        "Highlight + Name + HP + Distance.",
+        9,
+        UDim2.new(
+            0,
+            12,
+            0,
+            28
+        )
+    )
+
+gefESPDesc.TextColor3 =
+    C.GRAY
+
+gefESPDesc.Size =
+    UDim2.new(
+        1,
+        -75,
+        0,
+        18
+    )
+
+
+local gefESPButton =
+    Instance.new("TextButton")
+
+gefESPButton.Size =
+    UDim2.new(
+        0,
+        45,
+        0,
+        24
+    )
+
+gefESPButton.Position =
+    UDim2.new(
+        1,
+        -58,
+        0.5,
+        -12
+    )
+
+gefESPButton.BackgroundColor3 =
+    C.PANEL2
+
+gefESPButton.Text = ""
+
+gefESPButton.BorderSizePixel = 0
+
+gefESPButton.Parent =
+    gefESPHolder
+
+Corner(
+    gefESPButton,
+    12
+)
+
+
+local gefESPdot =
+    Instance.new("Frame")
+
+gefESPdot.Size =
+    UDim2.new(
+        0,
+        18,
+        0,
+        18
+    )
+
+gefESPdot.Position =
+    UDim2.new(
+        0,
+        3,
+        0.5,
+        -9
+    )
+
+gefESPdot.BackgroundColor3 =
+    C.WHITE
+
+gefESPdot.BorderSizePixel = 0
+
+gefESPdot.Parent =
+    gefESPButton
+
+Corner(
+    gefESPdot,
+    10
+)
+
+
+gefESPButton.MouseButton1Click:Connect(
+    function()
+
+        Config.GEFESP =
+            not Config.GEFESP
+
+
+        if Config.GEFESP then
+
+            gefESPButton.BackgroundColor3 =
+                C.RED
+
+            gefESPdot.Position =
+                UDim2.new(
+                    1,
+                    -21,
+                    0.5,
+                    -9
+                )
+
+        else
+
+            gefESPButton.BackgroundColor3 =
+                C.PANEL2
+
+            gefESPdot.Position =
+                UDim2.new(
+                    0,
+                    3,
+                    0.5,
+                    -9
+                )
+
+            ClearGEFESP()
+
+        end
+
+    end
+)
+
+
+-- ============================================================
+-- GEF ALERT
+-- ============================================================
+
+local gefAlertHolder =
+    Instance.new("Frame")
+
+gefAlertHolder.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        55
+    )
+
+gefAlertHolder.BackgroundColor3 =
+    C.PANEL
+
+gefAlertHolder.BorderSizePixel = 0
+
+gefAlertHolder.Parent =
+    CombatPage
+
+Corner(
+    gefAlertHolder,
+    8
+)
+
+Stroke(
+    gefAlertHolder,
+    C.PANEL2,
+    1
+)
+
+
+local gefAlertTitle =
+    CreateLabel(
+        gefAlertHolder,
+        "GEF Alert",
+        13,
+        UDim2.new(
+            0,
+            12,
+            0,
+            7
+        )
+    )
+
+gefAlertTitle.Font =
+    Enum.Font.GothamBold
+
+gefAlertTitle.Size =
+    UDim2.new(
+        1,
+        -75,
+        0,
+        20
+    )
+
+
+local gefAlertDesc =
+    CreateLabel(
+        gefAlertHolder,
+        "Thông báo khi GEF mới xuất hiện.",
+        9,
+        UDim2.new(
+            0,
+            12,
+            0,
+            28
+        )
+    )
+
+gefAlertDesc.TextColor3 =
+    C.GRAY
+
+gefAlertDesc.Size =
+    UDim2.new(
+        1,
+        -75,
+        0,
+        18
+    )
+
+
+local gefAlertButton =
+    Instance.new("TextButton")
+
+gefAlertButton.Size =
+    UDim2.new(
+        0,
+        45,
+        0,
+        24
+    )
+
+gefAlertButton.Position =
+    UDim2.new(
+        1,
+        -58,
+        0.5,
+        -12
+    )
+
+gefAlertButton.BackgroundColor3 =
+    C.PANEL2
+
+gefAlertButton.Text = ""
+
+gefAlertButton.BorderSizePixel = 0
+
+gefAlertButton.Parent =
+    gefAlertHolder
+
+Corner(
+    gefAlertButton,
+    12
+)
+
+
+local gefAlertDot =
+    Instance.new("Frame")
+
+gefAlertDot.Size =
+    UDim2.new(
+        0,
+        18,
+        0,
+        18
+    )
+
+gefAlertDot.Position =
+    UDim2.new(
+        0,
+        3,
+        0.5,
+        -9
+    )
+
+gefAlertDot.BackgroundColor3 =
+    C.WHITE
+
+gefAlertDot.BorderSizePixel = 0
+
+gefAlertDot.Parent =
+    gefAlertButton
+
+Corner(
+    gefAlertDot,
+    10
+)
+
+
+gefAlertButton.MouseButton1Click:Connect(
+    function()
+
+        Config.GEFAlert =
+            not Config.GEFAlert
+
+
+        if Config.GEFAlert then
+
+            gefAlertButton.BackgroundColor3 =
+                C.RED
+
+            gefAlertDot.Position =
+                UDim2.new(
+                    1,
+                    -21,
+                    0.5,
+                    -9
+                )
+
+        else
+
+            gefAlertButton.BackgroundColor3 =
+                C.PANEL2
+
+            gefAlertDot.Position =
+                UDim2.new(
+                    0,
+                    3,
+                    0.5,
+                    -9
+                )
+
+        end
+
+    end
+)
+
+
+-- ============================================================
+-- GEF UPDATE LOOP
+-- ============================================================
+
+Connections.GEF =
+    RunService.Heartbeat:Connect(
+        function()
+
+            if not ScreenGui.Parent then
+                return
+            end
+
+
+            if Config.GEFDetector then
+
+                local geffs =
+                    GetAllGEFs()
+
+
+                local count = 0
+
+
+                for _,gef in ipairs(
+                    geffs
+                ) do
+
+                    if GetGEFDistance(
+                        gef
+                    )
+                    <=
+                    Config.GEFMaxDistance
+                    then
+
+                        count += 1
+
+                    end
+
+                end
+
+
+                GEFCount.Text =
+                    "GEF Count: "
+                    ..count
+
+
+                local nearest,distance =
+                    GetNearestGEF()
+
+
+                if nearest then
+
+                    GEFNearest.Text =
+                        "Nearest GEF: "
+                        ..
+                        nearest.Name
+                        ..
+                        " • "
+                        ..
+                        math.floor(
+                            distance
+                        )
+                        ..
+                        " studs"
+
+                    GEFNearest.TextColor3 =
+                        C.WHITE
+
+                else
+
+                    GEFNearest.Text =
+                        "Nearest GEF: None"
+
+                    GEFNearest.TextColor3 =
+                        C.GRAY
+
+                end
+
+
+                UpdateGEFAlert()
+
+            else
+
+                GEFCount.Text =
+                    "GEF Count: 0"
+
+                GEFNearest.Text =
+                    "Nearest GEF: None"
+
+            end
+
+
+            if Config.GEFESP then
+
+                UpdateGEFESP()
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- BRING ITEM
+-- ============================================================
+
+CreateToggle(
+    BringPage,
+    "Bring Item",
+    "Quản lý trạng thái item.",
+    "BringItem"
+)
+
+
+local bringInfo =
+    Instance.new("Frame")
+
+bringInfo.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        100
+    )
+
+bringInfo.BackgroundColor3 =
+    C.PANEL
+
+bringInfo.BorderSizePixel = 0
+
+bringInfo.Parent =
+    BringPage
+
+Corner(
+    bringInfo,
+    8
+)
+
+Stroke(
+    bringInfo,
+    C.PANEL2,
+    1
+)
+
+
+local bringTitle =
+    CreateLabel(
+        bringInfo,
+        "BRING ITEM",
+        14,
+        UDim2.new(
+            0,
+            12,
+            0,
+            10
+        )
+    )
+
+bringTitle.Font =
+    Enum.Font.GothamBold
+
+bringTitle.TextColor3 =
+    C.RED
+
+
+local bringDesc =
+    CreateLabel(
+        bringInfo,
+        "Kết nối hệ thống item hợp lệ của game tại đây.",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            38
+        )
+    )
+
+bringDesc.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- PLAYERS
+-- ============================================================
+
+CreateToggle(
+    PlayersPage,
+    "God Mode",
+    "Health setting.",
+    "GodMode"
+)
+
+
+CreateToggle(
+    PlayersPage,
+    "Infinite Stamina",
+    "Stamina setting.",
+    "InfiniteStamina"
+)
+
+
+CreateToggle(
+    PlayersPage,
+    "Speed",
+    "Movement setting.",
+    "SpeedHack"
+)
+
+
+CreateToggle(
+    PlayersPage,
+    "Jump",
+    "Jump setting.",
+    "JumpHack"
+)
+
+
+CreateToggle(
+    PlayersPage,
+    "Noclip",
+    "Collision setting.",
+    "Noclip"
+)
+
+
+CreateToggle(
+    PlayersPage,
+    "Fly",
+    "Flight setting.",
+    "Fly"
+)
+
+
+-- ============================================================
+-- TELEPORTS
+-- ============================================================
+
+local TeleportPoints = {
+
+    ["Spawn"] =
+        Vector3.new(
+            0,
+            10,
+            0
+        ),
+
+    ["Center Map"] =
+        Vector3.new(
+            150,
+            10,
+            150
+        ),
+
+    ["High Mountain"] =
+        Vector3.new(
+            0,
+            250,
+            0
+        ),
+
+    ["Secret Area"] =
+        Vector3.new(
+            -300,
+            20,
+            300
+        )
+
+}
+
+
+for name,pos in pairs(
+    TeleportPoints
+) do
+
+    local button =
+        CreateButton(
+            TeleportPage,
+
+            name
+            ..
+            " • "
+            ..
+            math.floor(pos.X)
+            ..
+            ", "
+            ..
+            math.floor(pos.Y)
+            ..
+            ", "
+            ..
+            math.floor(pos.Z),
+
+            42
+        )
+
+
+    button.MouseButton1Click:Connect(
+        function()
+
+            local root =
+                GetCharacterRoot()
+
+
+            if root then
+
+                root.CFrame =
+                    CFrame.new(pos)
+
+                Notify(
+                    "Teleported: "
+                    ..name
+                )
+
+            end
+
+        end
+    )
+
+end
+
+
+-- ============================================================
+-- PLAYER ESP
+-- ============================================================
+
+CreateToggle(
+    ESPPage,
+    "ESP Box",
+    "Player highlight.",
+    "ESPBox"
+)
+
+
+CreateToggle(
+    ESPPage,
+    "ESP Name",
+    "Player name display.",
+    "ESPName"
+)
+
+
+CreateToggle(
+    ESPPage,
+    "ESP Health",
+    "Player health display.",
+    "ESPHealth"
+)
+
+
+local function ClearESP()
+
+    for _,obj in pairs(
+        ESPObjects
+    ) do
+
+        if obj
+        and
+        obj.Parent
+        then
+
+            obj:Destroy()
+
+        end
+
+    end
+
+
+    table.clear(
+        ESPObjects
+    )
+
+end
+
+
+local function UpdateESP()
+
+    ClearESP()
+
+
+    if not Config.ESPBox then
+        return
+    end
+
+
+    for _,player in ipairs(
+        Players:GetPlayers()
+    ) do
+
+        if player ~=
+            LocalPlayer
+        then
+
+            local char =
+                player.Character
+
+
+            if char then
+
+                local highlight =
+                    Instance.new(
+                        "Highlight"
+                    )
+
+                highlight.Name =
+                    "MK_ESP_Highlight"
+
+                highlight.FillColor =
+                    C.RED
+
+                highlight.FillTransparency =
+                    0.8
+
+                highlight.OutlineColor =
+                    C.RED
+
+                highlight.OutlineTransparency =
+                    0
+
+                highlight.Adornee =
+                    char
+
+                highlight.Parent =
+                    char
+
+
+                table.insert(
+                    ESPObjects,
+                    highlight
+                )
+
+            end
+
+        end
+
+    end
+
+end
+
+
+Connections.PlayerESP =
+    RunService.Heartbeat:Connect(
+        function()
+
+            if not ScreenGui.Parent then
+                return
+            end
+
+
+            if Config.ESPBox then
+
+                UpdateESP()
+
+            else
+
+                ClearESP()
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- MISC
+-- ============================================================
+
+CreateToggle(
+    MiscPage,
+    "Fullbright",
+    "Lighting setting.",
+    "Fullbright"
+)
+
+
+local restoreLight =
+    CreateButton(
+        MiscPage,
+        "RESTORE LIGHTING",
+        42
+    )
+
+
+restoreLight.MouseButton1Click:Connect(
+    function()
+
+        Lighting.Brightness =
+            OriginalLighting.Brightness
+
+        Lighting.ClockTime =
+            OriginalLighting.ClockTime
+
+        Lighting.GlobalShadows =
+            OriginalLighting.GlobalShadows
+
+        Lighting.FogEnd =
+            OriginalLighting.FogEnd
+
+
+        Config.Fullbright =
+            false
+
+
+        Notify(
+            "Lighting restored."
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- SETTINGS
+-- ============================================================
+
+local settingsInfo =
+    Instance.new("Frame")
+
+settingsInfo.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        70
+    )
+
+settingsInfo.BackgroundColor3 =
+    C.PANEL
+
+settingsInfo.BorderSizePixel = 0
+
+settingsInfo.Parent =
+    SettingsPage
+
+Corner(
+    settingsInfo,
+    8
+)
+
+Stroke(
+    settingsInfo,
+    C.PANEL2,
+    1
+)
+
+
+local settingsTitle =
+    CreateLabel(
+        settingsInfo,
+        "SPECIAL BUILD CODE",
+        14,
+        UDim2.new(
+            0,
+            12,
+            0,
+            10
+        )
+    )
+
+settingsTitle.Font =
+    Enum.Font.GothamBold
+
+settingsTitle.TextColor3 =
+    C.RED
+
+
+local settingsDesc =
+    CreateLabel(
+        settingsInfo,
+        "Nhập JSON Build Code để đưa vào Build.",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            36
+        )
+    )
+
+settingsDesc.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- CODE BOX
+-- ============================================================
+
+local CodeBox =
+    Instance.new("TextBox")
+
+CodeBox.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        145
+    )
+
+CodeBox.BackgroundColor3 =
+    C.PANEL
+
+CodeBox.BorderSizePixel = 0
+
+CodeBox.TextColor3 =
+    C.WHITE
+
+CodeBox.PlaceholderColor3 =
+    C.GRAY
+
+CodeBox.PlaceholderText =
+    "Dán Build Code JSON vào đây..."
+
+CodeBox.Text =
+    ""
+
+CodeBox.TextSize = 10
+
+CodeBox.Font =
+    Enum.Font.Code
+
+CodeBox.TextXAlignment =
+    Enum.TextXAlignment.Left
+
+CodeBox.TextYAlignment =
+    Enum.TextYAlignment.Top
+
+CodeBox.MultiLine =
+    true
+
+CodeBox.ClearTextOnFocus =
+    false
+
+CodeBox.Parent =
+    SettingsPage
+
+Corner(
+    CodeBox,
+    8
+)
+
+Stroke(
+    CodeBox,
+    C.PANEL2,
+    1
+)
+
+Padding(
+    CodeBox,
+    10
+)
+
+
+-- ============================================================
+-- SAMPLE BUILD
+-- ============================================================
+
+local SampleBuildCode = [[
+{
+    "Name":"My House",
+    "Parts":[
+        {
+            "Name":"Floor",
+            "Size":[20,1,20],
+            "Position":[0,0,0],
+            "Rotation":[0,0,0],
+            "Material":"Wood"
+        },
+        {
+            "Name":"BackWall",
+            "Size":[20,8,1],
+            "Position":[0,4,-10],
+            "Rotation":[0,0,0],
+            "Material":"Wood"
+        },
+        {
+            "Name":"FrontWall",
+            "Size":[20,8,1],
+            "Position":[0,4,10],
+            "Rotation":[0,0,0],
+            "Material":"Wood"
+        },
+        {
+            "Name":"LeftWall",
+            "Size":[1,8,20],
+            "Position":[-10,4,0],
+            "Rotation":[0,0,0],
+            "Material":"Wood"
+        },
+        {
+            "Name":"RightWall",
+            "Size":[1,8,20],
+            "Position":[10,4,0],
+            "Rotation":[0,0,0],
+            "Material":"Wood"
+        },
+        {
+            "Name":"Roof",
+            "Size":[22,1,22],
+            "Position":[0,8,0],
+            "Rotation":[0,0,0],
+            "Material":"Wood"
+        }
+    ]
+}
+]]
+
+
+local function DecodeBuildCode(text)
+
+    if type(text) ~=
+        "string"
+    then
+
+        return nil,
+            "Code không hợp lệ."
+
+    end
+
+
+    if #text >
+        100000
+    then
+
+        return nil,
+            "Build Code quá dài."
+
+    end
+
+
+    if text:gsub(
+        "%s",
+        ""
+    ) == ""
+    then
+
+        return nil,
+            "Build Code đang trống."
+
+    end
+
+
+    local ok,data =
+        pcall(
+            function()
+
+                return
+                    HttpService:JSONDecode(
+                        text
+                    )
+
+            end
+        )
+
+
+    if not ok then
+
+        return nil,
+            "JSON không hợp lệ."
+
+    end
+
+
+    local valid,errorMessage =
+        ValidateBuild(data)
+
+
+    if not valid then
+
+        return nil,
+            errorMessage
+
+    end
+
+
+    return data
+
+end
+
+
+-- ============================================================
+-- UPDATE BUILD
+-- ============================================================
+
+local updateBuild =
+    CreateButton(
+        SettingsPage,
+        "UPDATE BUILD",
+        42
+    )
+
+
+updateBuild.MouseButton1Click:Connect(
+    function()
+
+        local build,errorMessage =
+            DecodeBuildCode(
+                CodeBox.Text
+            )
+
+
+        if not build then
+
+            Notify(
+                errorMessage
+            )
+
+            return
+
+        end
+
+
+        Config.ImportedBuild =
+            build
+
+        Config.ImportedBuildCode =
+            CodeBox.Text
+
+
+        buildStatus.Text =
+            "Imported: "
+            ..
+            tostring(
+                build.Name
+                or
+                "Unnamed"
+            )
+
+
+        Notify(
+            "Build updated: "
+            ..
+            tostring(
+                build.Name
+                or
+                "Unnamed"
+            )
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- PREVIEW IMPORTED
+-- ============================================================
+
+local previewImported =
+    CreateButton(
+        SettingsPage,
+        "PREVIEW IMPORTED BUILD",
+        42
+    )
+
+
+previewImported.MouseButton1Click:Connect(
+    function()
+
+        if not Config.ImportedBuild then
+
+            local build,errorMessage =
+                DecodeBuildCode(
+                    CodeBox.Text
+                )
+
+
+            if not build then
+
+                Notify(
+                    errorMessage
+                )
+
+                return
+
+            end
+
+
+            Config.ImportedBuild =
+                build
+
+        end
+
+
+        PreviewBuild(
+            Config.ImportedBuild
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- BUILD IMPORTED
+-- ============================================================
+
+local buildImported =
+    CreateButton(
+        SettingsPage,
+        "BUILD IMPORTED",
+        42
+    )
+
+
+buildImported.MouseButton1Click:Connect(
+    function()
+
+        if not Config.ImportedBuild then
+
+            local build,errorMessage =
+                DecodeBuildCode(
+                    CodeBox.Text
+                )
+
+
+            if not build then
+
+                Notify(
+                    errorMessage
+                )
+
+                return
+
+            end
+
+
+            Config.ImportedBuild =
+                build
+
+        end
+
+
+        BuildImported(
+            Config.ImportedBuild
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- CLEAR BUILD CODE
+-- ============================================================
+
+local clearCode =
+    CreateButton(
+        SettingsPage,
+        "CLEAR BUILD CODE",
+        42
+    )
+
+
+clearCode.MouseButton1Click:Connect(
+    function()
+
+        CodeBox.Text =
+            ""
+
+        Config.ImportedBuild =
+            nil
+
+        Config.ImportedBuildCode =
+            ""
+
+        ClearPreview()
+
+        buildStatus.Text =
+            "Imported: None"
+
+        Notify(
+            "Đã xóa Build Code."
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- LOAD SAMPLE
+-- ============================================================
+
+local loadSample =
+    CreateButton(
+        SettingsPage,
+        "LOAD SAMPLE BUILD CODE",
+        42
+    )
+
+
+loadSample.MouseButton1Click:Connect(
+    function()
+
+        CodeBox.Text =
+            SampleBuildCode
+
+        Notify(
+            "Đã nạp Sample Build Code."
+        )
+
+    end
+)
+
+
+-- ============================================================
+-- FORMAT INFO
+-- ============================================================
+
+local formatInfo =
+    Instance.new("Frame")
+
+formatInfo.Size =
+    UDim2.new(
+        1,
+        -10,
+        0,
+        105
+    )
+
+formatInfo.BackgroundColor3 =
+    C.PANEL
+
+formatInfo.BorderSizePixel = 0
+
+formatInfo.Parent =
+    SettingsPage
+
+Corner(
+    formatInfo,
+    8
+)
+
+Stroke(
+    formatInfo,
+    C.PANEL2,
+    1
+)
+
+
+local formatTitle =
+    CreateLabel(
+        formatInfo,
+        "BUILD CODE FORMAT",
+        13,
+        UDim2.new(
+            0,
+            12,
+            0,
+            10
+        )
+    )
+
+formatTitle.Font =
+    Enum.Font.GothamBold
+
+formatTitle.TextColor3 =
+    C.RED
+
+
+local formatText =
+    CreateLabel(
+        formatInfo,
+        "Name + Parts + Size + Position + Rotation + Material",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            38
+        )
+    )
+
+formatText.TextColor3 =
+    C.GRAY
+
+
+local formatText2 =
+    CreateLabel(
+        formatInfo,
+        "Build Code chỉ là dữ liệu JSON, không chạy Lua.",
+        10,
+        UDim2.new(
+            0,
+            12,
+            0,
+            62
+        )
+    )
+
+formatText2.TextColor3 =
+    C.GRAY
+
+
+-- ============================================================
+-- PLAYER LOGIC
+-- ============================================================
+
+local function GetCharacter()
+
+    return LocalPlayer.Character
+
+end
+
+
+-- ============================================================
+-- GOD MODE
+-- ============================================================
+
+Connections.GodMode =
+    RunService.Heartbeat:Connect(
+        function()
+
+            if not Config.GodMode then
+                return
+            end
+
+
+            local char =
+                GetCharacter()
+
+
+            if not char then
+                return
+            end
+
+
+            local hum =
+                char:FindFirstChildOfClass(
+                    "Humanoid"
+                )
+
+
+            if hum then
+
+                hum.Health =
+                    hum.MaxHealth
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- STAMINA
+-- ============================================================
+
+Connections.Stamina =
+    RunService.Heartbeat:Connect(
+        function()
+
+            if not Config.InfiniteStamina then
+                return
+            end
+
+
+            local char =
+                GetCharacter()
+
+
+            if not char then
+                return
+            end
+
+
+            local stamina =
+                char:FindFirstChild(
+                    "Stamina"
+                )
+
+
+            if stamina
+            and
+            stamina:IsA(
+                "NumberValue"
+            )
+            then
+
+                stamina.Value =
+                    100
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- SPEED
+-- ============================================================
+
+Connections.Speed =
+    RunService.Heartbeat:Connect(
+        function()
+
+            local char =
+                GetCharacter()
+
+
+            if not char then
+                return
+            end
+
+
+            local hum =
+                char:FindFirstChildOfClass(
+                    "Humanoid"
+                )
+
+
+            if not hum then
+                return
+            end
+
+
+            if Config.SpeedHack then
+
+                hum.WalkSpeed =
+                    35
+
+            else
+
+                hum.WalkSpeed =
+                    16
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- JUMP
+-- ============================================================
+
+Connections.Jump =
+    RunService.Heartbeat:Connect(
+        function()
+
+            local char =
+                GetCharacter()
+
+
+            if not char then
+                return
+            end
+
+
+            local hum =
+                char:FindFirstChildOfClass(
+                    "Humanoid"
+                )
+
+
+            if not hum then
+                return
+            end
+
+
+            if Config.JumpHack then
+
+                hum.JumpPower =
+                    70
+
+            else
+
+                hum.JumpPower =
+                    50
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- NOCLIP
+-- ============================================================
+
+Connections.Noclip =
+    RunService.Stepped:Connect(
+        function()
+
+            local char =
+                GetCharacter()
+
+
+            if not char then
+                return
+            end
+
+
+            if Config.Noclip then
+
+                for _,obj in ipairs(
+                    char:GetDescendants()
+                ) do
+
+                    if obj:IsA(
+                        "BasePart"
+                    ) then
+
+                        if OriginalCollision[obj]
+                            == nil
+                        then
+
+                            OriginalCollision[obj] =
+                                obj.CanCollide
+
+                        end
+
+
+                        obj.CanCollide =
+                            false
+
+                    end
+
+                end
+
+            else
+
+                for obj,oldValue in pairs(
+                    OriginalCollision
+                ) do
+
+                    if obj
+                    and
+                    obj.Parent
+                    then
+
+                        obj.CanCollide =
+                            oldValue
+
+                    end
+
+
+                    OriginalCollision[obj] =
+                        nil
+
+                end
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- FULLBRIGHT
+-- ============================================================
+
+Connections.Fullbright =
+    RunService.Heartbeat:Connect(
+        function()
+
+            if not Config.Fullbright then
+                return
+            end
+
+
+            Lighting.Brightness =
+                2
+
+            Lighting.ClockTime =
+                14
+
+            Lighting.GlobalShadows =
+                false
+
+            Lighting.FogEnd =
+                100000
+
+        end
+    )
+
+
+-- ============================================================
+-- INFINITE JUMP
+-- ============================================================
+
+Connections.InfiniteJump =
+    UIS.JumpRequest:Connect(
+        function()
+
+            if not Config.JumpHack then
+                return
+            end
+
+
+            local char =
+                GetCharacter()
+
+
+            if not char then
+                return
+            end
+
+
+            local hum =
+                char:FindFirstChildOfClass(
+                    "Humanoid"
+                )
+
+
+            if hum then
+
+                hum:ChangeState(
+                    Enum.HumanoidStateType.Jumping
+                )
+
+            end
+
+        end
+    )
+
+
+-- ============================================================
+-- CLOSE CONFIRM
+-- ============================================================
+
+local CloseConfirm =
+    Instance.new("Frame")
+
+CloseConfirm.Size =
+    UDim2.new(
+        0,
+        300,
+        0,
+        150
+    )
+
+CloseConfirm.Position =
+    UDim2.new(
+        0.5,
+        -150,
+        0.5,
+        -75
+    )
+
+CloseConfirm.BackgroundColor3 =
+    C.PANEL
+
+CloseConfirm.BorderSizePixel = 0
+
+CloseConfirm.Visible =
+    false
+
+CloseConfirm.ZIndex =
+    100
+
+CloseConfirm.Parent =
+    ScreenGui
+
+Corner(
+    CloseConfirm,
+    10
+)
+
+Stroke(
+    CloseConfirm,
+    C.RED,
+    1
+)
+
+
+local closeTitle =
+    CreateLabel(
+        CloseConfirm,
+        "CLOSE MENU?",
+        16,
+        UDim2.new(
+            0,
+            15,
+            0,
+            15
+        )
+    )
+
+closeTitle.Font =
+    Enum.Font.GothamBold
+
+closeTitle.TextColor3 =
+    C.RED
+
+closeTitle.ZIndex =
+    101
+
+
+local closeDesc =
+    CreateLabel(
+        CloseConfirm,
+        "Bạn có chắc muốn đóng menu?",
+        11,
+        UDim2.new(
+            0,
+            15,
+            0,
+            48
+        )
+    )
+
+closeDesc.TextColor3 =
+    C.GRAY
+
+closeDesc.ZIndex =
+    101
+
+
+local yesClose =
+    CreateButton(
+        CloseConfirm,
+        "YES",
+        35
+    )
+
+yesClose.Size =
+    UDim2.new(
+        0.43,
+        0,
+        0,
+        35
+    )
+
+yesClose.Position =
+    UDim2.new(
+        0.05,
+        0,
+        1,
+        -48
+    )
+
+yesClose.ZIndex =
+    101
+
+
+local noClose =
+    CreateButton(
+        CloseConfirm,
+        "NO",
+        35
+    )
+
+noClose.Size =
+    UDim2.new(
+        0.43,
+        0,
+        0,
+        35
+    )
+
+noClose.Position =
+    UDim2.new(
+        0.52,
+        0,
+        1,
+        -48
+    )
+
+noClose.ZIndex =
+    101
+
+
+CloseButton.MouseButton1Click:Connect(
+    function()
+
+        CloseConfirm.Visible =
+            true
+
+    end
+)
+
+
+noClose.MouseButton1Click:Connect(
+    function()
+
+        CloseConfirm.Visible =
+            false
+
+    end
+)
+
+
+yesClose.MouseButton1Click:Connect(
+    function()
+
+        Config.MenuVisible =
+            false
+
+
+        ClearESP()
+
+        ClearGEFESP()
+
+        ClearPreview()
+
+
+        for name in pairs(
+            Connections
+        ) do
+
+            Disconnect(name)
+
+        end
+
+
+        Lighting.Brightness =
+            OriginalLighting.Brightness
+
+        Lighting.ClockTime =
+            OriginalLighting.ClockTime
+
+        Lighting.GlobalShadows =
+            OriginalLighting.GlobalShadows
+
+        Lighting.FogEnd =
+            OriginalLighting.FogEnd
+
+
+        for obj,oldValue in pairs(
+            OriginalCollision
+        ) do
+
+            if obj
+            and
+            obj.Parent
+            then
+
+                obj.CanCollide =
+                    oldValue
+
+            end
+
+        end
+
+
+        table.clear(
+            OriginalCollision
+        )
+
+
+        ScreenGui:Destroy()
+
+    end
+)
+
+
+-- ============================================================
+-- MINIMIZE
+-- ============================================================
+
+MinButton.MouseButton1Click:Connect(
+    function()
+
+        Config.MenuVisible =
+            false
+
+        MainFrame.Visible =
+            false
+
+    end
+)
+
+
+Floating.MouseButton1Click:Connect(
+    function()
+
+        Config.MenuVisible =
+            not Config.MenuVisible
+
+        MainFrame.Visible =
+            Config.MenuVisible
+
+    end
+)
+
+
+-- ============================================================
+-- CHARACTER RESPAWN
+-- ============================================================
+
+LocalPlayer.CharacterAdded:Connect(
+    function()
+
+        task.wait(1)
+
+        ClearESP()
+
+        ClearGEFESP()
+
+        if Config.ESPBox then
+            UpdateESP()
+        end
+
+    end
+)
+
+
+-- ============================================================
+-- DEFAULT PAGE
+-- ============================================================
+
+for _,page in pairs(
+    Pages
+) do
+
+    page.Visible =
+        false
+
+end
+
+
+Pages["Main"].Visible =
+    true
+
+
+if NavButtons["Main"] then
+
+    NavButtons["Main"].BackgroundColor3 =
+        C.DARK_RED
+
+    NavButtons["Main"].TextColor3 =
+        C.WHITE
+
+end
+
+
+-- ============================================================
+-- GEF API
+-- ============================================================
+
+_G.MINH_KHA_GEF = {
+
+    IsGEF =
+        IsGEF,
+
+    GetAll =
+        GetAllGEFs,
+
+    GetRoot =
+        GetGEFRoot,
+
+    GetHumanoid =
+        GetGEFHumanoid,
+
+    GetDistance =
+        GetGEFDistance,
+
+    GetNearest =
+        GetNearestGEF,
+
+    ClearESP =
+        ClearGEFESP,
+
+    Config =
+        Config
+
+}
+
+
+-- ============================================================
+-- FINAL
+-- ============================================================
+
+Notify(
+    "MINH KHA HUB v3 ULTIMATE đã khởi động."
+)
+
+print(
+    "MINH KHA HUB v3 ULTIMATE + GEF SYSTEM loaded."
+)
