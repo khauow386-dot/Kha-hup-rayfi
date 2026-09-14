@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minh Kha Hup — Menu Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #e8c36a;
+      --gold-2: #f3d98a;
+      --ink: #0b0c10;
+      --panel: rgba(16, 18, 24, 0.72);
+      --line: rgba(232, 195, 106, 0.28);
+      --text: #f6f1e6;
+      --muted: #c9c0b0;
+      --accent: #ff7a59;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: "Be Vietnam Pro", system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(232, 195, 106, 0.16), transparent 50%),
+        radial-gradient(900px 500px at 100% 0%, rgba(255, 122, 89, 0.12), transparent 45%),
+        linear-gradient(180deg, #0b0c10 0%, #12141b 55%, #0b0c10 100%);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ===== MKH Menu Library ===== */
+    .mkh-nav {
+      position: sticky;
+      top: 16px;
+      z-index: 1000;
+      width: min(1180px, calc(100% - 28px));
+      margin: 16px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 14px 12px 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      backdrop-filter: blur(22px) saturate(140%);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .mkh-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+      min-width: max-content;
+    }
+    .mkh-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #f3d98a, #c89a3a);
+      color: #2a1c05;
+      font-family: "Playfair Display", serif;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 8px 20px rgba(232, 195, 106, 0.28);
+    }
+    .mkh-brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.05;
+    }
+    .mkh-brand-text strong {
+      font-family: "Playfair Display", serif;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    .mkh-brand-text span {
+      font-size: 11px;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .mkh-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+    .mkh-links > li { position: relative; }
+
+    .mkh-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: 0.25s ease;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .mkh-link:hover,
+    .mkh-link.is-active,
+    .mkh-item:hover > .mkh-link {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+    }
+    .mkh-link .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--gold);
+      opacity: 0;
+      transform: scale(0.4);
+      transition: 0.25s ease;
+    }
+    .mkh-link.is-active .dot,
+    .mkh-link:hover .dot {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .mkh-caret {
+      width: 8px; height: 8px;
+      border-right: 1.6px solid currentColor;
+      border-bottom: 1.6px solid currentColor;
+      transform: rotate(45deg) translateY(-2px);
+      transition: 0.25s ease;
+    }
+    .mkh-item:hover .mkh-caret,
+    .mkh-item.open .mkh-caret {
+      transform: rotate(225deg) translateY(-1px);
+    }
+
+    .mkh-drop {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      min-width: 240px;
+      padding: 10px;
+      background: rgba(18, 20, 28, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: 0.22s ease;
+      backdrop-filter: blur(18px);
+    }
+    .mkh-item:hover .mkh-drop,
+    .mkh-item.open .mkh-drop {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .mkh-drop a {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration: none;
+      transition: 0.2s ease;
+    }
+    .mkh-drop a:hover { background: rgba(232, 195, 106, 0.08); }
+    .mkh-drop .ico {
+      width: 32px; height: 32px; flex: 0 0 32px;
+      border-radius: 10px;
+      display: grid; place-items: center;
+      background: rgba(232,195,106,0.12);
+      color: var(--gold);
+      font-size: 15px;
+    }
+    .mkh-drop b { display: block; font-size: 13.5px; font-weight: 600; }
+    .mkh-drop small { color: var(--muted); font-size: 11.5px; }
+
+    .mkh-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 16px;
+      border-radius: 14px;
+      border: 0;
+      cursor: pointer;
+      text-decoration: none;
+      color: #2a1c05;
+      font-weight: 700;
+      font-size: 13.5px;
+      background: linear-gradient(135deg, #f6de97, #d4a441);
+      box-shadow: 0 10px 24px rgba(212, 164, 65, 0.28);
+      transition: 0.25s ease;
+      white-space: nowrap;
+    }
+    .mkh-cta:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+    .mkh-toggle {
+      display: none;
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      place-items: center;
+    }
+    .mkh-toggle span,
+    .mkh-toggle span::before,
+    .mkh-toggle span::after {
+      display: block;
+      width: 18px; height: 1.8px;
+      background: var(--gold-2);
+      border-radius: 4px;
+      position: relative;
+      transition: 0.25s ease;
+    }
+    .mkh-toggle span::before,
+    .mkh-toggle span::after {
+      content: "";
+      position: absolute;
+      left: 0;
+    }
+    .mkh-toggle span::before { top: -6px; }
+    .mkh-toggle span::after { top: 6px; }
+    .mkh-nav.is-open .mkh-toggle span { background: transparent; }
+    .mkh-nav.is-open .mkh-toggle span::before { top: 0; transform: rotate(45deg); }
+    .mkh-nav.is-open .mkh-toggle span::after { top: 0; transform: rotate(-45deg); }
+
+    /* Demo page */
+    .hero {
+      width: min(1180px, calc(100% - 28px));
+      margin: 48px auto 80px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 36px;
+      align-items: center;
+    }
+    .eyebrow {
+      color: var(--gold);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-family: "Playfair Display", serif;
+      font-size: clamp(36px, 6vw, 68px);
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    h1 em { font-style: normal; color: var(--gold-2); }
+    .lead {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.7;
+      max-width: 540px;
+      margin-bottom: 28px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+      background: rgba(255,255,255,0.03);
+    }
+    .preview {
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      min-height: 360px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .preview::before {
+      content: "";
+      position: absolute;
+      inset: auto -20% -30% 20%;
+      height: 240px;
+      background: radial-gradient(circle, rgba(232,195,106,0.22), transparent 65%);
+      pointer-events: none;
+    }
+    .card-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .food {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(232,195,106,0.12);
+    }
+    .food b { display: block; margin-bottom: 4px; }
+    .food span { color: var(--muted); font-size: 12.5px; }
+    .price { color: var(--gold); font-weight: 700; white-space: nowrap; }
+
+    .section {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto 80px;
+    }
+    .section h2 {
+      font-family: "Playfair Display", serif;
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    .section p { color: var(--muted); margin-bottom: 18px; }
+    pre {
+      background: #0a0b10;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #ead9b2;
+    }
+
+    @media (max-width: 860px) {
+      .mkh-toggle { display: grid; }
+      .mkh-links, .mkh-cta { display: none; }
+      .mkh-nav.is-open .mkh-links {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0; right: 0;
+        padding: 12px;
+        background: rgba(14,16,22,0.96);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+      }
+      .mkh-nav.is-open .mkh-cta {
+        display: inline-flex;
+        margin: 8px 12px 12px;
+        justify-content: center;
+      }
+      .mkh-drop {
+        position: static;
+        transform: none;
+        min-width: 0;
+        margin-top: 6px;
+        display: none;
+      }
+      .mkh-item.open .mkh-drop { display: block; opacity: 1; visibility: visible; }
+      .hero { grid-template-columns: 1fr; margin-top: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="mkh-nav" id="mkhNav" aria-label="Minh Kha Hup menu">
+    <a class="mkh-brand" href="#home">
+      <div class="mkh-mark">MK</div>
+      <div class="mkh-brand-text">
+        <strong>Minh Kha Hup</strong>
+        <span>Menu Library</span>
+      </div>
+    </a>
+
+    <ul class="mkh-links">
+      <li><a class="mkh-link is-active" href="#home"><i class="dot"></i>Trang chủ</a></li>
+      <li class="mkh-item">
+        <button class="mkh-link" type="button" data-drop>
+          <i class="dot"></i>Thực đơn <i class="mkh-caret"></i>
+        </button>
+        <div class="mkh-drop">
+          <a href="#menu"><span class="ico">🍜</span><span><b>Món chính</b><small>Phở, bún, cơm tấm</small></span></a>
+          <a href="#menu"><span class="ico">🥗</span><span><b>Khai vị</b><small>Gỏi, cuốn, chả giò</small></span></a>
+          <a href="#menu"><span class="ico">🧋</span><span><b>Thức uống</b><small>Trà, cà phê, nước ép</small></span></a>
+        </div>
+      </li>
+      <li><a class="mkh-link" href="#about"><i class="dot"></i>Giới thiệu</a></li>
+      <li><a class="mkh-link" href="#code"><i class="dot"></i>Cách dùng</a></li>
+    </ul>
+
+    <a class="mkh-cta" href="#book">Đặt bàn ngay</a>
+    <button class="mkh-toggle" id="mkhToggle" aria-label="Mở menu"><span></span></button>
+  </nav>
+
+  <section class="hero" id="home">
+    <div>
+      <div class="eyebrow">Thư viện menu siêu đẹp</div>
+      <h1>Menu <em>Minh Kha Hup</em><br/>sang – mượt – hiện đại</h1>
+      <p class="lead">
+        Thanh điều hướng kính mờ, hiệu ứng hover tinh tế, dropdown có mô tả,
+        nút vàng nổi và menu mobile trượt đẹp. Copy một file là dùng được ngay.
+      </p>
+      <div class="chips">
+        <span class="chip">Glassmorphism</span>
+        <span class="chip">Responsive</span>
+        <span class="chip">Dropdown thông minh</span>
+        <span class="chip">Không cần framework</span>
+      </div>
+    </div>
+    <div class="preview" id="menu">
+      <div class="card-grid">
+        <div class="food"><div><b>Phở đặc biệt Minh Kha</b><span>Nước dùng ninh 12 giờ</span></div><div class="price">68.000đ</div></div>
+        <div class="food"><div><b>Bún thịt nướng Hup</b><span>Thịt than hoa, nước mắm chua ngọt</span></div><div class="price">55.000đ</div></div>
+        <div class="food"><div><b>Cơm tấm sườn cây</b><span>Sườn mật ong, bì, chả</span></div><div class="price">62.000đ</div></div>
+        <div class="food"><div><b>Trà tắc mật ong</b><span>Mát lạnh, thơm dịu</span></div><div class="price">25.000đ</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="about">
+    <h2>Về thư viện</h2>
+    <p>Đây là bộ menu độc lập: chỉ HTML + CSS + một ít JavaScript. Đặt class <b>mkh-nav</b> vào trang nào cũng giữ được phong cách Minh Kha Hup.</p>
+  </section>
+
+  <section class="section" id="code">
+    <h2>Cách gắn vào website</h2>
+    <p>Copy file này, hoặc lấy khối <code>.mkh-nav</code> cùng CSS/JS bên dưới.</p>
+    <pre>const nav = document.getElementById('mkhNav');
+document.getElementById('mkhToggle').onclick = () => nav.classList.toggle('is-open');
+nav.querySelectorAll('[data-drop]').forEach(btn => {
+  btn.onclick = () => btn.parentElement.classList.toggle('open');
+});</pre>
+  </section>
+
+  <section class="section" id="book">
+    <h2>Đặt bàn</h2>
+    <p>Demo giao diện thôi — bạn có thể nối form thật sau. Menu đã sẵn sàng để copy.</p>
+  </section>
+
+  <script>
+    (function () {
+      const nav = document.getElementById('mkhNav');
+      const toggle = document.getElementById('mkhToggle');
+      toggle.addEventListener('click', () => nav.classList.toggle('is-open'));
+
+      nav.querySelectorAll('[data-drop]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          btn.parentElement.classList.toggle('open');
+        });
+      });
+
+      nav.querySelectorAll('.mkh-links a').forEach((a) => {
+        a.addEventListener('click', () => {
+          nav.querySelectorAll('.mkh-link').forEach((el) => el.classList.remove('is-active'));
+          if (a.classList.contains('mkh-link')) a.classList.add('is-active');
+          nav.classList.remove('is-open');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
