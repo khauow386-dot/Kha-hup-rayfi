@@ -1,0 +1,161 @@
+--========================================================
+--              MINH KHA HUB • ONE-LINE LOAD
+--========================================================
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Xóa menu cũ nếu đang chạy
+local Old = PlayerGui:FindFirstChild("MINH_KHA_HUB_COMPLETE")
+if Old then Old:Destroy() end
+
+-- Cấu hình mặc định
+local Theme = {
+    BorderColor = Color3.fromRGB(220, 25, 45),
+    GlassTransparency = 0.22,
+    BorderThickness = 1.5,
+    BorderTransparency = 0.10,
+    UIScale = 1,
+}
+
+-- Khởi tạo Giao diện (ScreenGui)
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "MINH_KHA_HUB_COMPLETE"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = PlayerGui
+
+-- Các hàm hỗ trợ nhanh (Helpers)
+local function Corner(obj, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 10)
+    c.Parent = obj
+    return c
+end
+
+local function Stroke(obj)
+    local s = Instance.new("UIStroke")
+    s.Name = "DynamicBorder"
+    s.Color = Theme.BorderColor
+    s.Thickness = Theme.BorderThickness
+    s.Transparency = Theme.BorderTransparency
+    s.Parent = obj
+    return s
+end
+
+-- Cửa sổ chính (Main)
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 430, 0, 330)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+Main.BackgroundColor3 = Color3.fromRGB(6, 6, 9)
+Main.BackgroundTransparency = Theme.GlassTransparency
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Main.Parent = Gui
+
+Corner(Main, 18)
+Stroke(Main)
+
+local UIScaleObj = Instance.new("UIScale")
+UIScaleObj.Scale = Theme.UIScale
+UIScaleObj.Parent = Main
+
+-- Thanh tiêu đề (TopBar)
+local Top = Instance.new("Frame")
+Top.Size = UDim2.new(1, 0, 0, 60)
+Top.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+Top.BackgroundTransparency = 0.08
+Top.BorderSizePixel = 0
+Top.Parent = Main
+Corner(Top, 18)
+
+local Title = Instance.new("TextLabel")
+Title.Position = UDim2.new(0, 16, 0, 7)
+Title.Size = UDim2.new(1, -65, 0, 27)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 19
+Title.TextColor3 = Color3.fromRGB(245, 245, 245)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Text = "MINH KHA HUB"
+Title.Parent = Top
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Position = UDim2.new(0, 17, 0, 34)
+Subtitle.Size = UDim2.new(1, -70, 0, 18)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextSize = 10
+Subtitle.TextColor3 = Color3.fromRGB(155, 155, 165)
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Text = "DARK GLASS • 1-LINE READY"
+Subtitle.Parent = Top
+
+-- Nút Đóng (X)
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.new(0, 36, 0, 36)
+Close.Position = UDim2.new(1, -46, 0, 12)
+Close.BackgroundColor3 = Color3.fromRGB(100, 15, 25)
+Close.BackgroundTransparency = 0.10
+Close.BorderSizePixel = 0
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 22
+Close.TextColor3 = Color3.fromRGB(245, 245, 245)
+Close.Text = "×"
+Close.Parent = Top
+Corner(Close, 10)
+Stroke(Close)
+
+Close.MouseButton1Click:Connect(function()
+    Main.Visible = false
+end)
+
+-- Kéo thả menu (Dragging)
+local dragging, dragStart, startPos
+Top.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Nút nổi MK để ẩn/hiện menu
+local MK = Instance.new("TextButton")
+MK.Size = UDim2.new(0, 58, 0, 58)
+MK.Position = UDim2.new(0, 18, 0.5, -29)
+MK.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+MK.BackgroundTransparency = 0.12
+MK.BorderSizePixel = 0
+MK.Font = Enum.Font.GothamBlack
+MK.TextSize = 18
+MK.TextColor3 = Theme.BorderColor
+MK.Text = "MK"
+MK.AutoButtonColor = false
+MK.Parent = Gui
+
+Corner(MK, 16)
+Stroke(MK)
+
+MK.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+print("MINH KHA HUB • LOADED SUCCESSFULLY!")
