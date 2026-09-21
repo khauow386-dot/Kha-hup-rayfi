@@ -1,5 +1,5 @@
 --========================================================
---              MINH KHA HUB • ONE-LINE LOAD
+--              MINH KHA HUB • ONE-LINE LIBRARY
 --========================================================
 
 local Players = game:GetService("Players")
@@ -55,6 +55,7 @@ Main.BackgroundColor3 = Color3.fromRGB(6, 6, 9)
 Main.BackgroundTransparency = Theme.GlassTransparency
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
+Main.Active = true
 Main.Parent = Gui
 
 Corner(Main, 18)
@@ -92,7 +93,7 @@ Subtitle.Font = Enum.Font.Gotham
 Subtitle.TextSize = 10
 Subtitle.TextColor3 = Color3.fromRGB(155, 155, 165)
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Text = "DARK GLASS • 1-LINE READY"
+Subtitle.Text = "DARK GLASS • 2 COLUMNS READY"
 Subtitle.Parent = Top
 
 -- Nút Đóng (X)
@@ -137,6 +138,245 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+--========================================================
+-- HỆ THỐNG 2 CỘT (BODY, LEFT MENU, RIGHT CONTENT)
+--========================================================
+
+local Body = Instance.new("Frame")
+Body.Name = "Body"
+Body.Parent = Main
+Body.Position = UDim2.new(0, 10, 0, 70)
+Body.Size = UDim2.new(1, -20, 1, -80)
+Body.BackgroundTransparency = 1
+Body.BorderSizePixel = 0
+
+-- Cột trái (Menu chứa danh sách Tab)
+local Left = Instance.new("Frame")
+Left.Name = "LeftMenu"
+Left.Parent = Body
+Left.Size = UDim2.new(0, 125, 1, 0)
+Left.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+Left.BackgroundTransparency = 0.12
+Left.BorderSizePixel = 0
+Corner(Left, 12)
+Stroke(Left)
+
+local MenuScroll = Instance.new("ScrollingFrame")
+MenuScroll.Parent = Left
+MenuScroll.Position = UDim2.new(0, 6, 0, 8)
+MenuScroll.Size = UDim2.new(1, -12, 1, -16)
+MenuScroll.BackgroundTransparency = 1
+MenuScroll.BorderSizePixel = 0
+MenuScroll.ScrollBarThickness = 2
+MenuScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+MenuScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local MenuLayout = Instance.new("UIListLayout")
+MenuLayout.Parent = MenuScroll
+MenuLayout.Padding = UDim.new(0, 7)
+MenuLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- Cột phải (Hiển thị nội dung của Tab đang chọn)
+local Right = Instance.new("Frame")
+Right.Name = "RightContent"
+Right.Parent = Body
+Right.Position = UDim2.new(0, 135, 0, 0)
+Right.Size = UDim2.new(1, -135, 1, 0)
+Right.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+Right.BackgroundTransparency = 0.08
+Right.BorderSizePixel = 0
+Right.ClipsDescendants = true
+Corner(Right, 12)
+Stroke(Right)
+
+local RightScroll = Instance.new("ScrollingFrame")
+RightScroll.Parent = Right
+RightScroll.Position = UDim2.new(0, 8, 0, 8)
+RightScroll.Size = UDim2.new(1, -16, 1, -16)
+RightScroll.BackgroundTransparency = 1
+RightScroll.BorderSizePixel = 0
+RightScroll.ScrollBarThickness = 3
+RightScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+RightScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local RightLayout = Instance.new("UIListLayout")
+RightLayout.Parent = RightScroll
+RightLayout.Padding = UDim.new(0, 8)
+
+--========================================================
+-- HỆ THỐNG TẠO TAB VÀ COMPONENT (API LIBRARY)
+--========================================================
+
+local Pages = {}
+local Tabs = {}
+local firstTab = true
+
+local Library = {}
+
+function Library:CreateTab(tabName)
+    local page = Instance.new("Frame")
+    page.Name = tabName
+    page.Parent = RightScroll
+    page.Size = UDim2.new(1, -4, 0, 0)
+    page.AutomaticSize = Enum.AutomaticSize.Y
+    page.BackgroundTransparency = 1
+    page.Visible = false
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = page
+    layout.Padding = UDim.new(0, 8)
+    
+    Pages[tabName] = page
+
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Parent = MenuScroll
+    tabBtn.Size = UDim2.new(1, -4, 0, 38)
+    tabBtn.BackgroundColor3 = Color3.fromRGB(43, 43, 51)
+    tabBtn.BackgroundTransparency = 0.25
+    tabBtn.BorderSizePixel = 0
+    tabBtn.Text = tabName
+    tabBtn.TextColor3 = Color3.fromRGB(245, 245, 245)
+    tabBtn.TextSize = 10
+    tabBtn.Font = Enum.Font.GothamSemibold
+    tabBtn.AutoButtonColor = false
+    Corner(tabBtn, 9)
+    Stroke(tabBtn)
+
+    Tabs[tabName] = tabBtn
+
+    tabBtn.MouseButton1Click:Connect(function()
+        for pName, pObj in pairs(Pages) do
+            pObj.Visible = (pName == tabName)
+        end
+        for tName, tObj in pairs(Tabs) do
+            if tName == tabName then
+                tObj.BackgroundColor3 = Theme.BorderColor
+                tObj.BackgroundTransparency = 0.05
+            else
+                tObj.BackgroundColor3 = Color3.fromRGB(43, 43, 51)
+                tObj.BackgroundTransparency = 0.25
+            end
+        end
+        RightScroll.CanvasPosition = Vector2.new(0, 0)
+    end)
+
+    if firstTab then
+        firstTab = false
+        page.Visible = true
+        tabBtn.BackgroundColor3 = Theme.BorderColor
+        tabBtn.BackgroundTransparency = 0.05
+    end
+
+    local TabFunctions = {}
+
+    function TabFunctions:CreateButton(text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Parent = page
+        btn.Size = UDim2.new(1, -4, 0, 42)
+        btn.BackgroundColor3 = Color3.fromRGB(27, 27, 34)
+        btn.BackgroundTransparency = 0.18
+        btn.BorderSizePixel = 0
+        btn.Text = text
+        btn.TextColor3 = Color3.fromRGB(245, 245, 245)
+        btn.TextSize = 11
+        btn.Font = Enum.Font.GothamBold
+        btn.AutoButtonColor = false
+        Corner(btn, 10)
+        Stroke(btn, Color3.fromRGB(55, 55, 65), 1, 0)
+
+        btn.MouseButton1Click:Connect(function()
+            pcall(callback)
+        end)
+    end
+
+    function TabFunctions:CreateToggle(text, default, callback)
+        local enabled = default
+        local row = Instance.new("Frame")
+        row.Parent = page
+        row.Size = UDim2.new(1, -4, 0, 42)
+        row.BackgroundColor3 = Color3.fromRGB(27, 27, 34)
+        row.BackgroundTransparency = 0.18
+        row.BorderSizePixel = 0
+        Corner(row, 10)
+        Stroke(row, Color3.fromRGB(55, 55, 65), 1, 0)
+
+        local label = Instance.new("TextLabel")
+        label.Parent = row
+        label.Size = UDim2.new(1, -55, 1, 0)
+        label.Position = UDim2.new(0, 12, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamSemibold
+        label.TextSize = 11
+        label.TextColor3 = Color3.fromRGB(245, 245, 245)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+
+        local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Parent = row
+        toggleBtn.Size = UDim2.new(0, 36, 0, 20)
+        toggleBtn.Position = UDim2.new(1, -44, 0.5, -10)
+        toggleBtn.Text = ""
+        toggleBtn.BorderSizePixel = 0
+        Corner(toggleBtn, 10)
+
+        local function update()
+            label.Text = text .. "  [" .. (enabled and "ON" or "OFF") .. "]"
+            toggleBtn.BackgroundColor3 = enabled and Theme.BorderColor or Color3.fromRGB(43, 43, 51)
+            pcall(function() callback(enabled) end)
+        end
+
+        toggleBtn.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            update()
+        end)
+
+        update()
+    end
+
+    function TabFunctions:CreateInput(text, default, callback)
+        local holder = Instance.new("Frame")
+        holder.Parent = page
+        holder.Size = UDim2.new(1, -4, 0, 45)
+        holder.BackgroundColor3 = Color3.fromRGB(27, 27, 34)
+        holder.BackgroundTransparency = 0.18
+        holder.BorderSizePixel = 0
+        Corner(holder, 10)
+        Stroke(holder, Color3.fromRGB(55, 55, 65), 1, 0)
+
+        local label = Instance.new("TextLabel")
+        label.Parent = holder
+        label.Size = UDim2.new(0.35, 0, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = Color3.fromRGB(245, 245, 245)
+        label.TextSize = 11
+        label.Font = Enum.Font.GothamBold
+        label.TextXAlignment = Enum.TextXAlignment.Left
+
+        local box = Instance.new("TextBox")
+        box.Parent = holder
+        box.Position = UDim2.new(0.4, 0, 0.15, 0)
+        box.Size = UDim2.new(0.57, 0, 0.7, 0)
+        box.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+        box.BorderSizePixel = 0
+        box.Text = tostring(default)
+        box.TextColor3 = Color3.fromRGB(245, 245, 245)
+        box.TextSize = 11
+        box.Font = Enum.Font.Gotham
+        box.ClearTextOnFocus = false
+        Corner(box, 7)
+
+        box.FocusLost:Connect(function()
+            local value = tonumber(box.Text)
+            if value then
+                pcall(function() callback(value) end)
+            end
+        end)
+    end
+
+    return TabFunctions
+end
+
 -- Nút nổi MK để ẩn/hiện menu
 local MK = Instance.new("TextButton")
 MK.Size = UDim2.new(0, 58, 0, 58)
@@ -154,8 +394,36 @@ MK.Parent = Gui
 Corner(MK, 16)
 Stroke(MK)
 
+local mkDragging, mkDragStart, mkStartPos, mkMoved = false, nil, nil, false
+MK.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        mkDragging = true
+        mkMoved = false
+        mkDragStart = input.Position
+        mkStartPos = MK.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if mkDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - mkDragStart
+        if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
+            mkMoved = true
+        end
+        MK.Position = UDim2.new(mkStartPos.X.Scale, mkStartPos.X.Offset + delta.X, mkStartPos.Y.Scale, mkStartPos.Y.Offset + delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        mkDragging = false
+    end
+end)
+
 MK.MouseButton1Click:Connect(function()
+    if mkMoved then mkMoved = false return end
     Main.Visible = not Main.Visible
 end)
 
-print("MINH KHA HUB • LOADED SUCCESSFULLY!")
+print("MINH KHA HUB • COMPLETE LIBRARY READY!")
+return Library
