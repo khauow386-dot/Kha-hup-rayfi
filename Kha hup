@@ -1,6 +1,6 @@
 --========================================================
 --              MINH KHA HUP - FULL CUSTOM HUB
---              2 COLUMN • DARK GLASS UI (VIP BUILD)
+--              2 COLUMN • DARK GLASS UI (VIP BUILD FIXED)
 --========================================================
 
 local Players = game:GetService("Players")
@@ -43,6 +43,7 @@ local vipWidth = 12
 local vipLength = 12
 local vipHeight = 7
 local vipHasFloor = true
+local vipBuildType = "hut"
 
 local fixLagEnabled = false
 local hiddenObjects = {}
@@ -428,7 +429,6 @@ local function showPage(name)
     RightScroll.CanvasPosition = Vector2.new(0, 0)
 end
 
--- Khởi tạo các trang chính
 local PlayersPage = CreatePage("Players", "👤 Người Chơi")
 local ItemsPage = CreatePage("Items", "📦 Vật Phẩm")
 local BuildingPage = CreatePage("Building", "🏗️ Xây Dựng")
@@ -606,7 +606,6 @@ AddToggle(PlayersPage, "Noclip", false, function(value)
     end
 end)
 
--- Bổ sung: Infinite Stamina (Thể lực vô hạn)
 AddToggle(PlayersPage, "Infinite Stamina", false, function(value)
     infStaminaEnabled = value
     task.spawn(function()
@@ -614,12 +613,11 @@ AddToggle(PlayersPage, "Infinite Stamina", false, function(value)
             pcall(function()
                 local char = LocalPlayer.Character
                 if char then
-                    -- Tự động tìm và khóa các giá trị thể lực/hunger/stamina nếu có trong nhân vật hoặc PlayerScripts
                     for _, v in ipairs(char:GetDescendants()) do
                         if v:IsA("NumberValue") or v:IsA("IntValue") then
                             local name = string.lower(v.Name)
                             if string.find(name, "stamina") or string.find(name, "energy") or string.find(name, "fatigue") then
-                                v.Value = 100 -- hoặc max giá trị
+                                v.Value = 100
                             end
                         end
                     end
@@ -630,7 +628,6 @@ AddToggle(PlayersPage, "Infinite Stamina", false, function(value)
     end)
 end)
 
--- Bổ sung: God Mode (Bất tử)
 AddToggle(PlayersPage, "God Mode", false, function(value)
     godModeEnabled = value
     task.spawn(function()
@@ -1029,7 +1026,7 @@ local function BuildBigFloor()
 end
 
 -- ==========================================
--- HÀM XÂY DỰNG VIP (TÙY CHỈNH KÍCH THƯỚC + SÀN)
+-- HÀM XÂY DỰNG VIP (ĐÃ SỬA LỖI TÍNH KÍCH THƯỚC)
 -- ==========================================
 local function BuildVIPCustom()
     local _, root, _, remote = getBuildData()
@@ -1065,6 +1062,15 @@ local function BuildVIPCustom()
         end
     end
 
+    if vipBuildType == "wall" then
+        local startPos = origin + forward*2
+        for y = 0.5, h, 0.5 do
+            fireSegment(startPos + right*(-w) + Vector3.new(0,y,0), startPos + right*w + Vector3.new(0,y,0))
+        end
+        notify("Build VIP", "Xây Wall VIP hoàn thành!")
+        return
+    end
+
     local c1 = origin + right*(-w)
     local c2 = origin + right*w
     local c3 = origin + right*w + forward*l
@@ -1089,13 +1095,11 @@ local function BuildVIPCustom()
         end
     end
 
-    -- Xây 4 bức tường
     buildWall(c1, c2, h, true)
     buildWall(c2, c3, h, false)
     buildWall(c3, c4, h, false)
     buildWall(c4, c1, h, false)
 
-    -- Xây sàn và trần tùy chọn
     if vipHasFloor then
         for z = 0, l - 0.01, 2 do
             local startS = origin + forward*z + right*(-w) + Vector3.new(0, 0.25, 0)
@@ -1104,14 +1108,13 @@ local function BuildVIPCustom()
         end
     end
 
-    -- Mái nhà (Trần)
     for z = 0, l - 0.01, 2 do
         local startT = origin + forward*z + right*(-w) + Vector3.new(0, h + 0.5, 0)
         local finishT = origin + forward*z + right*w + Vector3.new(0, h + 0.5, 0)
         fireSegment(startT, finishT)
     end
 
-    notify("Build VIP", "Xây dựng nhà VIP tùy chỉnh thành công!")
+    notify("Build VIP", "Xây dựng cấu trúc VIP hoàn thành!")
 end
 
 --========================================================
@@ -1137,12 +1140,30 @@ end
 AddButton(BuildingPage, "⚡ THỰC HIỆN XÂY DỰNG", function() task.spawn(BuildSelected) end)
 
 --========================================================
--- MENU BUILD VIP (TÙY CHỈNH CHIỀU RỘNG, CAO, DÀI & SÀN)
+-- MENU BUILD VIP (TÙY CHỈNH MẪU, KÍCH THƯỚC & SÀN)
 --========================================================
 
-AddInput(BuildingVIPPage, "Chiều Rộng (Width)", 12, function(v) vipWidth = math.clamp(v, 4, 100) end)
-AddInput(BuildingVIPPage, "Chiều Dài (Length)", 12, function(v) vipLength = math.clamp(v, 4, 100) end)
-AddInput(BuildingVIPPage, "Chiều Cao (Height)", 7, function(v) vipHeight = math.clamp(v, 3, 50) end)
+AddButton(BuildingVIPPage, "Chọn Mẫu: Hut (Nhà Nhỏ)", function()
+    vipBuildType = "hut"
+    vipWidth, vipLength, vipHeight = 12, 12, 7
+    notify("Build VIP", "Đã chọn mẫu: Hut (12x12x7)")
+end)
+
+AddButton(BuildingVIPPage, "Chọn Mẫu: Big House (Nhà Lớn)", function()
+    vipBuildType = "bighouse"
+    vipWidth, vipLength, vipHeight = 60, 60, 10
+    notify("Build VIP", "Đã chọn mẫu: Big House (60x60x10)")
+end)
+
+AddButton(BuildingVIPPage, "Chọn Mẫu: Wall (Tường Ngang)", function()
+    vipBuildType = "wall"
+    vipWidth, vipLength, vipHeight = 12, 1, 6
+    notify("Build VIP", "Đã chọn mẫu: Wall (12x6)")
+end)
+
+AddInput(BuildingVIPPage, "Chiều Rộng (Width)", 12, function(v) vipWidth = math.clamp(v, 2, 200) end)
+AddInput(BuildingVIPPage, "Chiều Dài (Length)", 12, function(v) vipLength = math.clamp(v, 1, 200) end)
+AddInput(BuildingVIPPage, "Chiều Cao (Height)", 7, function(v) vipHeight = math.clamp(v, 2, 50) end)
 
 AddToggle(BuildingVIPPage, "Xây Kèm Sàn (Floor)", true, function(value)
     vipHasFloor = value
@@ -1239,7 +1260,7 @@ end)
 -- Preview Render Loop
 RunService.RenderStepped:Connect(function()
     local _, root = getCharacter()
-    if not root or selectedBuild == "no" then
+    if not root then
         if not Pages["Build VIP"].Visible then
             clearPreview()
             floorPreviewCFrame = nil
@@ -1252,8 +1273,18 @@ RunService.RenderStepped:Connect(function()
         clearPreview()
         local forward = root.CFrame.LookVector
         local origin = root.Position + Vector3.new(0, -3, 0)
-        local center = origin + forward*(vipLength/2) + Vector3.new(0, vipHeight/2, 0)
-        createPreviewPart(Vector3.new(vipWidth, vipHeight, vipLength), CFrame.new(center, center+forward))
+        if vipBuildType == "wall" then
+            local center = origin + forward*2 + Vector3.new(0, vipHeight/2, 0)
+            createPreviewPart(Vector3.new(vipWidth, vipHeight, 0.5), CFrame.new(center, center+forward))
+        else
+            local center = origin + forward*(vipLength/2) + Vector3.new(0, vipHeight/2, 0)
+            createPreviewPart(Vector3.new(vipWidth, vipHeight, vipLength), CFrame.new(center, center+forward))
+        end
+        return
+    end
+
+    if selectedBuild == "no" then
+        clearPreview()
         return
     end
 
@@ -1471,4 +1502,4 @@ end)
 -- INITIALIZE FINISHED
 --========================================================
 
-notify("MINH KHA HUP", "Menu Dark Glass với tab Xây VIP đã sẵn sàng!")
+notify("MINH KHA HUP", "Menu Dark Glass với tab Xây VIP đã sửa lỗi kích thước sẵn sàng!")
