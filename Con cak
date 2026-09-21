@@ -1,0 +1,4685 @@
+--========================================================
+--                 MINH KHA HUP
+--              COMPLETE CUSTOM HUB
+--========================================================
+-- NO RAYFIELD
+-- NO KEY
+-- DARK GLASS UI
+-- VN / EN
+-- PLAYERS
+-- ITEMS
+-- BUILDING
+-- VIP BUILD
+-- TELEPORT
+-- FIX LAG
+-- SETTINGS
+--========================================================
+--
+-- LOADER:
+--
+-- loadstring(game:HttpGet(
+-- "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minh%20kha%20hup%20ui%20l"
+-- ))()
+--
+--========================================================
+
+
+--========================================================
+-- SERVICES
+--========================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+
+--========================================================
+-- CONFIG
+--========================================================
+
+local Config = {
+    Language = "VN",
+
+    Glass = 0.20,
+
+    Red = Color3.fromRGB(
+        220,
+        25,
+        45
+    ),
+
+    DarkRed = Color3.fromRGB(
+        120,
+        10,
+        25
+    ),
+
+    Black = Color3.fromRGB(
+        7,
+        7,
+        10
+    ),
+
+    Dark = Color3.fromRGB(
+        13,
+        13,
+        17
+    ),
+
+    Panel = Color3.fromRGB(
+        20,
+        20,
+        26
+    ),
+
+    Panel2 = Color3.fromRGB(
+        27,
+        27,
+        34
+    ),
+
+    White = Color3.fromRGB(
+        245,
+        245,
+        245
+    ),
+
+    Gray = Color3.fromRGB(
+        150,
+        150,
+        158
+    )
+}
+
+
+--========================================================
+-- LANGUAGE
+--========================================================
+
+local L = {
+
+    VN = {
+
+        Players = "Người Chơi",
+        Items = "Vật Phẩm",
+        Building = "Xây Dựng",
+        VIP = "Xây Dựng VIP",
+        Teleport = "Dịch Chuyển",
+        Lag = "Giảm Lag",
+        Settings = "Cài Đặt",
+
+        Subtitle =
+            "DARK GLASS • MENU CHÍNH",
+
+        Menu =
+            "MENU",
+
+        ON =
+            "BẬT",
+
+        OFF =
+            "TẮT",
+
+        Jump =
+            "Nhảy Vô Hạn",
+
+        Noclip =
+            "Đi Xuyên Tường",
+
+        Stamina =
+            "Thể Lực Vô Hạn",
+
+        God =
+            "Bất Tử",
+
+        Paused =
+            "Chống Gameplay Paused",
+
+        Reset =
+            "Reset Nhân Vật",
+
+        XVC =
+            "XVC Hub",
+
+        Hammer =
+            "Tìm Hammer",
+
+        Food =
+            "Tìm Food",
+
+        Money =
+            "Tìm Money",
+
+        Crowbar =
+            "Tìm Crowbar",
+
+        Bat =
+            "Tìm Bat",
+
+        Lantern =
+            "Tìm Lantern",
+
+        Save =
+            "Lưu Vị Trí",
+
+        Return =
+            "Quay Lại Vị Trí",
+
+        Coords =
+            "Lấy Tọa Độ Hiện Tại",
+
+        GoCoords =
+            "Dịch Chuyển Theo Tọa Độ",
+
+        Highest =
+            "Sàn Cao Nhất",
+
+        Shop =
+            "Shop",
+
+        Main =
+            "Main Area",
+
+        Hut =
+            "Chọn Hut",
+
+        Wall =
+            "Chọn Wall",
+
+        Floor =
+            "Chọn Floor",
+
+        BigHouse =
+            "Chọn Big House",
+
+        BigFloor =
+            "Chọn Big Floor 100x100",
+
+        NoBuild =
+            "Tắt Build",
+
+        Build =
+            "THỰC HIỆN XÂY DỰNG",
+
+        VIPHut =
+            "VIP Hut",
+
+        VIPBig =
+            "VIP Big House",
+
+        VIPWall =
+            "VIP Wall",
+
+        Width =
+            "Chiều Rộng",
+
+        Length =
+            "Chiều Dài",
+
+        Height =
+            "Chiều Cao",
+
+        WithFloor =
+            "Xây Kèm Sàn",
+
+        VIPBuild =
+            "THỰC HIỆN XÂY VIP",
+
+        FloatBuild =
+            "Nút Build Nổi",
+
+        FixAll =
+            "Fix Lag Tổng Thể",
+
+        Vegetation =
+            "Ẩn Cây / Cỏ",
+
+        Effects =
+            "Tắt Hiệu Ứng",
+
+        Restore =
+            "Khôi Phục",
+
+        Vietnamese =
+            "Tiếng Việt",
+
+        English =
+            "English",
+
+        Switch =
+            "Đổi Ngôn Ngữ"
+    },
+
+
+    EN = {
+
+        Players =
+            "Players",
+
+        Items =
+            "Items",
+
+        Building =
+            "Building",
+
+        VIP =
+            "Build VIP",
+
+        Teleport =
+            "Teleport",
+
+        Lag =
+            "Fix Lag",
+
+        Settings =
+            "Settings",
+
+        Subtitle =
+            "DARK GLASS • MAIN MENU",
+
+        Menu =
+            "MENU",
+
+        ON =
+            "ON",
+
+        OFF =
+            "OFF",
+
+        Jump =
+            "Infinite Jump",
+
+        Noclip =
+            "Noclip",
+
+        Stamina =
+            "Infinite Stamina",
+
+        God =
+            "God Mode",
+
+        Paused =
+            "Anti Gameplay Paused",
+
+        Reset =
+            "Reset Character",
+
+        XVC =
+            "XVC Hub",
+
+        Hammer =
+            "Find Hammer",
+
+        Food =
+            "Find Food",
+
+        Money =
+            "Find Money",
+
+        Crowbar =
+            "Find Crowbar",
+
+        Bat =
+            "Find Bat",
+
+        Lantern =
+            "Find Lantern",
+
+        Save =
+            "Save Position",
+
+        Return =
+            "Return To Saved Position",
+
+        Coords =
+            "Get Current Coordinates",
+
+        GoCoords =
+            "Teleport To Coordinates",
+
+        Highest =
+            "Highest Floor",
+
+        Shop =
+            "Shop",
+
+        Main =
+            "Main Area",
+
+        Hut =
+            "Select Hut",
+
+        Wall =
+            "Select Wall",
+
+        Floor =
+            "Select Floor",
+
+        BigHouse =
+            "Select Big House",
+
+        BigFloor =
+            "Select Big Floor 100x100",
+
+        NoBuild =
+            "Disable Build",
+
+        Build =
+            "BUILD NOW",
+
+        VIPHut =
+            "VIP Hut",
+
+        VIPBig =
+            "VIP Big House",
+
+        VIPWall =
+            "VIP Wall",
+
+        Width =
+            "Width",
+
+        Length =
+            "Length",
+
+        Height =
+            "Height",
+
+        WithFloor =
+            "Build With Floor",
+
+        VIPBuild =
+            "BUILD VIP",
+
+        FloatBuild =
+            "Floating Build Button",
+
+        FixAll =
+            "Full Fix Lag",
+
+        Vegetation =
+            "Hide Vegetation",
+
+        Effects =
+            "Disable Effects",
+
+        Restore =
+            "Restore",
+
+        Vietnamese =
+            "Vietnamese",
+
+        English =
+            "English",
+
+        Switch =
+            "Switch Language"
+    }
+}
+
+
+local function T(key)
+
+    if L[Config.Language]
+    and L[Config.Language][key] then
+
+        return L[Config.Language][key]
+
+    end
+
+    return key
+end
+
+
+--========================================================
+-- HELPERS
+--========================================================
+
+local function Notify(title,text)
+
+    pcall(function()
+
+        StarterGui:SetCore(
+            "SendNotification",
+            {
+                Title =
+                    "MINH KHA HUP • "
+                    .. tostring(title),
+
+                Text =
+                    tostring(text),
+
+                Duration =
+                    3
+            }
+        )
+
+    end)
+
+end
+
+
+local function Character()
+
+    local char =
+        LocalPlayer.Character
+
+    if not char then
+        return nil,nil
+    end
+
+    local root =
+        char:FindFirstChild(
+            "HumanoidRootPart"
+        )
+
+    return char,root
+end
+
+
+local function Humanoid()
+
+    local char =
+        LocalPlayer.Character
+
+    if not char then
+        return nil
+    end
+
+    return char:FindFirstChildOfClass(
+        "Humanoid"
+    )
+end
+
+
+local function Corner(object,radius)
+
+    local c =
+        Instance.new("UICorner")
+
+    c.CornerRadius =
+        UDim.new(
+            0,
+            radius or 10
+        )
+
+    c.Parent =
+        object
+
+    return c
+end
+
+
+local function Stroke(
+    object,
+    color,
+    thickness
+)
+
+    local s =
+        Instance.new("UIStroke")
+
+    s.Color =
+        color
+        or Config.Red
+
+    s.Thickness =
+        thickness
+        or 1.5
+
+    s.Transparency =
+        0.10
+
+    s.Parent =
+        object
+
+    return s
+end
+
+
+--========================================================
+-- REMOVE OLD GUI
+--========================================================
+
+for _,name in ipairs({
+
+    "MINH_KHA_HUP",
+    "MINH_KHA_HUB_COMPLETE",
+    "MinhKhaBuildButton"
+
+}) do
+
+    local old =
+        PlayerGui:FindFirstChild(name)
+
+    if old then
+
+        pcall(function()
+            old:Destroy()
+        end)
+
+    end
+
+end
+
+
+--========================================================
+-- SCREEN GUI
+--========================================================
+
+local ScreenGui =
+    Instance.new("ScreenGui")
+
+ScreenGui.Name =
+    "MINH_KHA_HUP"
+
+ScreenGui.ResetOnSpawn =
+    false
+
+ScreenGui.IgnoreGuiInset =
+    true
+
+ScreenGui.ZIndexBehavior =
+    Enum.ZIndexBehavior.Sibling
+
+ScreenGui.Parent =
+    PlayerGui
+
+
+--========================================================
+-- MAIN WINDOW
+--========================================================
+
+local Main =
+    Instance.new("Frame")
+
+Main.Size =
+    UDim2.fromOffset(
+        430,
+        330
+    )
+
+Main.Position =
+    UDim2.fromScale(
+        .5,
+        .5
+    )
+
+Main.AnchorPoint =
+    Vector2.new(
+        .5,
+        .5
+    )
+
+Main.BackgroundColor3 =
+    Config.Black
+
+Main.BackgroundTransparency =
+    Config.Glass
+
+Main.BorderSizePixel =
+    0
+
+Main.Active =
+    true
+
+Main.Parent =
+    ScreenGui
+
+Corner(
+    Main,
+    17
+)
+
+Stroke(
+    Main,
+    Config.Red,
+    1.5
+)
+
+
+--========================================================
+-- TOP
+--========================================================
+
+local Top =
+    Instance.new("Frame")
+
+Top.Size =
+    UDim2.new(
+        1,
+        0,
+        0,
+        60
+    )
+
+Top.BackgroundColor3 =
+    Config.Dark
+
+Top.BackgroundTransparency =
+    .08
+
+Top.BorderSizePixel =
+    0
+
+Top.Parent =
+    Main
+
+Corner(
+    Top,
+    17
+)
+
+
+local Title =
+    Instance.new("TextLabel")
+
+Title.BackgroundTransparency =
+    1
+
+Title.Position =
+    UDim2.fromOffset(
+        15,
+        6
+    )
+
+Title.Size =
+    UDim2.new(
+        1,
+        -65,
+        0,
+        27
+    )
+
+Title.Text =
+    "MINH KHA HUB"
+
+Title.Font =
+    Enum.Font.GothamBlack
+
+Title.TextSize =
+    18
+
+Title.TextColor3 =
+    Config.White
+
+Title.TextXAlignment =
+    Enum.TextXAlignment.Left
+
+Title.Parent =
+    Top
+
+
+local Subtitle =
+    Instance.new("TextLabel")
+
+Subtitle.BackgroundTransparency =
+    1
+
+Subtitle.Position =
+    UDim2.fromOffset(
+        16,
+        35
+    )
+
+Subtitle.Size =
+    UDim2.new(
+        1,
+        -70,
+        0,
+        17
+    )
+
+Subtitle.Text =
+    T("Subtitle")
+
+Subtitle.Font =
+    Enum.Font.Gotham
+
+Subtitle.TextSize =
+    9
+
+Subtitle.TextColor3 =
+    Config.Gray
+
+Subtitle.TextXAlignment =
+    Enum.TextXAlignment.Left
+
+Subtitle.Parent =
+    Top
+
+
+local Close =
+    Instance.new("TextButton")
+
+Close.Size =
+    UDim2.fromOffset(
+        36,
+        36
+    )
+
+Close.Position =
+    UDim2.new(
+        1,
+        -46,
+        0,
+        12
+    )
+
+Close.Text =
+    "×"
+
+Close.TextSize =
+    22
+
+Close.Font =
+    Enum.Font.GothamBold
+
+Close.TextColor3 =
+    Config.White
+
+Close.BackgroundColor3 =
+    Config.DarkRed
+
+Close.BorderSizePixel =
+    0
+
+Close.Parent =
+    Top
+
+Corner(
+    Close,
+    10
+)
+
+Stroke(
+    Close,
+    Config.Red
+)
+
+
+Close.MouseButton1Click:Connect(
+    function()
+
+        Main.Visible =
+            false
+
+    end
+)
+
+
+--========================================================
+-- MAIN DRAG
+--========================================================
+
+do
+
+    local dragging =
+        false
+
+    local dragStart
+
+    local startPosition
+
+    Top.InputBegan:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+
+            or input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                dragging =
+                    true
+
+                dragStart =
+                    input.Position
+
+                startPosition =
+                    Main.Position
+
+            end
+
+        end
+    )
+
+
+    UserInputService.InputChanged:Connect(
+        function(input)
+
+            if not dragging then
+                return
+            end
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseMovement
+
+            or input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                local delta =
+                    input.Position
+                    - dragStart
+
+                Main.Position =
+                    UDim2.new(
+
+                        startPosition.X.Scale,
+
+                        startPosition.X.Offset
+                        + delta.X,
+
+                        startPosition.Y.Scale,
+
+                        startPosition.Y.Offset
+                        + delta.Y
+
+                    )
+
+            end
+
+        end
+    )
+
+
+    UserInputService.InputEnded:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+
+            or input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                dragging =
+                    false
+
+            end
+
+        end
+    )
+
+end
+
+
+--========================================================
+-- BODY
+--========================================================
+
+local Body =
+    Instance.new("Frame")
+
+Body.Position =
+    UDim2.fromOffset(
+        9,
+        69
+    )
+
+Body.Size =
+    UDim2.new(
+        1,
+        -18,
+        1,
+        -78
+    )
+
+Body.BackgroundTransparency =
+    1
+
+Body.Parent =
+    Main
+
+
+--========================================================
+-- LEFT MENU
+--========================================================
+
+local Left =
+    Instance.new("Frame")
+
+Left.Size =
+    UDim2.new(
+        0,
+        125,
+        1,
+        0
+    )
+
+Left.BackgroundColor3 =
+    Config.Panel
+
+Left.BackgroundTransparency =
+    .08
+
+Left.BorderSizePixel =
+    0
+
+Left.Parent =
+    Body
+
+Corner(
+    Left,
+    12
+)
+
+Stroke(
+    Left,
+    Color3.fromRGB(
+        55,
+        55,
+        65
+    ),
+    1
+)
+
+
+local MenuTitle =
+    Instance.new("TextLabel")
+
+MenuTitle.BackgroundTransparency =
+    1
+
+MenuTitle.Position =
+    UDim2.fromOffset(
+        10,
+        7
+    )
+
+MenuTitle.Size =
+    UDim2.new(
+        1,
+        -20,
+        0,
+        24
+    )
+
+MenuTitle.Text =
+    T("Menu")
+
+MenuTitle.Font =
+    Enum.Font.GothamBold
+
+MenuTitle.TextSize =
+    11
+
+MenuTitle.TextColor3 =
+    Config.Red
+
+MenuTitle.TextXAlignment =
+    Enum.TextXAlignment.Left
+
+MenuTitle.Parent =
+    Left
+
+
+local MenuScroll =
+    Instance.new("ScrollingFrame")
+
+MenuScroll.Position =
+    UDim2.fromOffset(
+        6,
+        37
+    )
+
+MenuScroll.Size =
+    UDim2.new(
+        1,
+        -12,
+        1,
+        -43
+    )
+
+MenuScroll.BackgroundTransparency =
+    1
+
+MenuScroll.BorderSizePixel =
+    0
+
+MenuScroll.ScrollBarThickness =
+    2
+
+MenuScroll.ScrollBarImageColor3 =
+    Config.Red
+
+MenuScroll.AutomaticCanvasSize =
+    Enum.AutomaticSize.Y
+
+MenuScroll.Parent =
+    Left
+
+
+local MenuLayout =
+    Instance.new("UIListLayout")
+
+MenuLayout.Padding =
+    UDim.new(
+        0,
+        6
+    )
+
+MenuLayout.Parent =
+    MenuScroll
+
+
+--========================================================
+-- RIGHT
+--========================================================
+
+local Right =
+    Instance.new("Frame")
+
+Right.Position =
+    UDim2.fromOffset(
+        134,
+        0
+    )
+
+Right.Size =
+    UDim2.new(
+        1,
+        -134,
+        1,
+        0
+    )
+
+Right.BackgroundColor3 =
+    Config.Panel
+
+Right.BackgroundTransparency =
+    .08
+
+Right.BorderSizePixel =
+    0
+
+Right.ClipsDescendants =
+    true
+
+Right.Parent =
+    Body
+
+Corner(
+    Right,
+    12
+)
+
+Stroke(
+    Right,
+    Color3.fromRGB(
+        55,
+        55,
+        65
+    ),
+    1
+)
+
+
+local Scroll =
+    Instance.new("ScrollingFrame")
+
+Scroll.Position =
+    UDim2.fromOffset(
+        8,
+        8
+    )
+
+Scroll.Size =
+    UDim2.new(
+        1,
+        -16,
+        1,
+        -16
+    )
+
+Scroll.BackgroundTransparency =
+    1
+
+Scroll.BorderSizePixel =
+    0
+
+Scroll.ScrollBarThickness =
+    3
+
+Scroll.ScrollBarImageColor3 =
+    Config.Red
+
+Scroll.AutomaticCanvasSize =
+    Enum.AutomaticSize.Y
+
+Scroll.Parent =
+    Right
+
+
+local PageLayout =
+    Instance.new("UIListLayout")
+
+PageLayout.Padding =
+    UDim.new(
+        0,
+        8
+    )
+
+PageLayout.Parent =
+    Scroll
+
+
+--========================================================
+-- PAGES
+--========================================================
+
+local Pages = {}
+local Tabs = {}
+local Components = {}
+
+
+local function CreatePage(
+    name,
+    languageKey
+)
+
+    local Page =
+        Instance.new("Frame")
+
+    Page.Name =
+        name
+
+    Page.Size =
+        UDim2.new(
+            1,
+            -4,
+            0,
+            0
+        )
+
+    Page.AutomaticSize =
+        Enum.AutomaticSize.Y
+
+    Page.BackgroundTransparency =
+        1
+
+    Page.Visible =
+        false
+
+    Page.Parent =
+        Scroll
+
+
+    local Layout =
+        Instance.new("UIListLayout")
+
+    Layout.Padding =
+        UDim.new(
+            0,
+            7
+        )
+
+    Layout.Parent =
+        Page
+
+
+    local Tab =
+        Instance.new("TextButton")
+
+    Tab.Size =
+        UDim2.new(
+            1,
+            -4,
+            0,
+            37
+        )
+
+    Tab.Text =
+        T(languageKey)
+
+    Tab.TextColor3 =
+        Config.White
+
+    Tab.TextSize =
+        9
+
+    Tab.Font =
+        Enum.Font.GothamSemibold
+
+    Tab.BackgroundColor3 =
+        Config.Panel2
+
+    Tab.BackgroundTransparency =
+        .15
+
+    Tab.BorderSizePixel =
+        0
+
+    Tab.AutoButtonColor =
+        false
+
+    Tab.Parent =
+        MenuScroll
+
+    Corner(
+        Tab,
+        9
+    )
+
+    Stroke(
+        Tab,
+        Color3.fromRGB(
+            55,
+            55,
+            65
+        ),
+        1
+    )
+
+
+    Pages[name] =
+        Page
+
+    Tabs[name] = {
+        Object = Tab,
+        Key = languageKey
+    }
+
+
+    Tab.MouseButton1Click:Connect(
+        function()
+
+            for pageName,page in pairs(
+                Pages
+            ) do
+
+                page.Visible =
+                    pageName == name
+
+            end
+
+
+            for pageName,data in pairs(
+                Tabs
+            ) do
+
+                if pageName == name then
+
+                    data.Object.BackgroundColor3 =
+                        Config.Red
+
+                    data.Object.BackgroundTransparency =
+                        .05
+
+                else
+
+                    data.Object.BackgroundColor3 =
+                        Config.Panel2
+
+                    data.Object.BackgroundTransparency =
+                        .15
+
+                end
+
+            end
+
+            Scroll.CanvasPosition =
+                Vector2.new(
+                    0,
+                    0
+                )
+
+        end
+    )
+
+end
+
+
+CreatePage(
+    "Players",
+    "Players"
+)
+
+CreatePage(
+    "Items",
+    "Items"
+)
+
+CreatePage(
+    "Building",
+    "Building"
+)
+
+CreatePage(
+    "VIP",
+    "VIP"
+)
+
+CreatePage(
+    "Teleport",
+    "Teleport"
+)
+
+CreatePage(
+    "Lag",
+    "Lag"
+)
+
+CreatePage(
+    "Settings",
+    "Settings"
+)
+
+
+--========================================================
+-- BUTTON
+--========================================================
+
+local function AddButton(
+    parent,
+    key,
+    callback
+)
+
+    local Button =
+        Instance.new("TextButton")
+
+    Button.Size =
+        UDim2.new(
+            1,
+            -4,
+            0,
+            42
+        )
+
+    Button.Text =
+        T(key)
+
+    Button.TextColor3 =
+        Config.White
+
+    Button.TextSize =
+        10
+
+    Button.Font =
+        Enum.Font.GothamBold
+
+    Button.BackgroundColor3 =
+        Config.Panel2
+
+    Button.BackgroundTransparency =
+        .10
+
+    Button.BorderSizePixel =
+        0
+
+    Button.AutoButtonColor =
+        false
+
+    Button.Parent =
+        parent
+
+    Corner(
+        Button,
+        10
+    )
+
+    Stroke(
+        Button,
+        Color3.fromRGB(
+            55,
+            55,
+            65
+        ),
+        1
+    )
+
+
+    table.insert(
+        Components,
+        {
+            Object = Button,
+            Key = key,
+            Type = "Button"
+        }
+    )
+
+
+    Button.MouseEnter:Connect(
+        function()
+
+            Button.BackgroundColor3 =
+                Color3.fromRGB(
+                    55,
+                    55,
+                    65
+                )
+
+        end
+    )
+
+
+    Button.MouseLeave:Connect(
+        function()
+
+            Button.BackgroundColor3 =
+                Config.Panel2
+
+        end
+    )
+
+
+    Button.MouseButton1Click:Connect(
+        function()
+
+            task.spawn(
+                function()
+
+                    pcall(callback)
+
+                end
+            )
+
+        end
+    )
+
+
+    return Button
+
+end
+
+
+--========================================================
+-- TOGGLE
+--========================================================
+
+local function AddToggle(
+    parent,
+    key,
+    default,
+    callback
+)
+
+    local State =
+        default
+
+    local Button =
+        Instance.new("TextButton")
+
+    Button.Size =
+        UDim2.new(
+            1,
+            -4,
+            0,
+            42
+        )
+
+    Button.TextColor3 =
+        Config.White
+
+    Button.TextSize =
+        10
+
+    Button.Font =
+        Enum.Font.GothamBold
+
+    Button.BorderSizePixel =
+        0
+
+    Button.AutoButtonColor =
+        false
+
+    Button.Parent =
+        parent
+
+    Corner(
+        Button,
+        10
+    )
+
+    Stroke(
+        Button,
+        Color3.fromRGB(
+            55,
+            55,
+            65
+        ),
+        1
+    )
+
+
+    local Component = {
+
+        Object = Button,
+
+        Key = key,
+
+        Type = "Toggle",
+
+        State = function()
+            return State
+        end
+
+    }
+
+
+    table.insert(
+        Components,
+        Component
+    )
+
+
+    local function Update()
+
+        Button.Text =
+            T(key)
+            .. " ["
+            .. T(
+                State
+                and "ON"
+                or "OFF"
+            )
+            .. "]"
+
+
+        if State then
+
+            Button.BackgroundColor3 =
+                Config.Red
+
+        else
+
+            Button.BackgroundColor3 =
+                Config.Panel2
+
+        end
+
+    end
+
+
+    Component.Update =
+        Update
+
+
+    Button.MouseButton1Click:Connect(
+        function()
+
+            State =
+                not State
+
+            Update()
+
+            task.spawn(
+                function()
+
+                    pcall(
+                        callback,
+                        State
+                    )
+
+                end
+            )
+
+        end
+    )
+
+
+    Update()
+
+
+    task.spawn(
+        function()
+
+            pcall(
+                callback,
+                State
+            )
+
+        end
+    )
+
+
+    return Button
+
+end
+
+
+--========================================================
+-- INPUT
+--========================================================
+
+local function AddInput(
+    parent,
+    key,
+    default,
+    callback
+)
+
+    local Holder =
+        Instance.new("Frame")
+
+    Holder.Size =
+        UDim2.new(
+            1,
+            -4,
+            0,
+            45
+        )
+
+    Holder.BackgroundColor3 =
+        Config.Panel2
+
+    Holder.BackgroundTransparency =
+        .10
+
+    Holder.BorderSizePixel =
+        0
+
+    Holder.Parent =
+        parent
+
+    Corner(
+        Holder,
+        10
+    )
+
+    Stroke(
+        Holder,
+        Color3.fromRGB(
+            55,
+            55,
+            65
+        ),
+        1
+    )
+
+
+    local Label =
+        Instance.new("TextLabel")
+
+    Label.BackgroundTransparency =
+        1
+
+    Label.Position =
+        UDim2.fromOffset(
+            9,
+            0
+        )
+
+    Label.Size =
+        UDim2.new(
+            .40,
+            0,
+            1,
+            0
+        )
+
+    Label.Text =
+        T(key)
+
+    Label.TextColor3 =
+        Config.White
+
+    Label.TextSize =
+        10
+
+    Label.Font =
+        Enum.Font.GothamBold
+
+    Label.TextXAlignment =
+        Enum.TextXAlignment.Left
+
+    Label.Parent =
+        Holder
+
+
+    local Box =
+        Instance.new("TextBox")
+
+    Box.Position =
+        UDim2.new(
+            .41,
+            0,
+            .15,
+            0
+        )
+
+    Box.Size =
+        UDim2.new(
+            .56,
+            0,
+            .70,
+            0
+        )
+
+    Box.Text =
+        tostring(default)
+
+    Box.TextColor3 =
+        Config.White
+
+    Box.TextSize =
+        10
+
+    Box.Font =
+        Enum.Font.Gotham
+
+    Box.BackgroundColor3 =
+        Config.Dark
+
+    Box.BorderSizePixel =
+        0
+
+    Box.ClearTextOnFocus =
+        false
+
+    Box.Parent =
+        Holder
+
+    Corner(
+        Box,
+        7
+    )
+
+
+    table.insert(
+        Components,
+        {
+            Object = Label,
+            Key = key,
+            Type = "Input"
+        }
+    )
+
+
+    Box.FocusLost:Connect(
+        function()
+
+            local value =
+                tonumber(
+                    Box.Text
+                )
+
+            if value then
+
+                pcall(
+                    callback,
+                    value
+                )
+
+            end
+
+        end
+    )
+
+
+    return Box
+
+end
+
+
+--========================================================
+-- PLAYER FEATURES
+--========================================================
+
+local InfiniteJump =
+    false
+
+local Noclip =
+    false
+
+local InfiniteStamina =
+    false
+
+local GodMode =
+    false
+
+
+AddToggle(
+    Pages.Players,
+    "Jump",
+    false,
+    function(value)
+
+        InfiniteJump =
+            value
+
+    end
+)
+
+
+UserInputService.JumpRequest:Connect(
+    function()
+
+        if not InfiniteJump then
+            return
+        end
+
+        local hum =
+            Humanoid()
+
+        if hum then
+
+            hum:ChangeState(
+                Enum.HumanoidStateType.Jumping
+            )
+
+        end
+
+    end
+)
+
+
+AddToggle(
+    Pages.Players,
+    "Noclip",
+    false,
+    function(value)
+
+        Noclip =
+            value
+
+    end
+)
+
+
+AddToggle(
+    Pages.Players,
+    "Stamina",
+    false,
+    function(value)
+
+        InfiniteStamina =
+            value
+
+    end
+)
+
+
+AddToggle(
+    Pages.Players,
+    "God",
+    false,
+    function(value)
+
+        GodMode =
+            value
+
+    end
+)
+
+
+AddToggle(
+    Pages.Players,
+    "Paused",
+    false,
+    function(value)
+
+        pcall(
+            function()
+
+                GuiService:
+                    SetGameplayPausedNotificationEnabled(
+                        not value
+                    )
+
+            end
+        )
+
+    end
+)
+
+
+RunService.Stepped:Connect(
+    function()
+
+        if not Noclip then
+            return
+        end
+
+        local char =
+            LocalPlayer.Character
+
+        if not char then
+            return
+        end
+
+        for _,obj in ipairs(
+            char:GetDescendants()
+        ) do
+
+            if obj:IsA("BasePart") then
+
+                obj.CanCollide =
+                    false
+
+            end
+
+        end
+
+    end
+)
+
+
+RunService.Heartbeat:Connect(
+    function()
+
+        if GodMode then
+
+            local hum =
+                Humanoid()
+
+            if hum then
+
+                pcall(
+                    function()
+
+                        hum.MaxHealth =
+                            math.huge
+
+                        hum.Health =
+                            math.huge
+
+                    end
+                )
+
+            end
+
+        end
+
+
+        if InfiniteStamina then
+
+            local char =
+                LocalPlayer.Character
+
+            if char then
+
+                for _,obj in ipairs(
+                    char:GetDescendants()
+                ) do
+
+                    if obj:IsA("NumberValue")
+                    or obj:IsA("IntValue") then
+
+                        local name =
+                            string.lower(
+                                obj.Name
+                            )
+
+                        if string.find(
+                            name,
+                            "stamina",
+                            1,
+                            true
+                        )
+                        or string.find(
+                            name,
+                            "energy",
+                            1,
+                            true
+                        ) then
+
+                            pcall(
+                                function()
+
+                                    obj.Value =
+                                        100
+
+                                end
+                            )
+
+                        end
+
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Players,
+    "Reset",
+    function()
+
+        local hum =
+            Humanoid()
+
+        if hum then
+
+            hum.Health =
+                0
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Players,
+    "XVC",
+    function()
+
+        local success,err =
+            pcall(
+                function()
+
+                    loadstring(
+                        game:HttpGet(
+                            "https://raw.githubusercontent.com/XVCHub/Games/main/GEF"
+                        )
+                    )()
+
+                end
+            )
+
+        if not success then
+
+            Notify(
+                "XVC",
+                tostring(err)
+            )
+
+        end
+
+    end
+)
+
+
+--========================================================
+-- ITEMS
+--========================================================
+
+local function FindItem(
+    itemName
+)
+
+    local _,root =
+        Character()
+
+    if not root then
+        return
+    end
+
+    local found = {}
+
+    for _,obj in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if obj:IsA("BasePart")
+        and string.find(
+            string.lower(
+                obj.Name
+            ),
+            string.lower(
+                itemName
+            ),
+            1,
+            true
+        ) then
+
+            table.insert(
+                found,
+                obj
+            )
+
+        end
+
+    end
+
+
+    if #found == 0 then
+
+        Notify(
+            "Items",
+            "Not found: "
+            .. itemName
+        )
+
+        return
+
+    end
+
+
+    local target =
+        found[
+            math.random(
+                1,
+                #found
+            )
+        ]
+
+
+    root.CFrame =
+        target.CFrame
+        + Vector3.new(
+            0,
+            3,
+            0
+        )
+
+end
+
+
+AddButton(
+    Pages.Items,
+    "Hammer",
+    function()
+        FindItem("Hammer")
+    end
+)
+
+AddButton(
+    Pages.Items,
+    "Food",
+    function()
+        FindItem("Food")
+    end
+)
+
+AddButton(
+    Pages.Items,
+    "Money",
+    function()
+        FindItem("Money")
+    end
+)
+
+AddButton(
+    Pages.Items,
+    "Crowbar",
+    function()
+        FindItem("Crowbar")
+    end
+)
+
+AddButton(
+    Pages.Items,
+    "Bat",
+    function()
+        FindItem("Bat")
+    end
+)
+
+AddButton(
+    Pages.Items,
+    "Lantern",
+    function()
+        FindItem("Lantern")
+    end
+)
+
+
+--========================================================
+-- BUILD SYSTEM
+--========================================================
+
+local SelectedBuild =
+    "no"
+
+local VIPType =
+    "hut"
+
+local VIPWidth =
+    12
+
+local VIPLength =
+    12
+
+local VIPHeight =
+    7
+
+local VIPFloor =
+    true
+
+
+--========================================================
+-- BUILD DATA
+--========================================================
+
+local function GetBuildData()
+
+    local char,root =
+        Character()
+
+    if not char or not root then
+
+        Notify(
+            "Build",
+            "Character not found."
+        )
+
+        return
+
+    end
+
+
+    local hammer =
+        char:FindFirstChild(
+            "Hammer"
+        )
+
+    if not hammer then
+
+        Notify(
+            "Build",
+            "Equip Hammer first."
+        )
+
+        return
+
+    end
+
+
+    local remote =
+        hammer:FindFirstChild(
+            "BuildPlank"
+        )
+
+    if not remote then
+
+        Notify(
+            "Build",
+            "BuildPlank not found."
+        )
+
+        return
+
+    end
+
+
+    local road =
+        workspace:FindFirstChild(
+            "Road"
+        )
+
+    if not road then
+
+        Notify(
+            "Build",
+            "Road not found."
+        )
+
+        return
+
+    end
+
+
+    local children =
+        road:GetChildren()
+
+    local part =
+        children[33]
+
+
+    if not part
+    or not part:IsA("BasePart") then
+
+        Notify(
+            "Build",
+            "Build part not found."
+        )
+
+        return
+
+    end
+
+
+    return root,remote,part
+
+end
+
+
+--========================================================
+-- SEGMENT
+--========================================================
+
+local function Segment(
+    remote,
+    part,
+    A,
+    B
+)
+
+    local distance =
+        (B-A).Magnitude
+
+    if distance < .05 then
+        return
+    end
+
+
+    local direction =
+        (B-A).Unit
+
+    local current =
+        A
+
+
+    while distance > .05 do
+
+        local length =
+            math.min(
+                10,
+                distance
+            )
+
+        local nextPoint =
+            current
+            + direction
+            * length
+
+
+        pcall(
+            function()
+
+                remote:FireServer(
+                    current,
+                    nextPoint,
+                    part,
+                    part,
+                    Vector3.new(
+                        0,
+                        1,
+                        0
+                    )
+                )
+
+            end
+        )
+
+
+        current =
+            nextPoint
+
+        distance -=
+            length
+
+        task.wait(
+            .01
+        )
+
+    end
+
+end
+
+
+--========================================================
+-- FLOOR
+--========================================================
+
+local function BuildFloor(
+    width,
+    length
+)
+
+    local root,remote,part =
+        GetBuildData()
+
+    if not root then
+        return
+    end
+
+
+    width =
+        math.max(
+            2,
+            width
+        )
+
+    length =
+        math.max(
+            2,
+            length
+        )
+
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+
+    local origin =
+        root.Position
+        + Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+
+    for z = 0,length,2 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + forward*z
+            + right*(-width/2)
+            + Vector3.new(
+                0,
+                .25,
+                0
+            ),
+
+            origin
+            + forward*z
+            + right*(width/2)
+            + Vector3.new(
+                0,
+                .25,
+                0
+            )
+        )
+
+    end
+
+
+    Notify(
+        "Build",
+        "Floor complete."
+    )
+
+end
+
+
+--========================================================
+-- WALL
+--========================================================
+
+local function BuildWall(
+    width,
+    height
+)
+
+    local root,remote,part =
+        GetBuildData()
+
+    if not root then
+        return
+    end
+
+
+    width =
+        math.max(
+            2,
+            width
+        )
+
+    height =
+        math.max(
+            2,
+            height
+        )
+
+
+    local right =
+        root.CFrame.RightVector
+
+
+    local origin =
+        root.Position
+        + Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+
+    for y = .5,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + right*(-width/2)
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            origin
+            + right*(width/2)
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+
+    Notify(
+        "Build",
+        "Wall complete."
+    )
+
+end
+
+
+--========================================================
+-- HOUSE FLOOR
+--========================================================
+
+local function HouseFloor(
+    root,
+    remote,
+    part,
+    width,
+    length
+)
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+
+    local origin =
+        root.Position
+        + Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+
+    for z = 0,length,2 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + forward*z
+            + right*(-width/2)
+            + Vector3.new(
+                0,
+                .25,
+                0
+            ),
+
+            origin
+            + forward*z
+            + right*(width/2)
+            + Vector3.new(
+                0,
+                .25,
+                0
+            )
+        )
+
+    end
+
+end
+
+
+--========================================================
+-- HOUSE WALLS + DOOR
+--========================================================
+
+local function HouseWalls(
+    root,
+    remote,
+    part,
+    width,
+    length,
+    height
+)
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+
+    local origin =
+        root.Position
+        + Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+
+    local frontLeft =
+        origin
+        + right*(-width/2)
+
+    local frontRight =
+        origin
+        + right*(width/2)
+
+    local backLeft =
+        frontLeft
+        + forward*length
+
+    local backRight =
+        frontRight
+        + forward*length
+
+
+    --====================================================
+    -- DOOR
+    --====================================================
+
+    local doorWidth =
+        math.clamp(
+            width*.22,
+            2.5,
+            5
+        )
+
+    local doorHeight =
+        math.clamp(
+            height*.65,
+            3,
+            6
+        )
+
+
+    local doorLeft =
+        -doorWidth/2
+
+    local doorRight =
+        doorWidth/2
+
+
+    --====================================================
+    -- FRONT LEFT
+    --====================================================
+
+    for y=.5,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + right*(-width/2)
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            origin
+            + right*doorLeft
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+
+    --====================================================
+    -- FRONT RIGHT
+    --====================================================
+
+    for y=.5,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + right*doorRight
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            origin
+            + right*(width/2)
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+
+    --====================================================
+    -- ABOVE DOOR
+    --====================================================
+
+    for y=doorHeight,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + right*doorLeft
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            origin
+            + right*doorRight
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+
+    --====================================================
+    -- BACK WALL
+    --====================================================
+
+    for y=.5,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            backLeft
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            backRight
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+
+    --====================================================
+    -- LEFT WALL
+    --====================================================
+
+    for y=.5,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            frontLeft
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            backLeft
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+
+    --====================================================
+    -- RIGHT WALL
+    --====================================================
+
+    for y=.5,height,.5 do
+
+        Segment(
+            remote,
+            part,
+
+            frontRight
+            + Vector3.new(
+                0,
+                y,
+                0
+            ),
+
+            backRight
+            + Vector3.new(
+                0,
+                y,
+                0
+            )
+        )
+
+    end
+
+end
+
+
+--========================================================
+-- ROOF
+--========================================================
+
+local function BuildRoof(
+    root,
+    remote,
+    part,
+    width,
+    length,
+    height
+)
+
+    local forward =
+        root.CFrame.LookVector
+
+    local right =
+        root.CFrame.RightVector
+
+
+    local origin =
+        root.Position
+        + Vector3.new(
+            0,
+            -3,
+            0
+        )
+
+
+    local roofY =
+        height + .5
+
+
+    --====================================================
+    -- MAIN ROOF
+    --====================================================
+
+    for z=0,length,2 do
+
+        Segment(
+            remote,
+            part,
+
+            origin
+            + forward*z
+            + right*(-width/2)
+            + Vector3.new(
+                0,
+                roofY,
+                0
+            ),
+
+            origin
+            + forward*z
+            + right*(width/2)
+            + Vector3.new(
+                0,
+                roofY,
+                0
+            )
+        )
+
+    end
+
+
+    --====================================================
+    -- FRONT ROOF EDGE
+    --====================================================
+
+    Segment(
+        remote,
+        part,
+
+        origin
+        + right*(-width/2)
+        + Vector3.new(
+            0,
+            roofY,
+            0
+        ),
+
+        origin
+        + right*(width/2)
+        + Vector3.new(
+            0,
+            roofY,
+            0
+        )
+    )
+
+
+    --====================================================
+    -- BACK ROOF EDGE
+    --====================================================
+
+    Segment(
+        remote,
+        part,
+
+        origin
+        + forward*length
+        + right*(-width/2)
+        + Vector3.new(
+            0,
+            roofY,
+            0
+        ),
+
+        origin
+        + forward*length
+        + right*(width/2)
+        + Vector3.new(
+            0,
+            roofY,
+            0
+        )
+    )
+
+end
+
+
+--========================================================
+-- HOUSE
+--========================================================
+
+local function BuildHouse(
+    width,
+    length,
+    height,
+    withFloor
+)
+
+    local root,remote,part =
+        GetBuildData()
+
+    if not root then
+        return
+    end
+
+
+    width =
+        math.max(
+            4,
+            width
+        )
+
+    length =
+        math.max(
+            4,
+            length
+        )
+
+    height =
+        math.max(
+            3,
+            height
+        )
+
+
+    -- FLOOR
+
+    if withFloor then
+
+        HouseFloor(
+            root,
+            remote,
+            part,
+            width,
+            length
+        )
+
+        task.wait(
+            .10
+        )
+
+    end
+
+
+    -- WALLS + DOOR
+
+    HouseWalls(
+        root,
+        remote,
+        part,
+        width,
+        length,
+        height
+    )
+
+
+    task.wait(
+        .10
+    )
+
+
+    -- ROOF
+
+    BuildRoof(
+        root,
+        remote,
+        part,
+        width,
+        length,
+        height
+    )
+
+
+    Notify(
+        "Build",
+        "House + Door + Roof complete."
+    )
+
+end
+
+
+--========================================================
+-- NORMAL BUILD SELECT
+--========================================================
+
+AddButton(
+    Pages.Building,
+    "Hut",
+    function()
+
+        SelectedBuild =
+            "hut"
+
+        Notify(
+            "Build",
+            "Hut selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Building,
+    "Wall",
+    function()
+
+        SelectedBuild =
+            "wall"
+
+        Notify(
+            "Build",
+            "Wall selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Building,
+    "Floor",
+    function()
+
+        SelectedBuild =
+            "floor"
+
+        Notify(
+            "Build",
+            "Floor selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Building,
+    "BigHouse",
+    function()
+
+        SelectedBuild =
+            "big"
+
+        Notify(
+            "Build",
+            "Big House selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Building,
+    "BigFloor",
+    function()
+
+        SelectedBuild =
+            "bigfloor"
+
+        Notify(
+            "Build",
+            "Big Floor selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Building,
+    "NoBuild",
+    function()
+
+        SelectedBuild =
+            "no"
+
+        Notify(
+            "Build",
+            "Build disabled."
+        )
+
+    end
+)
+
+
+--========================================================
+-- NORMAL BUILD
+--========================================================
+
+AddButton(
+    Pages.Building,
+    "Build",
+    function()
+
+        if SelectedBuild ==
+            "hut" then
+
+            BuildHouse(
+                12,
+                12,
+                7,
+                true
+            )
+
+
+        elseif SelectedBuild ==
+            "wall" then
+
+            BuildWall(
+                12,
+                6
+            )
+
+
+        elseif SelectedBuild ==
+            "floor" then
+
+            BuildFloor(
+                12,
+                12
+            )
+
+
+        elseif SelectedBuild ==
+            "big" then
+
+            BuildHouse(
+                60,
+                60,
+                10,
+                true
+            )
+
+
+        elseif SelectedBuild ==
+            "bigfloor" then
+
+            BuildFloor(
+                100,
+                100
+            )
+
+
+        else
+
+            Notify(
+                "Build",
+                "Select a build first."
+            )
+
+        end
+
+    end
+)
+
+
+--========================================================
+-- VIP SELECT
+-- VIP SUPPORTS ALL NORMAL BUILD
+--========================================================
+
+AddButton(
+    Pages.VIP,
+    "VIPHut",
+    function()
+
+        VIPType =
+            "hut"
+
+        VIPWidth =
+            12
+
+        VIPLength =
+            12
+
+        VIPHeight =
+            7
+
+        Notify(
+            "VIP",
+            "Hut selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.VIP,
+    "VIPWall",
+    function()
+
+        VIPType =
+            "wall"
+
+        VIPWidth =
+            12
+
+        VIPLength =
+            1
+
+        VIPHeight =
+            6
+
+        Notify(
+            "VIP",
+            "Wall selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.VIP,
+    "Floor",
+    function()
+
+        VIPType =
+            "floor"
+
+        VIPWidth =
+            12
+
+        VIPLength =
+            12
+
+        VIPHeight =
+            1
+
+        Notify(
+            "VIP",
+            "Floor selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.VIP,
+    "VIPBig",
+    function()
+
+        VIPType =
+            "big"
+
+        VIPWidth =
+            60
+
+        VIPLength =
+            60
+
+        VIPHeight =
+            10
+
+        Notify(
+            "VIP",
+            "Big House selected."
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.VIP,
+    "BigFloor",
+    function()
+
+        VIPType =
+            "bigfloor"
+
+        VIPWidth =
+            100
+
+        VIPLength =
+            100
+
+        VIPHeight =
+            1
+
+        Notify(
+            "VIP",
+            "Big Floor selected."
+        )
+
+    end
+)
+
+
+--========================================================
+-- VIP INPUTS
+--========================================================
+
+AddInput(
+    Pages.VIP,
+    "Width",
+    12,
+    function(value)
+
+        VIPWidth =
+            math.clamp(
+                value,
+                2,
+                200
+            )
+
+    end
+)
+
+
+AddInput(
+    Pages.VIP,
+    "Length",
+    12,
+    function(value)
+
+        VIPLength =
+            math.clamp(
+                value,
+                2,
+                200
+            )
+
+    end
+)
+
+
+AddInput(
+    Pages.VIP,
+    "Height",
+    7,
+    function(value)
+
+        VIPHeight =
+            math.clamp(
+                value,
+                3,
+                50
+            )
+
+    end
+)
+
+
+AddToggle(
+    Pages.VIP,
+    "WithFloor",
+    true,
+    function(value)
+
+        VIPFloor =
+            value
+
+    end
+)
+
+
+--========================================================
+-- VIP BUILD
+--========================================================
+
+AddButton(
+    Pages.VIP,
+    "VIPBuild",
+    function()
+
+        if VIPType ==
+            "hut" then
+
+            BuildHouse(
+                VIPWidth,
+                VIPLength,
+                VIPHeight,
+                VIPFloor
+            )
+
+
+        elseif VIPType ==
+            "big" then
+
+            BuildHouse(
+                VIPWidth,
+                VIPLength,
+                VIPHeight,
+                VIPFloor
+            )
+
+
+        elseif VIPType ==
+            "wall" then
+
+            BuildWall(
+                VIPWidth,
+                VIPHeight
+            )
+
+
+        elseif VIPType ==
+            "floor" then
+
+            BuildFloor(
+                VIPWidth,
+                VIPLength
+            )
+
+
+        elseif VIPType ==
+            "bigfloor" then
+
+            BuildFloor(
+                VIPWidth,
+                VIPLength
+            )
+
+
+        else
+
+            Notify(
+                "VIP",
+                "Select build type."
+            )
+
+        end
+
+    end
+)
+
+
+--========================================================
+-- FLOATING BUILD BUTTON
+--========================================================
+
+local FloatingBuildGui
+
+
+AddToggle(
+    Pages.Building,
+    "FloatBuild",
+    false,
+    function(enabled)
+
+        if FloatingBuildGui then
+
+            pcall(
+                function()
+                    FloatingBuildGui:Destroy()
+                end
+            )
+
+            FloatingBuildGui =
+                nil
+
+        end
+
+
+        if not enabled then
+            return
+        end
+
+
+        FloatingBuildGui =
+            Instance.new(
+                "ScreenGui"
+            )
+
+        FloatingBuildGui.Name =
+            "MinhKhaBuildButton"
+
+        FloatingBuildGui.ResetOnSpawn =
+            false
+
+        FloatingBuildGui.IgnoreGuiInset =
+            true
+
+        FloatingBuildGui.DisplayOrder =
+            999999
+
+        FloatingBuildGui.Parent =
+            PlayerGui
+
+
+        local Button =
+            Instance.new(
+                "TextButton"
+            )
+
+        Button.Size =
+            UDim2.fromOffset(
+                145,
+                50
+            )
+
+        Button.Position =
+            UDim2.fromScale(
+                .5,
+                .82
+            )
+
+        Button.Text =
+            "BUILD"
+
+        Button.TextSize =
+            19
+
+        Button.Font =
+            Enum.Font.GothamBlack
+
+        Button.TextColor3 =
+            Config.White
+
+        Button.BackgroundColor3 =
+            Color3.fromRGB(
+                35,
+                210,
+                70
+            )
+
+        Button.BorderSizePixel =
+            0
+
+        Button.Parent =
+            FloatingBuildGui
+
+        Corner(
+            Button,
+            12
+        )
+
+        Stroke(
+            Button,
+            Color3.fromRGB(
+                100,
+                255,
+                100
+            ),
+            2
+        )
+
+
+        Button.MouseButton1Click:Connect(
+            function()
+
+                if VIPType ==
+                    "hut"
+
+                or VIPType ==
+                    "big" then
+
+                    BuildHouse(
+                        VIPWidth,
+                        VIPLength,
+                        VIPHeight,
+                        VIPFloor
+                    )
+
+
+                elseif VIPType ==
+                    "wall" then
+
+                    BuildWall(
+                        VIPWidth,
+                        VIPHeight
+                    )
+
+
+                elseif VIPType ==
+                    "floor"
+
+                or VIPType ==
+                    "bigfloor" then
+
+                    BuildFloor(
+                        VIPWidth,
+                        VIPLength
+                    )
+
+                end
+
+            end
+        )
+
+    end
+)
+
+
+--========================================================
+-- TELEPORT
+--========================================================
+
+local SavedCFrame
+
+local CoordX = 0
+local CoordY = 0
+local CoordZ = 0
+
+
+AddButton(
+    Pages.Teleport,
+    "Save",
+    function()
+
+        local _,root =
+            Character()
+
+        if root then
+
+            SavedCFrame =
+                root.CFrame
+
+            Notify(
+                "Teleport",
+                "Position saved."
+            )
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Teleport,
+    "Return",
+    function()
+
+        local _,root =
+            Character()
+
+        if root
+        and SavedCFrame then
+
+            root.CFrame =
+                SavedCFrame
+
+        else
+
+            Notify(
+                "Teleport",
+                "No saved position."
+            )
+
+        end
+
+    end
+)
+
+
+AddInput(
+    Pages.Teleport,
+    "X",
+    0,
+    function(value)
+
+        CoordX =
+            value
+
+    end
+)
+
+
+AddInput(
+    Pages.Teleport,
+    "Y",
+    0,
+    function(value)
+
+        CoordY =
+            value
+
+    end
+)
+
+
+AddInput(
+    Pages.Teleport,
+    "Z",
+    0,
+    function(value)
+
+        CoordZ =
+            value
+
+    end
+)
+
+
+AddButton(
+    Pages.Teleport,
+    "Coords",
+    function()
+
+        local _,root =
+            Character()
+
+        if not root then
+            return
+        end
+
+
+        local p =
+            root.Position
+
+        CoordX =
+            p.X
+
+        CoordY =
+            p.Y
+
+        CoordZ =
+            p.Z
+
+
+        local text =
+            string.format(
+                "%.2f, %.2f, %.2f",
+                CoordX,
+                CoordY,
+                CoordZ
+            )
+
+
+        pcall(
+            function()
+
+                if setclipboard then
+
+                    setclipboard(
+                        text
+                    )
+
+                end
+
+            end
+        )
+
+
+        Notify(
+            "Coordinates",
+            text
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Teleport,
+    "GoCoords",
+    function()
+
+        local _,root =
+            Character()
+
+        if root then
+
+            root.CFrame =
+                CFrame.new(
+                    CoordX,
+                    CoordY,
+                    CoordZ
+                )
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Teleport,
+    "Highest",
+    function()
+
+        local highest
+        local highestY =
+            -math.huge
+
+
+        for _,obj in ipairs(
+            workspace:GetDescendants()
+        ) do
+
+            if obj:IsA("BasePart")
+            and obj.CanCollide
+            and obj.Transparency < 1
+            and obj.Size.X >= 3
+            and obj.Size.Z >= 3 then
+
+                local top =
+                    obj.Position.Y
+                    + obj.Size.Y/2
+
+
+                if top > highestY then
+
+                    highestY =
+                        top
+
+                    highest =
+                        obj
+
+                end
+
+            end
+
+        end
+
+
+        local _,root =
+            Character()
+
+
+        if highest
+        and root then
+
+            root.CFrame =
+                CFrame.new(
+                    highest.Position.X,
+                    highestY + 4,
+                    highest.Position.Z
+                )
+
+        else
+
+            Notify(
+                "Teleport",
+                "No floor found."
+            )
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Teleport,
+    "Shop",
+    function()
+
+        local _,root =
+            Character()
+
+        if root then
+
+            root.CFrame =
+                CFrame.new(
+                    -425,
+                    6,
+                    77
+                )
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Teleport,
+    "Main",
+    function()
+
+        local _,root =
+            Character()
+
+        if root then
+
+            root.CFrame =
+                CFrame.new(
+                    -394,
+                    3,
+                    423
+                )
+
+        end
+
+    end
+)
+
+
+--========================================================
+-- FIX LAG
+--========================================================
+
+local HiddenObjects = {}
+local DisabledEffects = {}
+
+
+local VegetationNames = {
+
+    "tree",
+    "trees",
+    "plant",
+    "plants",
+    "grass",
+    "leaf",
+    "leaves",
+    "bush",
+    "bushes",
+    "flower",
+    "flowers",
+    "foliage",
+    "branch",
+    "branches"
+
+}
+
+
+local function IsVegetation(
+    object
+)
+
+    local name =
+        string.lower(
+            object.Name
+        )
+
+
+    for _,word in ipairs(
+        VegetationNames
+    ) do
+
+        if string.find(
+            name,
+            word,
+            1,
+            true
+        ) then
+
+            return true
+
+        end
+
+    end
+
+
+    return false
+
+end
+
+
+local function HideVegetation()
+
+    local count =
+        0
+
+
+    for _,obj in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if obj:IsA("BasePart")
+        and IsVegetation(obj)
+        and not (
+            LocalPlayer.Character
+            and obj:IsDescendantOf(
+                LocalPlayer.Character
+            )
+        ) then
+
+            if HiddenObjects[obj] ==
+                nil then
+
+                HiddenObjects[obj] =
+                    obj.LocalTransparencyModifier
+
+                obj.LocalTransparencyModifier =
+                    1
+
+                count +=
+                    1
+
+            end
+
+        end
+
+    end
+
+
+    Notify(
+        "Fix Lag",
+        "Hidden: "
+        .. count
+    )
+
+end
+
+
+local function DisableEffects()
+
+    local count =
+        0
+
+
+    for _,obj in ipairs(
+        workspace:GetDescendants()
+    ) do
+
+        if obj:IsA(
+            "ParticleEmitter"
+        )
+        or obj:IsA(
+            "Trail"
+        )
+        or obj:IsA(
+            "Beam"
+        )
+        or obj:IsA(
+            "Smoke"
+        )
+        or obj:IsA(
+            "Fire"
+        )
+        or obj:IsA(
+            "Sparkles"
+        ) then
+
+            if DisabledEffects[obj] ==
+                nil then
+
+                DisabledEffects[obj] =
+                    obj.Enabled
+
+                obj.Enabled =
+                    false
+
+                count +=
+                    1
+
+            end
+
+        end
+
+    end
+
+
+    Notify(
+        "Fix Lag",
+        "Effects disabled: "
+        .. count
+    )
+
+end
+
+
+local function RestoreLag()
+
+    for obj,value in pairs(
+        HiddenObjects
+    ) do
+
+        if obj
+        and obj.Parent then
+
+            obj.LocalTransparencyModifier =
+                value
+
+        end
+
+    end
+
+
+    for obj,value in pairs(
+        DisabledEffects
+    ) do
+
+        if obj
+        and obj.Parent then
+
+            obj.Enabled =
+                value
+
+        end
+
+    end
+
+
+    table.clear(
+        HiddenObjects
+    )
+
+    table.clear(
+        DisabledEffects
+    )
+
+
+    Notify(
+        "Fix Lag",
+        "Restored."
+    )
+
+end
+
+
+AddToggle(
+    Pages.Lag,
+    "FixAll",
+    false,
+    function(enabled)
+
+        if enabled then
+
+            HideVegetation()
+            DisableEffects()
+
+        else
+
+            RestoreLag()
+
+        end
+
+    end
+)
+
+
+AddButton(
+    Pages.Lag,
+    "Vegetation",
+    HideVegetation
+)
+
+
+AddButton(
+    Pages.Lag,
+    "Effects",
+    DisableEffects
+)
+
+
+AddButton(
+    Pages.Lag,
+    "Restore",
+    RestoreLag
+)
+
+
+--========================================================
+-- LANGUAGE REFRESH
+--========================================================
+
+local function RefreshLanguage()
+
+    Subtitle.Text =
+        T("Subtitle")
+
+    MenuTitle.Text =
+        T("Menu")
+
+
+    for _,data in pairs(
+        Tabs
+    ) do
+
+        data.Object.Text =
+            T(data.Key)
+
+    end
+
+
+    for _,component in ipairs(
+        Components
+    ) do
+
+        if component.Type ==
+            "Button" then
+
+            component.Object.Text =
+                T(component.Key)
+
+
+        elseif component.Type ==
+            "Toggle" then
+
+            component.Update()
+
+
+        elseif component.Type ==
+            "Input" then
+
+            component.Object.Text =
+                T(component.Key)
+
+        end
+
+    end
+
+end
+
+
+--========================================================
+-- SETTINGS
+--========================================================
+
+AddButton(
+    Pages.Settings,
+    "Vietnamese",
+    function()
+
+        Config.Language =
+            "VN"
+
+        RefreshLanguage()
+
+        Notify(
+            "Settings",
+            "Tiếng Việt"
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Settings,
+    "English",
+    function()
+
+        Config.Language =
+            "EN"
+
+        RefreshLanguage()
+
+        Notify(
+            "Settings",
+            "English"
+        )
+
+    end
+)
+
+
+AddButton(
+    Pages.Settings,
+    "Switch",
+    function()
+
+        if Config.Language ==
+            "VN" then
+
+            Config.Language =
+                "EN"
+
+        else
+
+            Config.Language =
+                "VN"
+
+        end
+
+
+        RefreshLanguage()
+
+    end
+)
+
+
+--========================================================
+-- FLOATING MK BUTTON
+--========================================================
+
+local MK =
+    Instance.new("TextButton")
+
+MK.Name =
+    "MKButton"
+
+MK.Size =
+    UDim2.fromOffset(
+        58,
+        58
+    )
+
+MK.Position =
+    UDim2.fromOffset(
+        15,
+        250
+    )
+
+MK.Text =
+    "MK"
+
+MK.TextSize =
+    18
+
+MK.Font =
+    Enum.Font.GothamBlack
+
+MK.TextColor3 =
+    Config.Red
+
+MK.BackgroundColor3 =
+    Config.Dark
+
+MK.BackgroundTransparency =
+    .05
+
+MK.BorderSizePixel =
+    0
+
+MK.Active =
+    true
+
+MK.ZIndex =
+    99999
+
+MK.Parent =
+    ScreenGui
+
+Corner(
+    MK,
+    16
+)
+
+Stroke(
+    MK,
+    Config.Red,
+    1.5
+)
+
+
+--========================================================
+-- MK DRAG
+--========================================================
+
+do
+
+    local dragging =
+        false
+
+    local dragStart
+
+    local startPosition
+
+    local moved =
+        false
+
+
+    MK.InputBegan:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+
+            or input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                dragging =
+                    true
+
+                moved =
+                    false
+
+                dragStart =
+                    input.Position
+
+                startPosition =
+                    MK.Position
+
+            end
+
+        end
+    )
+
+
+    UserInputService.InputChanged:Connect(
+        function(input)
+
+            if not dragging then
+                return
+            end
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseMovement
+
+            or input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                local delta =
+                    input.Position
+                    - dragStart
+
+
+                if math.abs(delta.X) > 5
+                or math.abs(delta.Y) > 5 then
+
+                    moved =
+                        true
+
+                end
+
+
+                MK.Position =
+                    UDim2.new(
+
+                        startPosition.X.Scale,
+
+                        startPosition.X.Offset
+                        + delta.X,
+
+                        startPosition.Y.Scale,
+
+                        startPosition.Y.Offset
+                        + delta.Y
+
+                    )
+
+            end
+
+        end
+    )
+
+
+    UserInputService.InputEnded:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+
+            or input.UserInputType ==
+                Enum.UserInputType.Touch then
+
+                dragging =
+                    false
+
+            end
+
+        end
+    )
+
+
+    MK.MouseButton1Click:Connect(
+        function()
+
+            if moved then
+
+                moved =
+                    false
+
+                return
+
+            end
+
+
+            Main.Visible =
+                not Main.Visible
+
+        end
+    )
+
+end
+
+
+--========================================================
+-- RIGHT SHIFT
+--========================================================
+
+UserInputService.InputBegan:Connect(
+    function(input,processed)
+
+        if processed then
+            return
+        end
+
+
+        if input.KeyCode ==
+            Enum.KeyCode.RightShift then
+
+            Main.Visible =
+                not Main.Visible
+
+        end
+
+    end
+)
+
+
+--========================================================
+-- SHOW FIRST PAGE
+--========================================================
+
+for _,page in pairs(
+    Pages
+) do
+
+    page.Visible =
+        false
+
+end
+
+
+Pages.Players.Visible =
+    true
+
+
+for name,data in pairs(
+    Tabs
+) do
+
+    if name ==
+        "Players" then
+
+        data.Object.BackgroundColor3 =
+            Config.Red
+
+        data.Object.BackgroundTransparency =
+            .05
+
+    end
+
+end
+
+
+RefreshLanguage()
+
+
+--========================================================
+-- READY
+--========================================================
+
+Notify(
+    "MINH KHA HUP",
+    "Ready!"
+)
+
+
+--========================================================
+-- LIBRARY
+--========================================================
+
+local Library = {
+
+    Name =
+        "MINH KHA HUP",
+
+    ScreenGui =
+        ScreenGui,
+
+    Main =
+        Main,
+
+    SetLanguage =
+        function(
+            _,
+            language
+        )
+
+            if L[language] then
+
+                Config.Language =
+                    language
+
+                RefreshLanguage()
+
+            end
+
+        end,
+
+    GetLanguage =
+        function()
+
+            return Config.Language
+
+        end
+
+}
+
+
+return Library
