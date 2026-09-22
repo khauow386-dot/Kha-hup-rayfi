@@ -1,21 +1,20 @@
 --============================================================
 --        MINH KHA HUB • RIDE A PET
---        AUTO STEAL + EGG ESP
+--        FULL MENU • VIỆT NAM / ENGLISH
+--        AUTO STEAL + EGG ESP + TELEPORT + FLY BACK
 --        NO KEY • MOBILE FRIENDLY
 --============================================================
 
 --============================================================
--- 1. LOAD LIBRARY
+-- 1. SERVICES
 --============================================================
 
-local Library = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minh%20kha%20hup%20ui%20l"
-))()
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-if not Library then
-    warn("[MINH KHA HUB] Cannot load UI Library")
-    return
-end
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
 --============================================================
 -- 2. GAME CHECK
@@ -27,17 +26,182 @@ if game.PlaceId ~= 124216119978534 then
 end
 
 --============================================================
--- 3. SERVICES
+-- 3. LIBRARY
 --============================================================
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Player = Players.LocalPlayer
+local LibraryURL =
+    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minh%20kha%20hup%20ui%20l"
 
 --============================================================
--- 4. GAME OBJECTS
+-- 4. CONFIG
+--============================================================
+
+local Config = {
+
+    AutoSteal = false,
+
+    EggESP = false,
+
+    Speed = 300,
+
+    SavedPoint = nil,
+
+    Language = "Tiếng Việt",
+
+    Priority = "Highest Luck",
+
+    Busy = false,
+
+    StopMovement = false
+}
+
+--============================================================
+-- 5. LANGUAGE
+--============================================================
+
+local Language = {
+
+    ["Tiếng Việt"] = {
+
+        -- HEADER
+        Subtitle = "RIDE A PET • MENU ĐẦY ĐỦ",
+
+        -- TABS
+        AutoStealTab = "🥚 Auto Steal",
+        PointTab = "📍 Điểm",
+        ESPTab = "👁️ Egg ESP",
+        SettingsTab = "⚙️ Cài Đặt",
+
+        -- AUTO STEAL
+        AutoSteal = "🥚 Tự Động Steal Trứng",
+        StealTeleport = "⚡ Steal Teleport & Bay Về",
+        StopAuto = "🛑 DỪNG AUTO STEAL",
+
+        PriorityLuck = "🎯 Ưu Tiên: Luck Cao Nhất",
+        PriorityRarest = "💎 Ưu Tiên: Trứng Hiếm Nhất",
+
+        -- POINT
+        SavePoint = "📍 Lưu Điểm / Lưu Căn Cứ",
+        FlyPoint = "⚡ Bay Về Điểm Đã Lưu",
+        ClearPoint = "🧹 Xóa Điểm Đã Lưu",
+
+        -- ESP
+        EggESP = "👁️ Egg ESP",
+        RefreshESP = "🔄 Làm Mới Egg ESP",
+        ClearESP = "🧹 Xóa Egg ESP",
+        TestEgg = "🧪 Kiểm Tra Thông Tin Trứng",
+
+        -- SETTINGS
+        FlySpeed = "⚡ Tốc Độ Bay Về",
+        LanguageTitle = "🌐 Ngôn Ngữ",
+        Vietnamese = "🇻🇳 Tiếng Việt",
+        English = "🇺🇸 English",
+        TestBestEgg = "🧪 Kiểm Tra Trứng Tốt Nhất",
+
+        -- STATE
+        ON = "BẬT",
+        OFF = "TẮT",
+
+        -- MESSAGES
+        Saved = "Đã lưu vị trí căn cứ!",
+        NoPoint = "Bạn chưa lưu vị trí căn cứ.",
+        Cleared = "Đã xóa điểm đã lưu.",
+
+        NoEgg = "Không tìm thấy trứng.",
+
+        TeleportSuccess = "Đã dịch chuyển tới trứng.",
+        PickupSuccess = "Đã nhặt trứng.",
+        PickupFail = "Không nhặt được trứng.",
+
+        StealSuccess = "Steal thành công!",
+
+        BaseNotFound = "Không tìm thấy căn cứ.",
+
+        ESPEnabled = "Egg ESP đã bật.",
+        ESPDisabled = "Egg ESP đã tắt.",
+
+        HighestLuck = "Luck cao nhất",
+        Rarest = "Trứng hiếm nhất"
+    },
+
+    ["English"] = {
+
+        -- HEADER
+        Subtitle = "RIDE A PET • COMPLETE MENU",
+
+        -- TABS
+        AutoStealTab = "🥚 Auto Steal",
+        PointTab = "📍 Point",
+        ESPTab = "👁️ Egg ESP",
+        SettingsTab = "⚙️ Settings",
+
+        -- AUTO STEAL
+        AutoSteal = "🥚 Auto Steal Egg",
+        StealTeleport = "⚡ Steal Teleport & Fly Back",
+        StopAuto = "🛑 STOP AUTO STEAL",
+
+        PriorityLuck = "🎯 Priority: Highest Luck",
+        PriorityRarest = "💎 Priority: Rarest Egg",
+
+        -- POINT
+        SavePoint = "📍 Set Point / Save Base",
+        FlyPoint = "⚡ Fly To Saved Point",
+        ClearPoint = "🧹 Clear Saved Point",
+
+        -- ESP
+        EggESP = "👁️ Egg ESP",
+        RefreshESP = "🔄 Refresh Egg ESP",
+        ClearESP = "🧹 Clear Egg ESP",
+        TestEgg = "🧪 Test Egg Information",
+
+        -- SETTINGS
+        FlySpeed = "⚡ Fly Speed",
+        LanguageTitle = "🌐 Language",
+        Vietnamese = "🇻🇳 Vietnamese",
+        English = "🇺🇸 English",
+        TestBestEgg = "🧪 Test Find Best Egg",
+
+        -- STATE
+        ON = "ON",
+        OFF = "OFF",
+
+        -- MESSAGES
+        Saved = "Base point saved!",
+        NoPoint = "No base point saved.",
+        Cleared = "Saved point cleared.",
+
+        NoEgg = "No egg found.",
+
+        TeleportSuccess = "Teleported to egg.",
+        PickupSuccess = "Egg picked up.",
+        PickupFail = "Could not pick up egg.",
+
+        StealSuccess = "Steal successful!",
+
+        BaseNotFound = "Base not found.",
+
+        ESPEnabled = "Egg ESP enabled.",
+        ESPDisabled = "Egg ESP disabled.",
+
+        HighestLuck = "Highest Luck",
+        Rarest = "Rarest Egg"
+    }
+}
+
+local function T(Key)
+
+    local Data =
+        Language[Config.Language]
+
+    if Data and Data[Key] then
+        return Data[Key]
+    end
+
+    return Key
+end
+
+--============================================================
+-- 6. GAME OBJECTS
 --============================================================
 
 local Remotes
@@ -47,14 +211,15 @@ local GameData
 
 pcall(function()
 
-    Remotes = ReplicatedStorage:WaitForChild(
-        "Remotes",
-        10
-    )
+    Remotes =
+        ReplicatedStorage:WaitForChild(
+            "Remotes",
+            10
+        )
 
     GameRemotes =
-        Remotes and
-        Remotes:WaitForChild(
+        Remotes
+        and Remotes:WaitForChild(
             "Game",
             10
         )
@@ -66,8 +231,8 @@ pcall(function()
         )
 
     ActiveEggs =
-        ServerData and
-        ServerData:WaitForChild(
+        ServerData
+        and ServerData:WaitForChild(
             "ActiveEggs",
             10
         )
@@ -77,35 +242,10 @@ pcall(function()
             "GameData",
             10
         )
-
 end)
 
 --============================================================
--- 5. CONFIG
---============================================================
-
-local Config = {
-
-    AutoSteal = false,
-
-    EggESP = false,
-
-    -- DEFAULT FLY SPEED
-    Speed = 300,
-
-    SavedPoint = nil,
-
-    Language = "Tiếng Việt",
-
-    Busy = false,
-
-    StopMovement = false,
-
-    Priority = "Highest Luck"
-}
-
---============================================================
--- 6. RARITY
+-- 7. RARITY
 --============================================================
 
 local RarityOrder = {
@@ -118,44 +258,6 @@ local RarityOrder = {
     Divine = 6,
     Ethereal = 7
 }
-
---============================================================
--- 7. LANGUAGE
---============================================================
-
-local Dictionary = {
-
-    ["Tiếng Việt"] = {
-
-        Saved =
-            "Đã lưu vị trí căn cứ!",
-
-        NoPoint =
-            "Bạn chưa lưu vị trí căn cứ.",
-
-        Language =
-            "Đã chuyển sang Tiếng Việt."
-    },
-
-    ["English"] = {
-
-        Saved =
-            "Base point saved!",
-
-        NoPoint =
-            "No base point saved.",
-
-        Language =
-            "Language changed to English."
-    }
-}
-
-local function T(Key)
-
-    return
-        Dictionary[Config.Language][Key]
-        or Key
-end
 
 --============================================================
 -- 8. CHARACTER
@@ -180,11 +282,10 @@ local function GetCharacter()
             "HumanoidRootPart"
         )
 
-    if not Humanoid or not Root then
-        return nil, nil, nil
-    end
+    if not Humanoid
+        or not Root
+        or Humanoid.Health <= 0 then
 
-    if Humanoid.Health <= 0 then
         return nil, nil, nil
     end
 
@@ -192,7 +293,7 @@ local function GetCharacter()
 end
 
 --============================================================
--- 9. PLOT
+-- 9. GET PLOT
 --============================================================
 
 local function GetMyPlot()
@@ -216,12 +317,14 @@ local function GetMyPlot()
             )
 
         local Owner =
-            Data and
-            Data:FindFirstChild(
+            Data
+            and Data:FindFirstChild(
                 "Owner"
             )
 
-        if Owner and Owner.Value == Player then
+        if Owner
+            and Owner.Value == Player then
+
             return Plot
         end
     end
@@ -247,9 +350,12 @@ local function GetPlotPosition()
         return nil
     end
 
-    return
-        Baseplate.Position +
-        Vector3.new(0, 4, 0)
+    return Baseplate.Position
+        + Vector3.new(
+            0,
+            4,
+            0
+        )
 end
 
 --============================================================
@@ -285,9 +391,11 @@ local function StopMovement()
 
     if Humanoid then
 
-        Humanoid.PlatformStand = false
+        Humanoid.PlatformStand =
+            false
 
-        Humanoid.AutoRotate = true
+        Humanoid.AutoRotate =
+            true
     end
 end
 
@@ -304,7 +412,10 @@ local function FlyTo(Position)
     local Character, Humanoid, Root =
         GetCharacter()
 
-    if not Character or not Humanoid or not Root then
+    if not Character
+        or not Humanoid
+        or not Root then
+
         return false
     end
 
@@ -350,7 +461,8 @@ local function FlyTo(Position)
             OldCollision[Object] =
                 Object.CanCollide
 
-            Object.CanCollide = false
+            Object.CanCollide =
+                false
         end
     end
 
@@ -358,19 +470,16 @@ local function FlyTo(Position)
     Humanoid.AutoRotate = false
 
     local TargetCFrame =
-        CFrame.new(Position) *
-        Root.CFrame.Rotation
+        CFrame.new(Position)
+        * Root.CFrame.Rotation
 
     local Tween =
         TweenService:Create(
-
             Root,
-
             TweenInfo.new(
                 Duration,
                 Enum.EasingStyle.Linear
             ),
-
             {
                 CFrame = TargetCFrame
             }
@@ -381,19 +490,14 @@ local function FlyTo(Position)
     Tween:Play()
 
     while
-        Tween.PlaybackState ==
-        Enum.PlaybackState.Playing
+        Tween.PlaybackState
+        == Enum.PlaybackState.Playing
     do
 
-        if Config.StopMovement then
-            break
-        end
+        if Config.StopMovement
+            or not Root.Parent
+            or Humanoid.Health <= 0 then
 
-        if not Root.Parent then
-            break
-        end
-
-        if Humanoid.Health <= 0 then
             break
         end
 
@@ -416,8 +520,11 @@ local function FlyTo(Position)
         OldCollision
     ) do
 
-        if Part and Part.Parent then
-            Part.CanCollide = Value
+        if Part
+            and Part.Parent then
+
+            Part.CanCollide =
+                Value
         end
     end
 
@@ -434,7 +541,74 @@ local function FlyTo(Position)
 end
 
 --============================================================
--- 12. EGG DATA
+-- 12. TELEPORT TO EGG
+--============================================================
+
+local function InstantTeleportToEgg(
+    Position
+)
+
+    local Character, Humanoid, Root =
+        GetCharacter()
+
+    if not Character
+        or not Humanoid
+        or not Root then
+
+        return false
+    end
+
+    Config.StopMovement = false
+
+    local OldCollision = {}
+
+    for _, Object in ipairs(
+        Character:GetDescendants()
+    ) do
+
+        if Object:IsA("BasePart") then
+
+            OldCollision[Object] =
+                Object.CanCollide
+
+            Object.CanCollide =
+                false
+        end
+    end
+
+    Root.AssemblyLinearVelocity =
+        Vector3.zero
+
+    Root.AssemblyAngularVelocity =
+        Vector3.zero
+
+    Root.CFrame =
+        CFrame.new(Position)
+        * Root.CFrame.Rotation
+
+    task.delay(
+        0.2,
+        function()
+
+            for Part, Value in pairs(
+                OldCollision
+            ) do
+
+                if Part
+                    and Part.Parent then
+
+                    Part.CanCollide =
+                        Value
+                end
+            end
+        end
+    )
+
+    return true
+end
+
+--============================================================
+-- 13. EGG DATA
 --============================================================
 
 local EggsModule = nil
@@ -453,11 +627,10 @@ pcall(function()
                 require(Eggs)
         end
     end
-
 end)
 
 --============================================================
--- 13. GET EGG INFORMATION
+-- 14. EGG INFO
 --============================================================
 
 local function GetEggInfo(EggObject)
@@ -506,9 +679,7 @@ local function GetEggInfo(EggObject)
 end
 
 --============================================================
--- 14. EGG ESP
--- NAME + LUCK ONLY
--- NO BOX / NO BACKGROUND / NO RARITY
+-- 15. EGG ESP
 --============================================================
 
 local EggESPObjects = {}
@@ -530,11 +701,9 @@ end
 
 local function CreateEggESP(Egg)
 
-    if not Config.EggESP then
-        return
-    end
+    if not Config.EggESP
+        or not Egg then
 
-    if not Egg then
         return
     end
 
@@ -550,7 +719,9 @@ local function CreateEggESP(Egg)
             "Position"
         )
 
-    if typeof(Position) ~= "Vector3" then
+    if typeof(Position)
+        ~= "Vector3" then
+
         return
     end
 
@@ -573,13 +744,9 @@ local function CreateEggESP(Egg)
             )
 
         Part.Transparency = 1
-
         Part.Anchored = true
-
         Part.CanCollide = false
-
         Part.CanTouch = false
-
         Part.CanQuery = false
 
         Part.Parent =
@@ -608,14 +775,9 @@ local function CreateEggESP(Egg)
                 0
             )
 
-        Billboard.AlwaysOnTop =
-            true
-
-        Billboard.MaxDistance =
-            1000
-
-        Billboard.Parent =
-            Part
+        Billboard.AlwaysOnTop = true
+        Billboard.MaxDistance = 1000
+        Billboard.Parent = Part
 
         local Text =
             Instance.new(
@@ -654,11 +816,8 @@ local function CreateEggESP(Egg)
         Text.Font =
             Enum.Font.GothamBold
 
-        Text.TextSize =
-            14
-
-        Text.TextWrapped =
-            true
+        Text.TextSize = 14
+        Text.TextWrapped = true
 
         Text.Parent =
             Billboard
@@ -736,19 +895,13 @@ local function UpdateEggESP()
         EggESPObjects
     ) do
 
-        if
-            not ExistingEggs[Egg]
-            or not Egg.Parent
-        then
+        if not ExistingEggs[Egg]
+            or not Egg.Parent then
 
             RemoveEggESP(Egg)
         end
     end
 end
-
---============================================================
--- 15. ESP UPDATE LOOP
---============================================================
 
 task.spawn(function()
 
@@ -759,7 +912,6 @@ task.spawn(function()
             pcall(function()
                 UpdateEggESP()
             end)
-
         end
     end
 end)
@@ -782,9 +934,7 @@ local function FindBestEgg()
     end
 
     local BestEgg = nil
-
-    local BestScore =
-        -math.huge
+    local BestScore = -math.huge
 
     for _, Egg in ipairs(
         ActiveEggs:GetChildren()
@@ -802,29 +952,24 @@ local function FindBestEgg()
                 "Position"
             )
 
-        if
-            EggName
-            and typeof(Position) == "Vector3"
-        then
+        if EggName
+            and typeof(Position)
+            == "Vector3" then
 
             local Distance =
                 (
                     Root.Position
-                    -
-                    Position
+                    - Position
                 ).Magnitude
 
-            local Score = 0
+            local Score
 
-            if
-                Config.Priority ==
-                "Highest Luck"
-            then
+            if Config.Priority
+                == "Highest Luck" then
 
                 Score =
-                    (Luck * 100000)
-                    -
-                    Distance
+                    Luck * 100000
+                    - Distance
 
             else
 
@@ -833,17 +978,14 @@ local function FindBestEgg()
                     or 1
 
                 Score =
-                    (RarityValue * 100000)
-                    +
-                    (Luck * 1000)
-                    -
-                    Distance
+                    RarityValue * 100000
+                    + Luck * 1000
+                    - Distance
             end
 
             if Score > BestScore then
 
-                BestScore =
-                    Score
+                BestScore = Score
 
                 BestEgg = {
 
@@ -883,16 +1025,14 @@ local function GetBasket()
 end
 
 --============================================================
--- 18. PICKUP EGG
+-- 18. PICKUP
 --============================================================
 
 local function PickupEgg(Egg)
 
-    if not Egg then
-        return false
-    end
+    if not Egg
+        or not GameRemotes then
 
-    if not GameRemotes then
         return false
     end
 
@@ -902,11 +1042,6 @@ local function PickupEgg(Egg)
         )
 
     if not EggPickup then
-
-        warn(
-            "[MINH KHA HUB] EggPickup remote not found"
-        )
-
         return false
     end
 
@@ -923,46 +1058,40 @@ local function PickupEgg(Egg)
                 Egg.Object.Name
             )
         end
-
     end)
 
     local Timeout =
-        os.clock() + 3
+        os.clock() + 2
 
-    while os.clock() < Timeout do
+    while os.clock()
+        < Timeout do
 
         if Config.StopMovement then
             return false
         end
 
-        if #GetBasket() > Before then
+        if #GetBasket()
+            > Before then
+
             return true
         end
 
-        task.wait(0.1)
+        task.wait(0.05)
     end
 
     return false
 end
 
 --============================================================
--- 19. RETURN TO BASE
+-- 19. RETURN BASE
 --============================================================
 
 local function ReturnToBase()
 
-    local Target = nil
-
-    if Config.SavedPoint then
-
-        Target =
-            Config.SavedPoint.Position
-
-    else
-
-        Target =
-            GetPlotPosition()
-    end
+    local Target =
+        Config.SavedPoint
+        and Config.SavedPoint.Position
+        or GetPlotPosition()
 
     if not Target then
         return false
@@ -972,52 +1101,23 @@ local function ReturnToBase()
 end
 
 --============================================================
--- 20. DELIVER TO PLOT
+-- 20. DELIVER
 --============================================================
 
 local function DeliverToPlot()
 
-    local PlotPosition =
+    local Position =
         GetPlotPosition()
 
-    if not PlotPosition then
+    if not Position then
         return false
     end
 
-    if Config.SavedPoint then
-
-        local Character, Humanoid, Root =
-            GetCharacter()
-
-        if Root then
-
-            local Distance =
-                (
-                    Root.Position
-                    -
-                    PlotPosition
-                ).Magnitude
-
-            if Distance > 12 then
-
-                return FlyTo(
-                    PlotPosition
-                )
-            end
-        end
-
-    else
-
-        return FlyTo(
-            PlotPosition
-        )
-    end
-
-    return true
+    return FlyTo(Position)
 end
 
 --============================================================
--- 21. AUTO STEAL LOOP
+-- 21. AUTO STEAL
 --============================================================
 
 local function AutoStealLoop()
@@ -1027,7 +1127,6 @@ local function AutoStealLoop()
     end
 
     Config.Busy = true
-
     Config.StopMovement = false
 
     task.spawn(function()
@@ -1051,68 +1150,79 @@ local function AutoStealLoop()
             local BestEgg =
                 FindBestEgg()
 
-            if not BestEgg then
+            if not BestEgg
+                or not BestEgg.Object.Parent then
 
-                task.wait(0.5)
-
-                continue
-            end
-
-            if not BestEgg.Object.Parent then
-
-                task.wait(0.1)
+                task.wait(0.2)
 
                 continue
             end
 
-            local Arrived =
-                FlyTo(
+            --================================================
+            -- TELEPORT TO EGG
+            --================================================
 
-                    BestEgg.Position
-                    +
-                    Vector3.new(
-                        0,
-                        3,
-                        0
+            InstantTeleportToEgg(
+                BestEgg.Position
+                + Vector3.new(
+                    0,
+                    3,
+                    0
+                )
+            )
+
+            task.wait(0.12)
+
+            --================================================
+            -- PICKUP
+            --================================================
+
+            local Picked = false
+
+            for i = 1, 3 do
+
+                if not Config.AutoSteal then
+                    break
+                end
+
+                Picked =
+                    PickupEgg(
+                        BestEgg
                     )
-                )
 
-            if not Arrived then
-                break
+                if Picked then
+                    break
+                end
+
+                task.wait(0.08)
             end
 
-            if not Config.AutoSteal then
-                break
-            end
-
-            task.wait(0.15)
-
-            local Picked =
-                PickupEgg(
-                    BestEgg
-                )
+            --================================================
+            -- FLY BACK
+            --================================================
 
             if Picked then
 
-                if Config.SavedPoint then
+                local Target =
+                    Config.SavedPoint
+                    and Config.SavedPoint.Position
+                    or GetPlotPosition()
 
-                    FlyTo(
-                        Config.SavedPoint.Position
-                    )
+                if Target then
 
-                    task.wait(0.15)
+                    FlyTo(Target)
+
+                    task.wait(0.1)
+
+                    DeliverToPlot()
                 end
 
-                DeliverToPlot()
-
-                task.wait(0.5)
+                task.wait(0.3)
 
             else
 
-                task.wait(0.3)
+                task.wait(0.4)
             end
-
-            task.wait(0.15)
         end
 
         Config.Busy = false
@@ -1120,328 +1230,750 @@ local function AutoStealLoop()
 end
 
 --============================================================
--- 22. CREATE TABS
+-- 22. LIBRARY
 --============================================================
 
-local MainTab =
-    Library:CreateTab(
-        "Auto Steal"
-    )
+local Library = nil
 
-local PointTab =
-    Library:CreateTab(
-        "Point"
-    )
-
-local ESPTab =
-    Library:CreateTab(
-        "Egg ESP"
-    )
-
-local SettingsTab =
-    Library:CreateTab(
-        "Settings"
-    )
+local MainTab = nil
+local PointTab = nil
+local ESPTab = nil
+local SettingsTab = nil
 
 --============================================================
--- 23. AUTO STEAL TAB
+-- 23. LOAD LIBRARY
 --============================================================
 
-MainTab:CreateToggle(
-    "🥚 Auto Steal Egg",
-    false,
-    function(State)
+local function LoadLibrary()
 
-        Config.AutoSteal =
-            State
+    local Success, Result =
+        pcall(function()
 
-        if State then
+            return loadstring(
+                game:HttpGet(
+                    LibraryURL
+                )
+            )()
+        end)
 
-            Config.StopMovement =
-                false
+    if not Success
+        or not Result then
 
-            AutoStealLoop()
+        warn(
+            "[MINH KHA HUB] Library load failed."
+        )
 
-        else
+        return false
+    end
+
+    Library = Result
+
+    return true
+end
+
+--============================================================
+-- 24. PATCH LIBRARY TEXT
+--============================================================
+
+local function PatchLibraryText()
+
+    task.wait(0.05)
+
+    local Gui =
+        PlayerGui:FindFirstChild(
+            "MINH_KHA_HUB_COMPLETE"
+        )
+
+    if not Gui then
+        return
+    end
+
+    --========================================================
+    -- TITLE / SUBTITLE
+    --========================================================
+
+    for _, Object in ipairs(
+        Gui:GetDescendants()
+    ) do
+
+        if Object:IsA("TextLabel")
+            or Object:IsA("TextButton") then
+
+            -- Subtitle của library
+            if Object.Text
+                == "DARK GLASS • 2 COLUMNS READY" then
+
+                Object.Text =
+                    T("Subtitle")
+            end
+
+            -- Library toggle
+            if string.find(
+                Object.Text,
+                "  [ON]"
+            ) then
+
+                if Config.Language
+                    == "Tiếng Việt" then
+
+                    Object.Text =
+                        string.gsub(
+                            Object.Text,
+                            "%s%[ON%]",
+                            "  ["
+                            .. T("ON")
+                            .. "]"
+                        )
+
+                end
+            end
+
+            if string.find(
+                Object.Text,
+                "  [OFF]"
+            ) then
+
+                if Config.Language
+                    == "Tiếng Việt" then
+
+                    Object.Text =
+                        string.gsub(
+                            Object.Text,
+                            "%s%[OFF%]",
+                            "  ["
+                            .. T("OFF")
+                            .. "]"
+                        )
+
+                end
+            end
+        end
+    end
+end
+
+--============================================================
+-- 25. PATCH TOGGLE STATE
+--============================================================
+
+local function PatchToggleText()
+
+    local Gui =
+        PlayerGui:FindFirstChild(
+            "MINH_KHA_HUB_COMPLETE"
+        )
+
+    if not Gui then
+        return
+    end
+
+    if Config.Language
+        == "English" then
+
+        -- Library mặc định đã dùng ON/OFF.
+        return
+    end
+
+    for _, Object in ipairs(
+        Gui:GetDescendants()
+    ) do
+
+        if Object:IsA(
+            "TextLabel"
+        ) then
+
+            if string.sub(
+                Object.Text,
+                -4
+            ) == "[ON]" then
+
+                local Base =
+                    string.sub(
+                        Object.Text,
+                        1,
+                        #Object.Text - 4
+                    )
+
+                Object.Text =
+                    Base
+                    .. "["
+                    .. T("ON")
+                    .. "]"
+            end
+
+            if string.sub(
+                Object.Text,
+                -5
+            ) == "[OFF]" then
+
+                local Base =
+                    string.sub(
+                        Object.Text,
+                        1,
+                        #Object.Text - 5
+                    )
+
+                Object.Text =
+                    Base
+                    .. "["
+                    .. T("OFF")
+                    .. "]"
+            end
+        end
+    end
+end
+
+--============================================================
+-- 26. BUILD MENU
+--============================================================
+
+local function BuildMenu()
+
+    if not Library then
+        return
+    end
+
+    --========================================================
+    -- TABS
+    --========================================================
+
+    MainTab =
+        Library:CreateTab(
+            T("AutoStealTab")
+        )
+
+    PointTab =
+        Library:CreateTab(
+            T("PointTab")
+        )
+
+    ESPTab =
+        Library:CreateTab(
+            T("ESPTab")
+        )
+
+    SettingsTab =
+        Library:CreateTab(
+            T("SettingsTab")
+        )
+
+    --========================================================
+    -- AUTO STEAL
+    --========================================================
+
+    MainTab:CreateToggle(
+        T("AutoSteal"),
+        Config.AutoSteal,
+        function(State)
+
+            Config.AutoSteal =
+                State
+
+            if State then
+
+                Config.StopMovement =
+                    false
+
+                AutoStealLoop()
+
+            else
+
+                Config.AutoSteal =
+                    false
+
+                StopMovement()
+            end
+        end
+    )
+
+    --========================================================
+    -- STEAL TELEPORT
+    --========================================================
+
+    MainTab:CreateButton(
+        T("StealTeleport"),
+        function()
+
+            task.spawn(function()
+
+                local BestEgg =
+                    FindBestEgg()
+
+                if not BestEgg then
+
+                    print(
+                        "[MINH KHA HUB] "
+                        .. T("NoEgg")
+                    )
+
+                    return
+                end
+
+                InstantTeleportToEgg(
+                    BestEgg.Position
+                    + Vector3.new(
+                        0,
+                        3,
+                        0
+                    )
+                )
+
+                print(
+                    "[MINH KHA HUB] "
+                    .. T("TeleportSuccess")
+                )
+
+                task.wait(0.12)
+
+                local Picked = false
+
+                for i = 1, 3 do
+
+                    Picked =
+                        PickupEgg(
+                            BestEgg
+                        )
+
+                    if Picked then
+                        break
+                    end
+
+                    task.wait(0.08)
+                end
+
+                local Target =
+                    Config.SavedPoint
+                    and Config.SavedPoint.Position
+                    or GetPlotPosition()
+
+                if Target then
+
+                    FlyTo(Target)
+
+                    task.wait(0.05)
+
+                    DeliverToPlot()
+
+                else
+
+                    print(
+                        "[MINH KHA HUB] "
+                        .. T("BaseNotFound")
+                    )
+                end
+
+                if Picked then
+
+                    print(
+                        "[MINH KHA HUB] "
+                        .. T("StealSuccess")
+                        .. " "
+                        .. tostring(
+                            BestEgg.Name
+                        )
+                    )
+
+                else
+
+                    print(
+                        "[MINH KHA HUB] "
+                        .. T("PickupFail")
+                    )
+                end
+            end)
+        end
+    )
+
+    --========================================================
+    -- STOP
+    --========================================================
+
+    MainTab:CreateButton(
+        T("StopAuto"),
+        function()
 
             Config.AutoSteal =
                 false
 
+            Config.StopMovement =
+                true
+
             StopMovement()
         end
-    end
-)
+    )
 
-MainTab:CreateButton(
-    "🛑 STOP AUTO STEAL",
-    function()
+    --========================================================
+    -- PRIORITY
+    --========================================================
 
-        Config.AutoSteal =
-            false
+    MainTab:CreateButton(
+        T("PriorityLuck"),
+        function()
 
-        Config.StopMovement =
-            true
+            Config.Priority =
+                "Highest Luck"
 
-        StopMovement()
-    end
-)
-
-MainTab:CreateButton(
-    "🎯 Priority: Highest Luck",
-    function()
-
-        Config.Priority =
-            "Highest Luck"
-
-        print(
-            "[MINH KHA HUB] Priority: Highest Luck"
-        )
-    end
-)
-
-MainTab:CreateButton(
-    "💎 Priority: Rarest Egg",
-    function()
-
-        Config.Priority =
-            "Rarest"
-
-        print(
-            "[MINH KHA HUB] Priority: Rarest Egg"
-        )
-    end
-)
-
---============================================================
--- 24. POINT TAB
---============================================================
-
-PointTab:CreateButton(
-    "📍 Set Point / Lưu Căn Cứ",
-    function()
-
-        local Character, Humanoid, Root =
-            GetCharacter()
-
-        if not Root then
-            return
-        end
-
-        Config.SavedPoint =
-            Root.CFrame
-
-        print(
-            "[MINH KHA HUB] "
-            .. T("Saved")
-        )
-    end
-)
-
-PointTab:CreateButton(
-    "⚡ Fly To Saved Point",
-    function()
-
-        if not Config.SavedPoint then
-
-            warn(
+            print(
                 "[MINH KHA HUB] "
-                .. T("NoPoint")
+                .. T("HighestLuck")
             )
-
-            return
         end
+    )
 
-        task.spawn(function()
+    MainTab:CreateButton(
+        T("PriorityRarest"),
+        function()
 
-            FlyTo(
-                Config.SavedPoint.Position
+            Config.Priority =
+                "Rarest"
+
+            print(
+                "[MINH KHA HUB] "
+                .. T("Rarest")
             )
+        end
+    )
 
-        end)
-    end
-)
+    --========================================================
+    -- POINT
+    --========================================================
 
-PointTab:CreateButton(
-    "🧹 Clear Saved Point",
-    function()
+    PointTab:CreateButton(
+        T("SavePoint"),
+        function()
 
-        Config.SavedPoint =
-            nil
+            local Character,
+                Humanoid,
+                Root =
+                GetCharacter()
 
-        print(
-            "[MINH KHA HUB] Saved point cleared."
-        )
-    end
-)
+            if not Root then
+                return
+            end
 
---============================================================
--- 25. EGG ESP TAB
---============================================================
+            Config.SavedPoint =
+                Root.CFrame
 
-ESPTab:CreateToggle(
-    "👁️ Egg ESP",
-    false,
-    function(State)
+            print(
+                "[MINH KHA HUB] "
+                .. T("Saved")
+            )
+        end
+    )
 
-        Config.EggESP =
-            State
+    PointTab:CreateButton(
+        T("FlyPoint"),
+        function()
 
-        if State then
+            if not Config.SavedPoint then
+
+                warn(
+                    "[MINH KHA HUB] "
+                    .. T("NoPoint")
+                )
+
+                return
+            end
 
             task.spawn(function()
 
-                task.wait(0.1)
-
-                UpdateEggESP()
-
+                FlyTo(
+                    Config.SavedPoint.Position
+                )
             end)
-
-        else
-
-            ClearAllEggESP()
         end
-    end
-)
+    )
 
-ESPTab:CreateButton(
-    "🔄 Refresh Egg ESP",
-    function()
+    PointTab:CreateButton(
+        T("ClearPoint"),
+        function()
 
-        if Config.EggESP then
-            UpdateEggESP()
-        end
-    end
-)
-
-ESPTab:CreateButton(
-    "🧹 Clear Egg ESP",
-    function()
-
-        ClearAllEggESP()
-    end
-)
-
-ESPTab:CreateButton(
-    "🧪 Test Egg Information",
-    function()
-
-        if not ActiveEggs then
+            Config.SavedPoint =
+                nil
 
             print(
-                "[MINH KHA HUB] ActiveEggs not found."
+                "[MINH KHA HUB] "
+                .. T("Cleared")
             )
-
-            return
         end
+    )
 
-        for _, Egg in ipairs(
-            ActiveEggs:GetChildren()
-        ) do
+    --========================================================
+    -- EGG ESP
+    --========================================================
 
-            local EggName, Luck =
-                GetEggInfo(Egg)
+    ESPTab:CreateToggle(
+        T("EggESP"),
+        Config.EggESP,
+        function(State)
 
-            if EggName then
+            Config.EggESP =
+                State
+
+            if State then
 
                 print(
-                    "[EGG]",
-                    EggName,
-                    "| Luck:",
-                    Luck
+                    "[MINH KHA HUB] "
+                    .. T("ESPEnabled")
+                )
+
+                task.spawn(function()
+
+                    task.wait(0.1)
+
+                    UpdateEggESP()
+                end)
+
+            else
+
+                ClearAllEggESP()
+
+                print(
+                    "[MINH KHA HUB] "
+                    .. T("ESPDisabled")
                 )
             end
         end
-    end
-)
+    )
 
---============================================================
--- 26. SETTINGS TAB
---============================================================
+    ESPTab:CreateButton(
+        T("RefreshESP"),
+        function()
 
-SettingsTab:CreateInput(
-    "⚡ Fly Speed",
-    Config.Speed,
-    function(Value)
+            if Config.EggESP then
+                UpdateEggESP()
+            end
+        end
+    )
 
-        Value =
-            tonumber(Value)
+    ESPTab:CreateButton(
+        T("ClearESP"),
+        function()
 
-        if Value then
+            ClearAllEggESP()
+        end
+    )
 
-            Config.Speed =
-                math.clamp(
-                    Value,
-                    40,
-                    350
+    ESPTab:CreateButton(
+        T("TestEgg"),
+        function()
+
+            if not ActiveEggs then
+
+                print(
+                    "[MINH KHA HUB] ActiveEggs not found."
                 )
+
+                return
+            end
+
+            for _, Egg in ipairs(
+                ActiveEggs:GetChildren()
+            ) do
+
+                local EggName,
+                    Luck,
+                    Rarity =
+                    GetEggInfo(Egg)
+
+                if EggName then
+
+                    print(
+                        "[EGG]",
+                        EggName,
+                        "| Luck:",
+                        Luck,
+                        "| Rarity:",
+                        Rarity
+                    )
+                end
+            end
         end
-    end
-)
+    )
 
-SettingsTab:CreateButton(
-    "🇻🇳 Tiếng Việt",
-    function()
+    --========================================================
+    -- SETTINGS
+    --========================================================
 
-        Config.Language =
-            "Tiếng Việt"
+    SettingsTab:CreateInput(
+        T("FlySpeed"),
+        Config.Speed,
+        function(Value)
 
-        print(
-            "[MINH KHA HUB] "
-            .. T("Language")
-        )
-    end
-)
+            Value =
+                tonumber(Value)
 
-SettingsTab:CreateButton(
-    "🇺🇸 English",
-    function()
+            if Value then
 
-        Config.Language =
-            "English"
-
-        print(
-            "[MINH KHA HUB] "
-            .. T("Language")
-        )
-    end
-)
-
-SettingsTab:CreateButton(
-    "🔄 Reset Speed = 300",
-    function()
-
-        Config.Speed =
-            300
-    end
-)
-
-SettingsTab:CreateButton(
-    "🧪 Test Find Best Egg",
-    function()
-
-        local Egg =
-            FindBestEgg()
-
-        if Egg then
-
-            print(
-                "[MINH KHA HUB] Best Egg:",
-                Egg.Name,
-                "| Luck:",
-                Egg.Luck
-            )
-
-        else
-
-            print(
-                "[MINH KHA HUB] No egg found."
-            )
+                Config.Speed =
+                    math.clamp(
+                        Value,
+                        40,
+                        350
+                    )
+            end
         end
-    end
-)
+    )
+
+    --========================================================
+    -- LANGUAGE BUTTONS
+    --========================================================
+
+    SettingsTab:CreateButton(
+        T("LanguageTitle")
+        .. " : "
+        .. T("Vietnamese"),
+        function()
+
+            if Config.Language
+                == "Tiếng Việt" then
+                return
+            end
+
+            Config.Language =
+                "Tiếng Việt"
+
+            ReloadMenu()
+        end
+    )
+
+    SettingsTab:CreateButton(
+        T("LanguageTitle")
+        .. " : "
+        .. T("English"),
+        function()
+
+            if Config.Language
+                == "English" then
+                return
+            end
+
+            Config.Language =
+                "English"
+
+            ReloadMenu()
+        end
+    )
+
+    --========================================================
+    -- TEST
+    --========================================================
+
+    SettingsTab:CreateButton(
+        T("TestBestEgg"),
+        function()
+
+            local Egg =
+                FindBestEgg()
+
+            if Egg then
+
+                print(
+                    "[MINH KHA HUB] Best Egg:",
+                    Egg.Name,
+                    "| Luck:",
+                    Egg.Luck,
+                    "| Rarity:",
+                    Egg.Rarity
+                )
+
+            else
+
+                print(
+                    "[MINH KHA HUB] "
+                    .. T("NoEgg")
+                )
+            end
+        end
+    )
+
+    --========================================================
+    -- PATCH TEXT
+    --========================================================
+
+    task.defer(function()
+
+        PatchLibraryText()
+
+        PatchToggleText()
+
+    end)
+end
 
 --============================================================
--- 27. ACTIVE EGG EVENTS
+-- 27. RELOAD MENU
+--============================================================
+
+local Reloading = false
+
+function ReloadMenu()
+
+    if Reloading then
+        return
+    end
+
+    Reloading = true
+
+    -- Không dừng Auto Steal
+    -- Chỉ dừng tween hiện tại
+    if CurrentTween then
+
+        pcall(function()
+            CurrentTween:Cancel()
+        end)
+
+        CurrentTween = nil
+    end
+
+    --========================================================
+    -- XÓA MENU CŨ
+    --========================================================
+
+    local Old =
+        PlayerGui:FindFirstChild(
+            "MINH_KHA_HUB_COMPLETE"
+        )
+
+    if Old then
+
+        pcall(function()
+            Old:Destroy()
+        end)
+    end
+
+    Library = nil
+
+    MainTab = nil
+    PointTab = nil
+    ESPTab = nil
+    SettingsTab = nil
+
+    task.wait(0.12)
+
+    --========================================================
+    -- LOAD LẠI LIBRARY
+    --========================================================
+
+    local Success =
+        LoadLibrary()
+
+    if Success then
+
+        task.wait(0.12)
+
+        BuildMenu()
+
+        task.wait(0.08)
+
+        PatchLibraryText()
+
+        PatchToggleText()
+    end
+
+    Reloading = false
+end
+
+--============================================================
+-- 28. ACTIVE EGG EVENTS
 --============================================================
 
 if ActiveEggs then
@@ -1469,7 +2001,7 @@ if ActiveEggs then
 end
 
 --============================================================
--- 28. CHARACTER RESPAWN
+-- 29. CHARACTER RESPAWN
 --============================================================
 
 Player.CharacterAdded:Connect(
@@ -1494,16 +2026,29 @@ Player.CharacterAdded:Connect(
 )
 
 --============================================================
--- 29. FINAL
+-- 30. INITIAL LOAD
+--============================================================
+
+if not LoadLibrary() then
+    return
+end
+
+task.wait(0.2)
+
+BuildMenu()
+
+--============================================================
+-- 31. FINAL
 --============================================================
 
 print("================================================")
 print(" MINH KHA HUB • RIDE A PET")
-print(" UI LOADED")
-print(" Auto Steal: READY")
-print(" Point System: READY")
-print(" Fly System: READY")
-print(" Fly Speed: 300")
-print(" Egg ESP: READY")
-print(" Egg Name + Luck: READY")
+print(" FULL VIETNAMESE / ENGLISH")
+print(" AUTO STEAL")
+print(" STEAL TELEPORT + FLY BACK")
+print(" EGG ESP")
+print(" POINT SYSTEM")
+print(" DEFAULT FLY SPEED: 300")
+print(" INSTANT LANGUAGE SWITCH")
+print(" NO KEY • MOBILE")
 print("================================================")
