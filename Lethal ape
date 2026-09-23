@@ -1,0 +1,1327 @@
+--============================================================
+--              MINH KHA HUP • LETHAL APE
+--                 FULL CLIENT VERSION
+--============================================================
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+--============================================================
+-- LOAD MINH KHA HUP UI
+--============================================================
+
+local LIBRARY_URL =
+    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minh%20kha%20hup%20ui%20l"
+
+local Library
+
+local success, result = pcall(function()
+    return loadstring(game:HttpGet(LIBRARY_URL))()
+end)
+
+if success and result then
+    Library = result
+else
+    warn("MINH KHA HUP • Không tải được thư viện UI")
+    warn(tostring(result))
+end
+
+--============================================================
+-- SERVICES
+--============================================================
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+--============================================================
+-- SETTINGS
+--============================================================
+
+local Settings = {
+    AutoScrap = false,
+    ESPMonster = true,
+    ESPScrap = true,
+    AntiFall = true,
+
+    PromptRepeat = 5,
+    PromptDelay = 0.12,
+
+    SearchDelay = 0.15,
+
+    MaxNoResourceAttempts = 5,
+}
+
+--============================================================
+-- STATE
+--============================================================
+
+local activeESP = {}
+
+local farmThread = nil
+local antiFallConnection = nil
+local espThread = nil
+
+local currentTarget = nil
+local originalPosition = nil
+
+local isTeleporting = false
+local noResourcesCount = 0
+
+--============================================================
+-- FOLDERS
+--============================================================
+
+local MONSTER_FOLDERS = {
+    "KusMonster",
+    "DusMonster",
+    "GusMonster",
+    "LostMonster",
+}
+
+local SCRAP_FOLDERS = {
+    "Scraps",
+}
+
+--============================================================
+-- RESOURCE COLORS
+--============================================================
+
+local RESOURCE_COLORS = {
+    Gold = Color3.fromRGB(255, 204, 0),
+    Meat = Color3.fromRGB(255, 0, 0),
+    Emerald = Color3.fromRGB(0, 255, 0),
+    Diamond = Color3.fromRGB(0, 153, 255),
+    Copper = Color3.fromRGB(204, 102, 0),
+}
+
+--============================================================
+-- SELL KEYWORDS
+--============================================================
+
+local SellKeywords = {
+    "sell scrap",
+    "sell",
+    "scrap seller",
+    "scrap sell",
+    "sell station",
+    "sell machine",
+    "selling",
+}
+
+--============================================================
+-- UTILITY
+--============================================================
+
+local function getCharacter()
+    return LocalPlayer.Character
+end
+
+local function getHumanoid()
+    local character = getCharacter()
+    if not character then
+        return nil
+    end
+
+    return character:FindFirstChildOfClass("Humanoid")
+end
+
+local function getRoot()
+    local character = getCharacter()
+    if not character then
+        return nil
+    end
+
+    return character:FindFirstChild("HumanoidRootPart")
+end
+
+local function isAlive()
+    local humanoid = getHumanoid()
+
+    return humanoid
+        and humanoid.Health > 0
+end
+
+--============================================================
+-- FIND FOLDER
+--============================================================
+
+local function findFolder(path)
+    local current = Workspace
+
+    for part in string.gmatch(path, "[^/]+") do
+        current = current:FindFirstChild(part)
+
+        if not current then
+            return nil
+        end
+    end
+
+    return current
+end
+
+--============================================================
+-- KEYWORD
+--============================================================
+
+local function HasKeyword(text, keywords)
+    text = string.lower(tostring(text or ""))
+
+    for _, keyword in ipairs(keywords) do
+        if string.find(
+            text,
+            string.lower(keyword),
+            1,
+            true
+        ) then
+            return true
+        end
+    end
+
+    return false
+end
+
+--============================================================
+-- GET MAIN PART
+--============================================================
+
+local function GetMainPart(object)
+    if not object then
+        return nil
+    end
+
+    if object:IsA("BasePart") then
+        return object
+    end
+
+    if object:IsA("Model") then
+
+        local preferred = {
+            "HumanoidRootPart",
+            "PrimaryPart",
+            "Base",
+            "Part",
+            "Handle",
+        }
+
+        for _, name in ipairs(preferred) do
+            local part = object:FindFirstChild(name)
+
+            if part and part:IsA("BasePart") then
+                return part
+            end
+        end
+
+        for _, descendant in ipairs(object:GetDescendants()) do
+            if descendant:IsA("BasePart") then
+                return descendant
+            end
+        end
+    end
+
+    return nil
+end
+
+--============================================================
+-- RESOURCE VISIBILITY
+--============================================================
+
+local function isResourceVisible(resource)
+    if not resource then
+        return false
+    end
+
+    local parts = {}
+
+    if resource:IsA("BasePart") then
+        table.insert(parts, resource)
+
+    elseif resource:IsA("Model") then
+
+        for _, part in ipairs(resource:GetDescendants()) do
+            if part:IsA("BasePart") then
+                table.insert(parts, part)
+            end
+        end
+    end
+
+    if #parts == 0 then
+        return false
+    end
+
+    for _, part in ipairs(parts) do
+
+        if part.Transparency < 0.9 then
+
+            local y = part.Position.Y
+
+            if y > -100 and y < 1000 then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+--============================================================
+-- RESOURCE COLOR
+--============================================================
+
+local function getResourceColor(object)
+
+    local name = string.lower(object.Name)
+
+    for resourceName, color in pairs(RESOURCE_COLORS) do
+
+        if string.find(
+            name,
+            string.lower(resourceName),
+            1,
+            true
+        ) then
+            return color
+        end
+    end
+
+    return Color3.fromRGB(255, 255, 255)
+end
+
+--============================================================
+-- MONSTER CHECK
+--============================================================
+
+local function isMonster(object)
+
+    if not object:IsA("Model") then
+        return false
+    end
+
+    if object == LocalPlayer.Character then
+        return false
+    end
+
+    if not object:FindFirstChildOfClass("Humanoid") then
+        return false
+    end
+
+    return true
+end
+
+--============================================================
+-- ESP MONSTER
+--============================================================
+
+local function createMonsterESP(monster)
+
+    if activeESP[monster] then
+        return
+    end
+
+    if not monster or not monster.Parent then
+        return
+    end
+
+    local highlight = Instance.new("Highlight")
+
+    highlight.Name = "MINH_KHA_MONSTER_ESP"
+    highlight.FillColor = Color3.fromRGB(153, 0, 255)
+    highlight.FillTransparency = 0.35
+    highlight.OutlineColor = Color3.fromRGB(200, 100, 255)
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+    highlight.Parent = monster
+
+    local billboard
+
+    local head =
+        monster:FindFirstChild("Head")
+        or monster:FindFirstChild("HumanoidRootPart")
+
+    if head and head:IsA("BasePart") then
+
+        billboard = Instance.new("BillboardGui")
+
+        billboard.Name = "MINH_KHA_MONSTER_NAME"
+        billboard.Adornee = head
+        billboard.Size = UDim2.new(0, 150, 0, 28)
+        billboard.StudsOffset = Vector3.new(0, 4, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = monster
+
+        local label = Instance.new("TextLabel")
+
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+
+        label.Text = monster.Name
+        label.TextSize = 13
+        label.TextColor3 = Color3.fromRGB(190, 80, 255)
+
+        label.Font = Enum.Font.GothamBold
+        label.TextStrokeTransparency = 0.2
+
+        label.Parent = billboard
+    end
+
+    activeESP[monster] = {
+        Highlight = highlight,
+        Billboard = billboard,
+        Type = "Monster",
+    }
+end
+
+--============================================================
+-- ESP SCRAP
+--============================================================
+
+local function createResourceESP(resource)
+
+    if activeESP[resource] then
+        return
+    end
+
+    if not resource or not resource.Parent then
+        return
+    end
+
+    local highlight = Instance.new("Highlight")
+
+    highlight.Name = "MINH_KHA_SCRAP_ESP"
+    highlight.FillColor = getResourceColor(resource)
+    highlight.FillTransparency = 0.3
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+    highlight.Parent = resource
+
+    activeESP[resource] = {
+        Highlight = highlight,
+        Type = "Resource",
+    }
+end
+
+--============================================================
+-- REMOVE ESP
+--============================================================
+
+local function removeESP(object)
+
+    local esp = activeESP[object]
+
+    if not esp then
+        return
+    end
+
+    if esp.Highlight then
+        pcall(function()
+            esp.Highlight:Destroy()
+        end)
+    end
+
+    if esp.Billboard then
+        pcall(function()
+            esp.Billboard:Destroy()
+        end)
+    end
+
+    activeESP[object] = nil
+end
+
+--============================================================
+-- REMOVE ALL ESP
+--============================================================
+
+local function removeAllESP()
+
+    for object in pairs(activeESP) do
+        removeESP(object)
+    end
+end
+
+--============================================================
+-- UPDATE ESP
+--============================================================
+
+local function updateESP()
+
+    local current = {}
+
+    -- MONSTERS
+    if Settings.ESPMonster then
+
+        for _, folderName in ipairs(MONSTER_FOLDERS) do
+
+            local folder = findFolder(folderName)
+
+            if folder then
+
+                for _, object in ipairs(folder:GetChildren()) do
+
+                    if isMonster(object) then
+
+                        current[object] = true
+
+                        if not activeESP[object] then
+                            createMonsterESP(object)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- SCRAPS
+    if Settings.ESPScrap then
+
+        for _, folderName in ipairs(SCRAP_FOLDERS) do
+
+            local folder = findFolder(folderName)
+
+            if folder then
+
+                for _, object in ipairs(folder:GetChildren()) do
+
+                    if isResourceVisible(object) then
+
+                        current[object] = true
+
+                        if not activeESP[object] then
+                            createResourceESP(object)
+                        end
+
+                    elseif activeESP[object] then
+                        removeESP(object)
+                    end
+                end
+            end
+        end
+    end
+
+    -- REMOVE OLD ESP
+    for object in pairs(activeESP) do
+
+        if not current[object] or not object.Parent then
+            removeESP(object)
+        end
+    end
+end
+
+--============================================================
+-- FIND NEAREST SCRAP
+--============================================================
+
+local function findNearestResource()
+
+    local root = getRoot()
+
+    if not root then
+        return nil
+    end
+
+    local nearest = nil
+    local shortestDistance = math.huge
+
+    for _, folderName in ipairs(SCRAP_FOLDERS) do
+
+        local folder = findFolder(folderName)
+
+        if folder then
+
+            for _, object in ipairs(folder:GetChildren()) do
+
+                if object ~= currentTarget
+                    and isResourceVisible(object) then
+
+                    local mainPart = GetMainPart(object)
+
+                    if mainPart then
+
+                        local distance =
+                            (mainPart.Position - root.Position).Magnitude
+
+                        if distance < shortestDistance then
+
+                            shortestDistance = distance
+                            nearest = object
+
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+--============================================================
+-- HAS RESOURCE
+--============================================================
+
+local function hasAnyResources()
+
+    for _, folderName in ipairs(SCRAP_FOLDERS) do
+
+        local folder = findFolder(folderName)
+
+        if folder then
+
+            for _, object in ipairs(folder:GetChildren()) do
+
+                if isResourceVisible(object) then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+--============================================================
+-- FIND PROMPT
+--============================================================
+
+local function findProximityPrompt(resource)
+
+    if not resource then
+        return nil
+    end
+
+    local direct = resource:FindFirstChildOfClass(
+        "ProximityPrompt"
+    )
+
+    if direct then
+        return direct
+    end
+
+    for _, object in ipairs(resource:GetDescendants()) do
+
+        if object:IsA("ProximityPrompt") then
+            return object
+        end
+    end
+
+    return nil
+end
+
+--============================================================
+-- ACTIVATE PROMPT
+--============================================================
+
+local function activatePrompt(prompt)
+
+    if not prompt then
+        return false
+    end
+
+    for i = 1, Settings.PromptRepeat do
+
+        if not Settings.AutoScrap then
+            break
+        end
+
+        if not prompt.Parent then
+            break
+        end
+
+        local fired = false
+
+        -- Executor support
+        if typeof(fireproximityprompt) == "function" then
+
+            local ok = pcall(function()
+                fireproximityprompt(prompt)
+            end)
+
+            if ok then
+                fired = true
+            end
+        end
+
+        -- Fallback
+        if not fired then
+
+            pcall(function()
+                prompt:InputHoldBegin()
+            end)
+
+            task.wait(0.08)
+
+            pcall(function()
+                prompt:InputHoldEnd()
+            end)
+        end
+
+        task.wait(Settings.PromptDelay)
+    end
+
+    return true
+end
+
+--============================================================
+-- TELEPORT TO RESOURCE
+--============================================================
+
+local function teleportToResource(resource)
+
+    local root = getRoot()
+
+    if not root or not resource then
+        return false
+    end
+
+    local mainPart = GetMainPart(resource)
+
+    if not mainPart then
+        return false
+    end
+
+    local targetPosition =
+        mainPart.Position + Vector3.new(0, 3, 0)
+
+    local lookAt =
+        CFrame.lookAt(
+            targetPosition,
+            mainPart.Position
+        )
+
+    isTeleporting = true
+
+    pcall(function()
+        root.CFrame = lookAt
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+    end)
+
+    task.wait(0.08)
+
+    isTeleporting = false
+
+    return true
+end
+
+--============================================================
+-- SAVE POSITION
+--============================================================
+
+local function savePosition()
+
+    local root = getRoot()
+
+    if root then
+        originalPosition = root.CFrame
+    end
+end
+
+--============================================================
+-- RETURN ORIGINAL POSITION
+--============================================================
+
+local function returnToOriginalPosition()
+
+    if not originalPosition then
+        return
+    end
+
+    local root = getRoot()
+
+    if root then
+
+        isTeleporting = true
+
+        pcall(function()
+            root.CFrame = originalPosition
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+        end)
+
+        task.wait(0.1)
+
+        isTeleporting = false
+    end
+
+    originalPosition = nil
+end
+
+--============================================================
+-- ANTI FALL
+--============================================================
+
+local function startAntiFall()
+
+    if antiFallConnection then
+        antiFallConnection:Disconnect()
+    end
+
+    antiFallConnection =
+        RunService.Heartbeat:Connect(function()
+
+            if not Settings.AutoScrap
+                or not Settings.AntiFall
+                or isTeleporting then
+                return
+            end
+
+            local root = getRoot()
+
+            if not root then
+                return
+            end
+
+            local velocity = root.AssemblyLinearVelocity
+
+            if velocity.Y < -50 then
+
+                pcall(function()
+
+                    root.AssemblyLinearVelocity =
+                        Vector3.zero
+
+                    root.AssemblyAngularVelocity =
+                        Vector3.zero
+
+                    root.CFrame =
+                        root.CFrame + Vector3.new(0, 5, 0)
+
+                end)
+            end
+        end)
+end
+
+local function stopAntiFall()
+
+    if antiFallConnection then
+
+        antiFallConnection:Disconnect()
+        antiFallConnection = nil
+
+    end
+end
+
+--============================================================
+-- STOP FARM
+--============================================================
+
+local function stopFarm(shouldReturn)
+
+    Settings.AutoScrap = false
+
+    currentTarget = nil
+    noResourcesCount = 0
+
+    stopAntiFall()
+
+    if shouldReturn ~= false then
+        returnToOriginalPosition()
+    end
+end
+
+--============================================================
+-- AUTO FARM
+--============================================================
+
+local function farmLoop()
+
+    while Settings.AutoScrap do
+
+        if not isAlive() then
+            task.wait(0.5)
+            continue
+        end
+
+        --====================================================
+        -- CHECK RESOURCE
+        --====================================================
+
+        if not hasAnyResources() then
+
+            noResourcesCount += 1
+
+            if noResourcesCount >= Settings.MaxNoResourceAttempts then
+                break
+            end
+
+            task.wait(1)
+            continue
+
+        end
+
+        noResourcesCount = 0
+
+        --====================================================
+        -- FIND TARGET
+        --====================================================
+
+        local target = findNearestResource()
+
+        if target then
+
+            currentTarget = target
+
+            --================================================
+            -- TELEPORT
+            --================================================
+
+            local teleported =
+                teleportToResource(target)
+
+            if teleported then
+
+                task.wait(0.08)
+
+                --============================================
+                -- FIND PROMPT
+                --============================================
+
+                local prompt =
+                    findProximityPrompt(target)
+
+                if prompt then
+
+                    activatePrompt(prompt)
+
+                end
+            end
+
+            currentTarget = nil
+
+            task.wait(Settings.SearchDelay)
+
+        else
+
+            noResourcesCount += 1
+
+            if noResourcesCount >= Settings.MaxNoResourceAttempts then
+                break
+            end
+
+            task.wait(0.5)
+        end
+    end
+
+    if Settings.AutoScrap then
+        stopFarm(true)
+    else
+        stopAntiFall()
+    end
+end
+
+--============================================================
+-- START FARM
+--============================================================
+
+local function startFarm()
+
+    if Settings.AutoScrap then
+        return
+    end
+
+    if not getRoot() then
+        warn("MINH KHA HUP • Không tìm thấy HumanoidRootPart")
+        return
+    end
+
+    Settings.AutoScrap = true
+
+    noResourcesCount = 0
+    currentTarget = nil
+
+    savePosition()
+
+    if Settings.AntiFall then
+        startAntiFall()
+    end
+
+    farmThread = task.spawn(function()
+        farmLoop()
+    end)
+end
+
+--============================================================
+-- SELL SYSTEM
+--============================================================
+
+local function GetPromptPart(prompt)
+
+    if not prompt then
+        return nil
+    end
+
+    local parent = prompt.Parent
+
+    if not parent then
+        return nil
+    end
+
+    if parent:IsA("BasePart") then
+        return parent
+    end
+
+    if parent:IsA("Attachment") then
+
+        local p = parent.Parent
+
+        if p and p:IsA("BasePart") then
+            return p
+        end
+    end
+
+    return parent:FindFirstChildWhichIsA(
+        "BasePart",
+        true
+    )
+end
+
+--============================================================
+-- FIND SELL MACHINE
+--============================================================
+
+local function GetNearestSellPrompt()
+
+    local root = getRoot()
+
+    if not root then
+        return nil, nil
+    end
+
+    local nearestPrompt = nil
+    local nearestPart = nil
+
+    local shortestDistance = math.huge
+
+    for _, object in ipairs(
+        Workspace:GetDescendants()
+    ) do
+
+        if object:IsA("ProximityPrompt") then
+
+            local actionText =
+                object.ActionText or ""
+
+            local objectText =
+                object.ObjectText or ""
+
+            local objectName =
+                object.Name or ""
+
+            local parentName =
+                object.Parent
+                and object.Parent.Name
+                or ""
+
+            local fullText =
+                actionText
+                .. " "
+                .. objectText
+                .. " "
+                .. objectName
+                .. " "
+                .. parentName
+
+            if HasKeyword(
+                fullText,
+                SellKeywords
+            ) then
+
+                local part =
+                    GetPromptPart(object)
+
+                if part then
+
+                    local distance =
+                        (root.Position - part.Position).Magnitude
+
+                    if distance < shortestDistance then
+
+                        shortestDistance = distance
+                        nearestPrompt = object
+                        nearestPart = part
+
+                    end
+                end
+            end
+        end
+    end
+
+    return nearestPrompt, nearestPart
+end
+
+--============================================================
+-- TELEPORT SELL
+--============================================================
+
+local function TeleportToNearestSellMachine()
+
+    local root = getRoot()
+
+    if not root then
+        return
+    end
+
+    local prompt, part =
+        GetNearestSellPrompt()
+
+    if not prompt or not part then
+
+        warn(
+            "MINH KHA HUP • Không tìm thấy máy bán scrap"
+        )
+
+        return
+    end
+
+    isTeleporting = true
+
+    pcall(function()
+
+        root.CFrame =
+            part.CFrame
+            + Vector3.new(0, 3, 0)
+
+        root.AssemblyLinearVelocity =
+            Vector3.zero
+
+        root.AssemblyAngularVelocity =
+            Vector3.zero
+
+    end)
+
+    task.wait(0.15)
+
+    isTeleporting = false
+
+    -- Activate sell prompt
+
+    if typeof(fireproximityprompt) == "function" then
+
+        pcall(function()
+            fireproximityprompt(prompt)
+        end)
+
+    else
+
+        pcall(function()
+            prompt:InputHoldBegin()
+            task.wait(0.1)
+            prompt:InputHoldEnd()
+        end)
+
+    end
+end
+
+--============================================================
+-- UI
+--============================================================
+
+if Library
+    and type(Library) == "table"
+    and type(Library.CreateTab) == "function" then
+
+    local MainTab =
+        Library:CreateTab("Lethal Ape")
+
+    --========================================================
+    -- AUTO SCRAP
+    --========================================================
+
+    MainTab:CreateToggle(
+        "Auto Scrap Farm",
+        false,
+        function(value)
+
+            if value then
+                startFarm()
+            else
+                stopFarm(true)
+            end
+
+        end
+    )
+
+    --========================================================
+    -- SELL
+    --========================================================
+
+    MainTab:CreateButton(
+        "💰 Teleport to Sell Machine",
+        function()
+            TeleportToNearestSellMachine()
+        end
+    )
+
+    --========================================================
+    -- ESP MONSTER
+    --========================================================
+
+    MainTab:CreateToggle(
+        "Monster ESP",
+        true,
+        function(value)
+
+            Settings.ESPMonster = value
+
+            if not value then
+
+                for object, esp in pairs(activeESP) do
+
+                    if esp.Type == "Monster" then
+                        removeESP(object)
+                    end
+                end
+            end
+        end
+    )
+
+    --========================================================
+    -- ESP SCRAP
+    --========================================================
+
+    MainTab:CreateToggle(
+        "Scrap ESP",
+        true,
+        function(value)
+
+            Settings.ESPScrap = value
+
+            if not value then
+
+                for object, esp in pairs(activeESP) do
+
+                    if esp.Type == "Resource" then
+                        removeESP(object)
+                    end
+                end
+            end
+        end
+    )
+
+    --========================================================
+    -- ANTI FALL
+    --========================================================
+
+    MainTab:CreateToggle(
+        "Anti Fall",
+        true,
+        function(value)
+
+            Settings.AntiFall = value
+
+            if Settings.AutoScrap then
+
+                if value then
+                    startAntiFall()
+                else
+                    stopAntiFall()
+                end
+
+            end
+        end
+    )
+
+    --========================================================
+    -- PROMPT REPEAT
+    --========================================================
+
+    MainTab:CreateInput(
+        "Prompt Repeat",
+        5,
+        function(value)
+
+            value = math.floor(value)
+
+            if value < 1 then
+                value = 1
+            end
+
+            if value > 20 then
+                value = 20
+            end
+
+            Settings.PromptRepeat = value
+        end
+    )
+
+    --========================================================
+    -- PROMPT DELAY
+    --========================================================
+
+    MainTab:CreateInput(
+        "Prompt Delay",
+        0.12,
+        function(value)
+
+            if value < 0.03 then
+                value = 0.03
+            end
+
+            if value > 2 then
+                value = 2
+            end
+
+            Settings.PromptDelay = value
+        end
+    )
+
+else
+
+    warn(
+        "MINH KHA HUP • Library không có CreateTab"
+    )
+
+end
+
+--============================================================
+-- ESP LOOP
+--============================================================
+
+espThread = task.spawn(function()
+
+    while true do
+
+        pcall(function()
+            updateESP()
+        end)
+
+        task.wait(0.5)
+    end
+
+end)
+
+--============================================================
+-- CHARACTER RESPAWN
+--============================================================
+
+LocalPlayer.CharacterAdded:Connect(function()
+
+    task.wait(1)
+
+    currentTarget = nil
+
+    if Settings.AutoScrap then
+
+        savePosition()
+
+        if Settings.AntiFall then
+            startAntiFall()
+        end
+    end
+end)
+
+--============================================================
+-- FINAL
+--============================================================
+
+print(
+    "MINH KHA HUP • LETHAL APE • READY"
+)
+
+print(
+    "Auto Scrap + Sell + Monster ESP + Scrap ESP"
+)
