@@ -1,182 +1,56 @@
---============================================================
---              MINH KHA HUB • V3 LIBRARY
---          DARK GLASS • MOBILE • NO KEY
---       FPF RECTANGLE • FPS • PERSISTENT SETTINGS
---============================================================
-
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
---============================================================
--- SERVICES
---============================================================
+--========================================================
+--              MINH KHA HUB • ONE-LINE LIBRARY
+--========================================================
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
---============================================================
--- REMOVE OLD VERSION
---============================================================
+-- Xóa menu cũ nếu đang chạy
+local Old = PlayerGui:FindFirstChild("MINH_KHA_HUB_COMPLETE")
+if Old then Old:Destroy() end
 
-pcall(function()
-    local old = PlayerGui:FindFirstChild("MINH_KHA_HUB_COMPLETE")
-    if old then
-        old:Destroy()
-    end
-end)
-
---============================================================
--- CONFIG
---============================================================
-
+-- Cấu hình mặc định
 local Theme = {
-    BorderColor = Color3.fromRGB(220, 25, 45),
-    GlassTransparency = 0.22,
-    BorderThickness = 1.5,
-    BorderTransparency = 0.10,
-    UIScale = 1,
+BorderColor = Color3.fromRGB(220, 25, 45),
+GlassTransparency = 0.22,
+BorderThickness = 1.5,
+BorderTransparency = 0.10,
+UIScale = 1,
 }
 
-local SettingsFile = "MinhKhaHub_V3_Settings.json"
-
-local SavedData = {}
-
---============================================================
--- SAFE PERSISTENCE
---============================================================
-
-local CanFileSave =
-    typeof(isfile) == "function"
-    and typeof(readfile) == "function"
-    and typeof(writefile) == "function"
-
-local function LoadSettings()
-    if not CanFileSave then
-        return {}
-    end
-
-    local ok, result = pcall(function()
-        if not isfile(SettingsFile) then
-            return {}
-        end
-
-        local content = readfile(SettingsFile)
-
-        if not content or content == "" then
-            return {}
-        end
-
-        return HttpService:JSONDecode(content)
-    end)
-
-    if ok and type(result) == "table" then
-        return result
-    end
-
-    return {}
-end
-
-local function SaveSettings()
-    if not CanFileSave then
-        return
-    end
-
-    pcall(function()
-        writefile(
-            SettingsFile,
-            HttpService:JSONEncode(SavedData)
-        )
-    end)
-end
-
-SavedData = LoadSettings()
-
---============================================================
--- HELPERS
---============================================================
-
-local function Corner(obj, radius)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius or 10)
-    c.Parent = obj
-    return c
-end
-
-local function Stroke(
-    obj,
-    color,
-    thickness,
-    transparency
-)
-    local s = obj:FindFirstChild("DynamicBorder")
-
-    if not s then
-        s = Instance.new("UIStroke")
-        s.Name = "DynamicBorder"
-        s.Parent = obj
-    end
-
-    s.Color = color or Theme.BorderColor
-    s.Thickness = thickness or Theme.BorderThickness
-    s.Transparency = transparency or Theme.BorderTransparency
-
-    return s
-end
-
-local function SafeCall(callback, ...)
-    if typeof(callback) ~= "function" then
-        return
-    end
-
-    task.spawn(function()
-        pcall(callback, ...)
-    end)
-end
-
-local function Save()
-    SaveSettings()
-end
-
---============================================================
--- SCREEN GUI
---============================================================
-
+-- Khởi tạo Giao diện (ScreenGui)
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "MINH_KHA_HUB_COMPLETE"
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Gui.DisplayOrder = 999999
 Gui.Parent = PlayerGui
 
---============================================================
--- MAIN WINDOW
---============================================================
-
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 430, 0, 330)
-Main.AnchorPoint = Vector2.new(0.5, 0.5)
-
-local savedMainPosition = SavedData.MainPosition
-
-if type(savedMainPosition) == "table" then
-    Main.Position = UDim2.new(
-        savedMainPosition.XScale or 0.5,
-        savedMainPosition.XOffset or 0,
-        savedMainPosition.YScale or 0.5,
-        savedMainPosition.YOffset or 0
-    )
-else
-    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+-- Các hàm hỗ trợ nhanh (Helpers)
+local function Corner(obj, r)
+local c = Instance.new("UICorner")
+c.CornerRadius = UDim.new(0, r or 10)
+c.Parent = obj
+return c
 end
 
+local function Stroke(obj)
+local s = Instance.new("UIStroke")
+s.Name = "DynamicBorder"
+s.Color = Theme.BorderColor
+s.Thickness = Theme.BorderThickness
+s.Transparency = Theme.BorderTransparency
+s.Parent = obj
+return s
+end
+
+-- Cửa sổ chính (Main)
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 430, 0, 330)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 Main.BackgroundColor3 = Color3.fromRGB(6, 6, 9)
 Main.BackgroundTransparency = Theme.GlassTransparency
 Main.BorderSizePixel = 0
@@ -191,23 +65,18 @@ local UIScaleObj = Instance.new("UIScale")
 UIScaleObj.Scale = Theme.UIScale
 UIScaleObj.Parent = Main
 
---============================================================
--- TOP BAR
---============================================================
-
+-- Thanh tiêu đề (TopBar)
 local Top = Instance.new("Frame")
-Top.Name = "TopBar"
 Top.Size = UDim2.new(1, 0, 0, 60)
 Top.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
 Top.BackgroundTransparency = 0.08
 Top.BorderSizePixel = 0
 Top.Parent = Main
-
 Corner(Top, 18)
 
 local Title = Instance.new("TextLabel")
 Title.Position = UDim2.new(0, 16, 0, 7)
-Title.Size = UDim2.new(1, -70, 0, 27)
+Title.Size = UDim2.new(1, -65, 0, 27)
 Title.BackgroundTransparency = 1
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 19
@@ -224,15 +93,11 @@ Subtitle.Font = Enum.Font.Gotham
 Subtitle.TextSize = 10
 Subtitle.TextColor3 = Color3.fromRGB(155, 155, 165)
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Text = "DARK GLASS • V3"
+Subtitle.Text = "DARK GLASS • 2 COLUMNS READY"
 Subtitle.Parent = Top
 
---============================================================
--- CLOSE
---============================================================
-
+-- Nút Đóng (X)
 local Close = Instance.new("TextButton")
-Close.Name = "Close"
 Close.Size = UDim2.new(0, 36, 0, 36)
 Close.Position = UDim2.new(1, -46, 0, 12)
 Close.BackgroundColor3 = Color3.fromRGB(100, 15, 25)
@@ -242,80 +107,40 @@ Close.Font = Enum.Font.GothamBold
 Close.TextSize = 22
 Close.TextColor3 = Color3.fromRGB(245, 245, 245)
 Close.Text = "×"
-Close.AutoButtonColor = false
 Close.Parent = Top
-
 Corner(Close, 10)
 Stroke(Close)
 
-Close.Activated:Connect(function()
-    Main.Visible = false
-
-    SavedData.MainVisible = false
-    Save()
+Close.MouseButton1Click:Connect(function()
+Main.Visible = false
 end)
 
---============================================================
--- MAIN DRAG
---============================================================
-
-local dragging = false
-local dragStart
-local startPos
-
+-- Kéo thả menu (Dragging)
+local dragging, dragStart, startPos
 Top.InputBegan:Connect(function(input)
-    if
-        input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch
-    then
-        dragging = true
-        dragStart = input.Position
-        startPos = Main.Position
-    end
+if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+dragging = true
+dragStart = input.Position
+startPos = Main.Position
+end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if
-        dragging
-        and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        )
-    then
-        local delta = input.Position - dragStart
-
-        Main.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
+if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+local delta = input.Position - dragStart
+Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if
-        input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch
-    then
-        if dragging then
-            SavedData.MainPosition = {
-                XScale = Main.Position.X.Scale,
-                XOffset = Main.Position.X.Offset,
-                YScale = Main.Position.Y.Scale,
-                YOffset = Main.Position.Y.Offset,
-            }
-
-            Save()
-        end
-
-        dragging = false
-    end
+if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+dragging = false
+end
 end)
 
---============================================================
--- BODY
---============================================================
+--========================================================
+-- HỆ THỐNG 2 CỘT (BODY, LEFT MENU, RIGHT CONTENT)
+--========================================================
 
 local Body = Instance.new("Frame")
 Body.Name = "Body"
@@ -325,10 +150,7 @@ Body.Size = UDim2.new(1, -20, 1, -80)
 Body.BackgroundTransparency = 1
 Body.BorderSizePixel = 0
 
---============================================================
--- LEFT MENU
---============================================================
-
+-- Cột trái (Menu chứa danh sách Tab)
 local Left = Instance.new("Frame")
 Left.Name = "LeftMenu"
 Left.Parent = Body
@@ -336,12 +158,10 @@ Left.Size = UDim2.new(0, 125, 1, 0)
 Left.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
 Left.BackgroundTransparency = 0.12
 Left.BorderSizePixel = 0
-
 Corner(Left, 12)
 Stroke(Left)
 
 local MenuScroll = Instance.new("ScrollingFrame")
-MenuScroll.Name = "MenuScroll"
 MenuScroll.Parent = Left
 MenuScroll.Position = UDim2.new(0, 6, 0, 8)
 MenuScroll.Size = UDim2.new(1, -12, 1, -16)
@@ -356,10 +176,7 @@ MenuLayout.Parent = MenuScroll
 MenuLayout.Padding = UDim.new(0, 7)
 MenuLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
---============================================================
--- RIGHT CONTENT
---============================================================
-
+-- Cột phải (Hiển thị nội dung của Tab đang chọn)
 local Right = Instance.new("Frame")
 Right.Name = "RightContent"
 Right.Parent = Body
@@ -369,12 +186,10 @@ Right.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
 Right.BackgroundTransparency = 0.08
 Right.BorderSizePixel = 0
 Right.ClipsDescendants = true
-
 Corner(Right, 12)
 Stroke(Right)
 
 local RightScroll = Instance.new("ScrollingFrame")
-RightScroll.Name = "RightScroll"
 RightScroll.Parent = Right
 RightScroll.Position = UDim2.new(0, 8, 0, 8)
 RightScroll.Size = UDim2.new(1, -16, 1, -16)
@@ -388,687 +203,228 @@ local RightLayout = Instance.new("UIListLayout")
 RightLayout.Parent = RightScroll
 RightLayout.Padding = UDim.new(0, 8)
 
---============================================================
--- LIBRARY
---============================================================
-
-local Library = {}
+--========================================================
+-- HỆ THỐNG TẠO TAB VÀ COMPONENT (API LIBRARY)
+--========================================================
 
 local Pages = {}
 local Tabs = {}
-local Components = {}
-
 local firstTab = true
-local componentIndex = 0
-local currentTabName = nil
 
---============================================================
--- CREATE TAB
---============================================================
+local Library = {}
 
 function Library:CreateTab(tabName)
-
-    tabName = tostring(tabName or "Tab")
-
-    -- tránh lỗi khi trùng tên tab
-    local originalName = tabName
-    local count = 2
-
-    while Pages[tabName] do
-        tabName = originalName .. " " .. count
-        count += 1
-    end
-
-    local page = Instance.new("Frame")
-    page.Name = tabName
-    page.Parent = RightScroll
-    page.Size = UDim2.new(1, -4, 0, 0)
-    page.AutomaticSize = Enum.AutomaticSize.Y
-    page.BackgroundTransparency = 1
-    page.Visible = false
-
-    local layout = Instance.new("UIListLayout")
-    layout.Parent = page
-    layout.Padding = UDim.new(0, 8)
-
-    Pages[tabName] = page
-
-    local tabBtn = Instance.new("TextButton")
-    tabBtn.Name = "TabButton"
-    tabBtn.Parent = MenuScroll
-    tabBtn.Size = UDim2.new(1, -4, 0, 38)
-    tabBtn.BackgroundColor3 = Color3.fromRGB(43, 43, 51)
-    tabBtn.BackgroundTransparency = 0.25
-    tabBtn.BorderSizePixel = 0
-    tabBtn.Text = tabName
-    tabBtn.TextColor3 = Color3.fromRGB(245, 245, 245)
-    tabBtn.TextSize = 10
-    tabBtn.Font = Enum.Font.GothamSemibold
-    tabBtn.AutoButtonColor = false
-
-    Corner(tabBtn, 9)
-    Stroke(tabBtn)
-
-    Tabs[tabName] = tabBtn
-
-    local function SelectTab()
-
-        currentTabName = tabName
-
-        for pName, pObj in pairs(Pages) do
-            pObj.Visible = pName == tabName
-        end
-
-        for tName, tObj in pairs(Tabs) do
-            if tName == tabName then
-                tObj.BackgroundColor3 = Theme.BorderColor
-                tObj.BackgroundTransparency = 0.05
-            else
-                tObj.BackgroundColor3 = Color3.fromRGB(43, 43, 51)
-                tObj.BackgroundTransparency = 0.25
-            end
-        end
-
-        RightScroll.CanvasPosition = Vector2.new(0, 0)
-
-        SavedData.SelectedTab = tabName
-        Save()
-    end
-
-    tabBtn.Activated:Connect(SelectTab)
-
-    if firstTab then
-        firstTab = false
-        SelectTab()
-    elseif SavedData.SelectedTab == tabName then
-        SelectTab()
-    end
-
-    --========================================================
-    -- TAB API
-    --========================================================
-
-    local TabFunctions = {}
-
-    --========================================================
-    -- BUTTON
-    --========================================================
-
-    function TabFunctions:CreateButton(text, callback)
-
-        componentIndex += 1
-
-        local btn = Instance.new("TextButton")
-        btn.Name = "Button_" .. componentIndex
-        btn.Parent = page
-        btn.Size = UDim2.new(1, -4, 0, 42)
-        btn.BackgroundColor3 = Color3.fromRGB(27, 27, 34)
-        btn.BackgroundTransparency = 0.18
-        btn.BorderSizePixel = 0
-        btn.Text = tostring(text)
-        btn.TextColor3 = Color3.fromRGB(245, 245, 245)
-        btn.TextSize = 11
-        btn.Font = Enum.Font.GothamBold
-        btn.AutoButtonColor = false
-
-        Corner(btn, 10)
-        Stroke(btn)
-
-        btn.Activated:Connect(function()
-            SafeCall(callback)
-        end)
-
-        Components[#Components + 1] = {
-            Type = "Button",
-            Object = btn,
-            Text = text,
-        }
-
-        return btn
-    end
-
-    --========================================================
-    -- TOGGLE
-    --========================================================
-
-    function TabFunctions:CreateToggle(text, default, callback)
-
-        componentIndex += 1
-
-        local key =
-            "Toggle_" ..
-            tabName ..
-            "_" ..
-            tostring(text)
-
-        local enabled
-
-        if SavedData.Toggles
-            and SavedData.Toggles[key] ~= nil
-        then
-            enabled = SavedData.Toggles[key]
-        else
-            enabled = default == true
-        end
-
-        local row = Instance.new("Frame")
-        row.Name = "Toggle_" .. componentIndex
-        row.Parent = page
-        row.Size = UDim2.new(1, -4, 0, 42)
-        row.BackgroundColor3 = Color3.fromRGB(27, 27, 34)
-        row.BackgroundTransparency = 0.18
-        row.BorderSizePixel = 0
-
-        Corner(row, 10)
-        Stroke(row)
-
-        local label = Instance.new("TextLabel")
-        label.Parent = row
-        label.Size = UDim2.new(1, -55, 1, 0)
-        label.Position = UDim2.new(0, 12, 0, 0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamSemibold
-        label.TextSize = 11
-        label.TextColor3 = Color3.fromRGB(245, 245, 245)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Parent = row
-        toggleBtn.Size = UDim2.new(0, 36, 0, 20)
-        toggleBtn.Position = UDim2.new(1, -44, 0.5, -10)
-        toggleBtn.Text = ""
-        toggleBtn.BorderSizePixel = 0
-        toggleBtn.AutoButtonColor = false
-
-        Corner(toggleBtn, 10)
-
-        local function Update(callCallback)
-
-            label.Text =
-                tostring(text)
-                .. "  ["
-                .. (enabled and "ON" or "OFF")
-                .. "]"
-
-            if enabled then
-                toggleBtn.BackgroundColor3 = Theme.BorderColor
-            else
-                toggleBtn.BackgroundColor3 =
-                    Color3.fromRGB(43, 43, 51)
-            end
-
-            SavedData.Toggles = SavedData.Toggles or {}
-            SavedData.Toggles[key] = enabled
-
-            Save()
-
-            if callCallback then
-                SafeCall(callback, enabled)
-            end
-        end
-
-        toggleBtn.Activated:Connect(function()
-
-            enabled = not enabled
-
-            Update(true)
-
-        end)
-
-        Update(true)
-
-        local ToggleObject = {}
-
-        function ToggleObject:Set(value)
-
-            enabled = value == true
-
-            Update(true)
-
-        end
-
-        function ToggleObject:Get()
-
-            return enabled
-
-        end
-
-        Components[#Components + 1] = {
-            Type = "Toggle",
-            Object = row,
-            Key = key,
-            API = ToggleObject,
-        }
-
-        return ToggleObject
-    end
-
-    --========================================================
-    -- INPUT
-    --========================================================
-
-    function TabFunctions:CreateInput(text, default, callback)
-
-        componentIndex += 1
-
-        local key =
-            "Input_" ..
-            tabName ..
-            "_" ..
-            tostring(text)
-
-        local savedValue =
-            SavedData.Inputs
-            and SavedData.Inputs[key]
-
-        if savedValue == nil then
-            savedValue = default
-        end
-
-        local holder = Instance.new("Frame")
-        holder.Name = "Input_" .. componentIndex
-        holder.Parent = page
-        holder.Size = UDim2.new(1, -4, 0, 45)
-        holder.BackgroundColor3 = Color3.fromRGB(27, 27, 34)
-        holder.BackgroundTransparency = 0.18
-        holder.BorderSizePixel = 0
-
-        Corner(holder, 10)
-        Stroke(holder)
-
-        local label = Instance.new("TextLabel")
-        label.Parent = holder
-        label.Size = UDim2.new(0.35, 0, 1, 0)
-        label.Position = UDim2.new(0, 10, 0, 0)
-        label.BackgroundTransparency = 1
-        label.Text = tostring(text)
-        label.TextColor3 = Color3.fromRGB(245, 245, 245)
-        label.TextSize = 11
-        label.Font = Enum.Font.GothamBold
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        local box = Instance.new("TextBox")
-        box.Parent = holder
-        box.Position = UDim2.new(0.4, 0, 0.15, 0)
-        box.Size = UDim2.new(0.57, 0, 0.7, 0)
-        box.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
-        box.BorderSizePixel = 0
-        box.Text = tostring(savedValue or "")
-        box.TextColor3 = Color3.fromRGB(245, 245, 245)
-        box.TextSize = 11
-        box.Font = Enum.Font.Gotham
-        box.ClearTextOnFocus = false
-
-        Corner(box, 7)
-
-        box.FocusLost:Connect(function()
-
-            local value = tonumber(box.Text)
-
-            if value ~= nil then
-
-                SavedData.Inputs = SavedData.Inputs or {}
-                SavedData.Inputs[key] = value
-
-                Save()
-
-                SafeCall(callback, value)
-            end
-
-        end)
-
-        Components[#Components + 1] = {
-            Type = "Input",
-            Object = holder,
-            Key = key,
-        }
-
-        return box
-    end
-
-    --========================================================
-    -- LABEL
-    --========================================================
-
-    function TabFunctions:CreateLabel(text)
-
-        local label = Instance.new("TextLabel")
-        label.Parent = page
-        label.Size = UDim2.new(1, -4, 0, 32)
-        label.BackgroundTransparency = 1
-        label.Text = tostring(text)
-        label.TextColor3 = Color3.fromRGB(200, 200, 210)
-        label.TextSize = 11
-        label.Font = Enum.Font.Gotham
-        label.TextWrapped = true
-        label.TextXAlignment = Enum.TextXAlignment.Left
-
-        return label
-    end
-
-    --========================================================
-    -- SECTION
-    --========================================================
-
-    function TabFunctions:CreateSection(text)
-
-        local section = Instance.new("TextLabel")
-        section.Parent = page
-        section.Size = UDim2.new(1, -4, 0, 28)
-        section.BackgroundTransparency = 1
-        section.Text = "  " .. tostring(text)
-        section.TextColor3 = Theme.BorderColor
-        section.TextSize = 12
-        section.Font = Enum.Font.GothamBold
-        section.TextXAlignment = Enum.TextXAlignment.Left
-
-        return section
-    end
-
-    return TabFunctions
-end
-
---============================================================
--- THEME API
---============================================================
-
-function Library:SetTheme(color)
-
-    if typeof(color) ~= "Color3" then
-        return
-    end
-
-    Theme.BorderColor = color
-
-    for _, obj in ipairs(Gui:GetDescendants()) do
-
-        if obj:IsA("UIStroke") then
-            obj.Color = Theme.BorderColor
-        end
-
-    end
-
-    for _, tab in pairs(Tabs) do
-        if tab.BackgroundTransparency <= 0.06 then
-            tab.BackgroundColor3 = Theme.BorderColor
-        end
-    end
-
-    Save()
-end
-
---============================================================
--- TRANSPARENCY API
---============================================================
-
-function Library:SetTransparency(value)
-
-    value = tonumber(value)
-
-    if not value then
-        return
-    end
-
-    value = math.clamp(value, 0, 0.95)
-
-    Theme.GlassTransparency = value
-    Main.BackgroundTransparency = value
-
-    SavedData.GlassTransparency = value
-
-    Save()
-end
-
---============================================================
--- SHOW / HIDE API
---============================================================
-
-function Library:SetVisible(value)
-
-    Main.Visible = value == true
-
-    SavedData.MainVisible = Main.Visible
-
-    Save()
-end
-
-function Library:Toggle()
-
-    Main.Visible = not Main.Visible
-
-    SavedData.MainVisible = Main.Visible
-
-    Save()
-end
-
---============================================================
--- DESTROY API
---============================================================
-
-function Library:Destroy()
-
-    Save()
-
-    pcall(function()
-        Gui:Destroy()
-    end)
-end
-
---============================================================
--- FPF RECTANGLE
---============================================================
--- KHÔNG CÒN NÚT VUÔNG MK
--- CHỈ CÓ THANH CHỮ NHẬT FPF
---============================================================
-
-local FPF = Instance.new("TextButton")
-FPF.Name = "FPF"
-FPF.Size = UDim2.new(0, 170, 0, 34)
-FPF.AnchorPoint = Vector2.new(0.5, 0)
-
-local savedFPF = SavedData.FPFPosition
-
-if type(savedFPF) == "table" then
-
-    FPF.Position = UDim2.new(
-        savedFPF.XScale or 0.5,
-        savedFPF.XOffset or 0,
-        savedFPF.YScale or 0,
-        savedFPF.YOffset or 10
-    )
-
-else
-
-    FPF.Position = UDim2.new(
-        0.5,
-        0,
-        0,
-        10
-    )
+local page = Instance.new("Frame")
+page.Name = tabName
+page.Parent = RightScroll
+page.Size = UDim2.new(1, -4, 0, 0)
+page.AutomaticSize = Enum.AutomaticSize.Y
+page.BackgroundTransparency = 1
+page.Visible = false
+
+local layout = Instance.new("UIListLayout")  
+layout.Parent = page  
+layout.Padding = UDim.new(0, 8)  
+  
+Pages[tabName] = page  
+
+local tabBtn = Instance.new("TextButton")  
+tabBtn.Parent = MenuScroll  
+tabBtn.Size = UDim2.new(1, -4, 0, 38)  
+tabBtn.BackgroundColor3 = Color3.fromRGB(43, 43, 51)  
+tabBtn.BackgroundTransparency = 0.25  
+tabBtn.BorderSizePixel = 0  
+tabBtn.Text = tabName  
+tabBtn.TextColor3 = Color3.fromRGB(245, 245, 245)  
+tabBtn.TextSize = 10  
+tabBtn.Font = Enum.Font.GothamSemibold  
+tabBtn.AutoButtonColor = false  
+Corner(tabBtn, 9)  
+Stroke(tabBtn)  
+
+Tabs[tabName] = tabBtn  
+
+tabBtn.MouseButton1Click:Connect(function()  
+    for pName, pObj in pairs(Pages) do  
+        pObj.Visible = (pName == tabName)  
+    end  
+    for tName, tObj in pairs(Tabs) do  
+        if tName == tabName then  
+            tObj.BackgroundColor3 = Theme.BorderColor  
+            tObj.BackgroundTransparency = 0.05  
+        else  
+            tObj.BackgroundColor3 = Color3.fromRGB(43, 43, 51)  
+            tObj.BackgroundTransparency = 0.25  
+        end  
+    end  
+    RightScroll.CanvasPosition = Vector2.new(0, 0)  
+end)  
+
+if firstTab then  
+    firstTab = false  
+    page.Visible = true  
+    tabBtn.BackgroundColor3 = Theme.BorderColor  
+    tabBtn.BackgroundTransparency = 0.05  
+end  
+
+local TabFunctions = {}  
+
+function TabFunctions:CreateButton(text, callback)  
+    local btn = Instance.new("TextButton")  
+    btn.Parent = page  
+    btn.Size = UDim2.new(1, -4, 0, 42)  
+    btn.BackgroundColor3 = Color3.fromRGB(27, 27, 34)  
+    btn.BackgroundTransparency = 0.18  
+    btn.BorderSizePixel = 0  
+    btn.Text = text  
+    btn.TextColor3 = Color3.fromRGB(245, 245, 245)  
+    btn.TextSize = 11  
+    btn.Font = Enum.Font.GothamBold  
+    btn.AutoButtonColor = false  
+    Corner(btn, 10)  
+    Stroke(btn, Color3.fromRGB(55, 55, 65), 1, 0)  
+
+    btn.MouseButton1Click:Connect(function()  
+        pcall(callback)  
+    end)  
+end  
+
+function TabFunctions:CreateToggle(text, default, callback)  
+    local enabled = default  
+    local row = Instance.new("Frame")  
+    row.Parent = page  
+    row.Size = UDim2.new(1, -4, 0, 42)  
+    row.BackgroundColor3 = Color3.fromRGB(27, 27, 34)  
+    row.BackgroundTransparency = 0.18  
+    row.BorderSizePixel = 0  
+    Corner(row, 10)  
+    Stroke(row, Color3.fromRGB(55, 55, 65), 1, 0)  
+
+    local label = Instance.new("TextLabel")  
+    label.Parent = row  
+    label.Size = UDim2.new(1, -55, 1, 0)  
+    label.Position = UDim2.new(0, 12, 0, 0)  
+    label.BackgroundTransparency = 1  
+    label.Font = Enum.Font.GothamSemibold  
+    label.TextSize = 11  
+    label.TextColor3 = Color3.fromRGB(245, 245, 245)  
+    label.TextXAlignment = Enum.TextXAlignment.Left  
+
+    local toggleBtn = Instance.new("TextButton")  
+    toggleBtn.Parent = row  
+    toggleBtn.Size = UDim2.new(0, 36, 0, 20)  
+    toggleBtn.Position = UDim2.new(1, -44, 0.5, -10)  
+    toggleBtn.Text = ""  
+    toggleBtn.BorderSizePixel = 0  
+    Corner(toggleBtn, 10)  
+
+    local function update()  
+        label.Text = text .. "  [" .. (enabled and "ON" or "OFF") .. "]"  
+        toggleBtn.BackgroundColor3 = enabled and Theme.BorderColor or Color3.fromRGB(43, 43, 51)  
+        pcall(function() callback(enabled) end)  
+    end  
+
+    toggleBtn.MouseButton1Click:Connect(function()  
+        enabled = not enabled  
+        update()  
+    end)  
+
+    update()  
+end  
+
+function TabFunctions:CreateInput(text, default, callback)  
+    local holder = Instance.new("Frame")  
+    holder.Parent = page  
+    holder.Size = UDim2.new(1, -4, 0, 45)  
+    holder.BackgroundColor3 = Color3.fromRGB(27, 27, 34)  
+    holder.BackgroundTransparency = 0.18  
+    holder.BorderSizePixel = 0  
+    Corner(holder, 10)  
+    Stroke(holder, Color3.fromRGB(55, 55, 65), 1, 0)  
+
+    local label = Instance.new("TextLabel")  
+    label.Parent = holder  
+    label.Size = UDim2.new(0.35, 0, 1, 0)  
+    label.Position = UDim2.new(0, 10, 0, 0)  
+    label.BackgroundTransparency = 1  
+    label.Text = text  
+    label.TextColor3 = Color3.fromRGB(245, 245, 245)  
+    label.TextSize = 11  
+    label.Font = Enum.Font.GothamBold  
+    label.TextXAlignment = Enum.TextXAlignment.Left  
+
+    local box = Instance.new("TextBox")  
+    box.Parent = holder  
+    box.Position = UDim2.new(0.4, 0, 0.15, 0)  
+    box.Size = UDim2.new(0.57, 0, 0.7, 0)  
+    box.BackgroundColor3 = Color3.fromRGB(12, 12, 16)  
+    box.BorderSizePixel = 0  
+    box.Text = tostring(default)  
+    box.TextColor3 = Color3.fromRGB(245, 245, 245)  
+    box.TextSize = 11  
+    box.Font = Enum.Font.Gotham  
+    box.ClearTextOnFocus = false  
+    Corner(box, 7)  
+
+    box.FocusLost:Connect(function()  
+        local value = tonumber(box.Text)  
+        if value then  
+            pcall(function() callback(value) end)  
+        end  
+    end)  
+end  
+
+return TabFunctions
 
 end
 
-FPF.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
-FPF.BackgroundTransparency = 0.08
-FPF.BorderSizePixel = 0
-FPF.Font = Enum.Font.GothamBold
-FPF.TextSize = 12
-FPF.TextColor3 = Color3.fromRGB(245, 245, 245)
-FPF.Text = "FPF • 0 FPS"
-FPF.AutoButtonColor = false
-FPF.Active = true
-FPF.ZIndex = 1000
-FPF.Parent = Gui
+-- Nút nổi MK để ẩn/hiện menu
+local MK = Instance.new("TextButton")
+MK.Size = UDim2.new(0, 58, 0, 58)
+MK.Position = UDim2.new(0, 18, 0.5, -29)
+MK.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+MK.BackgroundTransparency = 0.12
+MK.BorderSizePixel = 0
+MK.Font = Enum.Font.GothamBlack
+MK.TextSize = 18
+MK.TextColor3 = Theme.BorderColor
+MK.Text = "MK"
+MK.AutoButtonColor = false
+MK.Parent = Gui
 
-Corner(FPF, 10)
-Stroke(FPF)
+Corner(MK, 16)
+Stroke(MK)
 
---============================================================
--- FPF DRAG
---============================================================
-
-local fpfDragging = false
-local fpfDragStart
-local fpfStartPos
-local fpfMoved = false
-
-FPF.InputBegan:Connect(function(input)
-
-    if
-        input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch
-    then
-
-        fpfDragging = true
-        fpfMoved = false
-        fpfDragStart = input.Position
-        fpfStartPos = FPF.Position
-
-    end
-
+local mkDragging, mkDragStart, mkStartPos, mkMoved = false, nil, nil, false
+MK.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+mkDragging = true
+mkMoved = false
+mkDragStart = input.Position
+mkStartPos = MK.Position
+end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-
-    if
-        fpfDragging
-        and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        )
-    then
-
-        local delta =
-            input.Position - fpfDragStart
-
-        if
-            math.abs(delta.X) > 5
-            or math.abs(delta.Y) > 5
-        then
-            fpfMoved = true
-        end
-
-        FPF.Position = UDim2.new(
-            fpfStartPos.X.Scale,
-            fpfStartPos.X.Offset + delta.X,
-            fpfStartPos.Y.Scale,
-            fpfStartPos.Y.Offset + delta.Y
-        )
-
-    end
-
+if mkDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+local delta = input.Position - mkDragStart
+if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
+mkMoved = true
+end
+MK.Position = UDim2.new(mkStartPos.X.Scale, mkStartPos.X.Offset + delta.X, mkStartPos.Y.Scale, mkStartPos.Y.Offset + delta.Y)
+end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-
-    if
-        input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch
-    then
-
-        if fpfDragging then
-
-            SavedData.FPFPosition = {
-                XScale = FPF.Position.X.Scale,
-                XOffset = FPF.Position.X.Offset,
-                YScale = FPF.Position.Y.Scale,
-                YOffset = FPF.Position.Y.Offset,
-            }
-
-            Save()
-
-        end
-
-        fpfDragging = false
-
-    end
-
-end)
-
---============================================================
--- FPF CLICK = SHOW / HIDE MENU
---============================================================
-
-FPF.Activated:Connect(function()
-
-    if fpfMoved then
-        fpfMoved = false
-        return
-    end
-
-    Main.Visible = not Main.Visible
-
-    SavedData.MainVisible = Main.Visible
-
-    Save()
-
-end)
-
---============================================================
--- FPS COUNTER
---============================================================
-
-local FPS = 0
-local frames = 0
-local lastFPSUpdate = tick()
-
-RunService.RenderStepped:Connect(function()
-
-    frames += 1
-
-    local now = tick()
-
-    if now - lastFPSUpdate >= 0.5 then
-
-        FPS = math.floor(
-            frames / (now - lastFPSUpdate) + 0.5
-        )
-
-        frames = 0
-        lastFPSUpdate = now
-
-        FPF.Text = "FPF • " .. tostring(FPS) .. " FPS"
-
-    end
-
-end)
-
---============================================================
--- RESTORE SETTINGS
---============================================================
-
-if SavedData.GlassTransparency ~= nil then
-
-    local value =
-        tonumber(SavedData.GlassTransparency)
-
-    if value then
-
-        value = math.clamp(value, 0, 0.95)
-
-        Theme.GlassTransparency = value
-        Main.BackgroundTransparency = value
-
-    end
-
+if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+mkDragging = false
 end
+end)
 
-if SavedData.MainVisible ~= nil then
-    Main.Visible = SavedData.MainVisible == true
-else
-    Main.Visible = true
-end
+MK.MouseButton1Click:Connect(function()
+if mkMoved then mkMoved = false return end
+Main.Visible = not Main.Visible
+end)
 
---============================================================
--- FINAL
---============================================================
-
-print("================================================")
-print("       MINH KHA HUB • V3 LIBRARY READY")
-print("       FPF RECTANGLE ENABLED")
-print("       FPS COUNTER ENABLED")
-print("       PERSISTENT SETTINGS ENABLED")
-print("       NO SQUARE MK BUTTON")
-print("================================================")
-
+print("MINH KHA HUB • COMPLETE LIBRARY READY!")
 return Library
