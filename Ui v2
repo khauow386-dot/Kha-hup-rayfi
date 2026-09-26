@@ -1,0 +1,998 @@
+--============================================================
+--        MINH KHA HUB • LIBRARY V2
+--        DARK GLASS • FPS BAR • SAVE DATA
+--        MOBILE • NO KEY • CHỮ LỚN
+--============================================================
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+--============================================================
+-- XÓA BẢN CŨ
+--============================================================
+
+local Old = PlayerGui:FindFirstChild("MINH_KHA_HUB_COMPLETE")
+if Old then
+    Old:Destroy()
+end
+
+--============================================================
+-- SAVE
+--============================================================
+
+local SAVE_FILE = "MinhKhaHub_V2_Data.json"
+
+local SaveData = {
+    Toggles = {},
+    Inputs = {},
+    MainPosition = nil
+}
+
+local function CanSave()
+    return type(writefile) == "function"
+        and type(readfile) == "function"
+end
+
+local function LoadData()
+    if not CanSave() then
+        return
+    end
+
+    pcall(function()
+        if isfile and isfile(SAVE_FILE) then
+            local raw = readfile(SAVE_FILE)
+
+            if raw and raw ~= "" then
+                local data = HttpService:JSONDecode(raw)
+
+                if type(data) == "table" then
+                    for k, v in pairs(data) do
+                        SaveData[k] = v
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local SaveQueued = false
+
+local function SaveNow()
+    if not CanSave() then
+        return
+    end
+
+    pcall(function()
+        writefile(
+            SAVE_FILE,
+            HttpService:JSONEncode(SaveData)
+        )
+    end)
+end
+
+local function QueueSave()
+    if SaveQueued then
+        return
+    end
+
+    SaveQueued = true
+
+    task.delay(0.25, function()
+        SaveQueued = false
+        SaveNow()
+    end)
+end
+
+LoadData()
+
+--============================================================
+-- THEME
+--============================================================
+
+local Theme = {
+    BorderColor = Color3.fromRGB(220, 25, 45),
+    GlassTransparency = 0.22,
+    BorderThickness = 1.5,
+    BorderTransparency = 0.10
+}
+
+--============================================================
+-- GUI
+--============================================================
+
+local Gui = Instance.new("ScreenGui")
+
+Gui.Name = "MINH_KHA_HUB_COMPLETE"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = PlayerGui
+
+--============================================================
+-- HELPERS
+--============================================================
+
+local function Corner(obj, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 10)
+    c.Parent = obj
+    return c
+end
+
+local function Stroke(obj, color, thickness, transparency)
+    local s = Instance.new("UIStroke")
+
+    s.Name = "DynamicBorder"
+    s.Color = color or Theme.BorderColor
+    s.Thickness = thickness or Theme.BorderThickness
+    s.Transparency = transparency or Theme.BorderTransparency
+
+    s.Parent = obj
+
+    return s
+end
+
+--============================================================
+-- MAIN
+--============================================================
+
+local Main = Instance.new("Frame")
+
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 450, 0, 350)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+
+if SaveData.MainPosition
+and type(SaveData.MainPosition) == "table"
+and SaveData.MainPosition.X
+and SaveData.MainPosition.Y then
+
+    Main.Position = UDim2.new(
+        SaveData.MainPosition.X,
+        SaveData.MainPosition.XOffset or 0,
+        SaveData.MainPosition.Y,
+        SaveData.MainPosition.YOffset or 0
+    )
+else
+    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+end
+
+Main.BackgroundColor3 = Color3.fromRGB(6, 6, 9)
+Main.BackgroundTransparency = Theme.GlassTransparency
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Main.Active = true
+Main.Visible = true
+Main.ZIndex = 10
+
+Main.Parent = Gui
+
+Corner(Main, 18)
+Stroke(Main)
+
+--============================================================
+-- TOP
+--============================================================
+
+local Top = Instance.new("Frame")
+
+Top.Size = UDim2.new(1, 0, 0, 68)
+Top.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+Top.BackgroundTransparency = 0.08
+Top.BorderSizePixel = 0
+Top.ZIndex = 11
+
+Top.Parent = Main
+
+Corner(Top, 18)
+
+--============================================================
+-- TITLE
+--============================================================
+
+local Title = Instance.new("TextLabel")
+
+Title.Position = UDim2.new(0, 17, 0, 7)
+Title.Size = UDim2.new(1, -70, 0, 31)
+
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+Title.TextColor3 = Color3.fromRGB(245, 245, 245)
+
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Text = "MINH KHA HUB"
+
+Title.ZIndex = 12
+Title.Parent = Top
+
+--============================================================
+-- SUBTITLE
+--============================================================
+
+local Subtitle = Instance.new("TextLabel")
+
+Subtitle.Position = UDim2.new(0, 18, 0, 39)
+Subtitle.Size = UDim2.new(1, -75, 0, 20)
+
+Subtitle.BackgroundTransparency = 1
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextSize = 11
+Subtitle.TextColor3 = Color3.fromRGB(170, 170, 180)
+
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Text = "DARK GLASS • V2 LIBRARY"
+
+Subtitle.ZIndex = 12
+Subtitle.Parent = Top
+
+--============================================================
+-- CLOSE
+--============================================================
+
+local Close = Instance.new("TextButton")
+
+Close.Size = UDim2.new(0, 40, 0, 40)
+Close.Position = UDim2.new(1, -50, 0, 14)
+
+Close.BackgroundColor3 = Color3.fromRGB(100, 15, 25)
+Close.BackgroundTransparency = 0.10
+
+Close.BorderSizePixel = 0
+
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 25
+Close.TextColor3 = Color3.fromRGB(245, 245, 245)
+
+Close.Text = "×"
+Close.AutoButtonColor = false
+
+Close.ZIndex = 13
+Close.Parent = Top
+
+Corner(Close, 10)
+Stroke(Close)
+
+--============================================================
+-- FPS BAR
+--============================================================
+
+local FPSBar = Instance.new("TextButton")
+
+FPSBar.Name = "FPSBar"
+
+FPSBar.Size = UDim2.new(0, 170, 0, 36)
+FPSBar.AnchorPoint = Vector2.new(0.5, 0)
+
+FPSBar.Position = UDim2.new(0.5, 0, 0, 6)
+
+FPSBar.BackgroundColor3 = Color3.fromRGB(8, 8, 11)
+FPSBar.BackgroundTransparency = 0.08
+
+FPSBar.BorderSizePixel = 0
+
+FPSBar.Font = Enum.Font.GothamBold
+FPSBar.TextSize = 15
+FPSBar.TextColor3 = Color3.fromRGB(245, 245, 245)
+
+FPSBar.Text = "FPS: --  •  MK V2"
+
+FPSBar.AutoButtonColor = false
+FPSBar.ZIndex = 100
+
+FPSBar.Parent = Gui
+
+Corner(FPSBar, 10)
+Stroke(FPSBar)
+
+--============================================================
+-- FPS
+--============================================================
+
+local Frames = 0
+local LastFPSUpdate = os.clock()
+local CurrentFPS = 0
+
+RunService.RenderStepped:Connect(function()
+
+    Frames += 1
+
+    local now = os.clock()
+
+    if now - LastFPSUpdate >= 0.5 then
+
+        CurrentFPS = math.floor(
+            Frames / (now - LastFPSUpdate) + 0.5
+        )
+
+        Frames = 0
+        LastFPSUpdate = now
+
+        FPSBar.Text =
+            "FPS: "
+            .. tostring(CurrentFPS)
+            .. "  •  MK V2"
+    end
+end)
+
+--============================================================
+-- ẨN / HIỆN MENU
+--============================================================
+
+local function ToggleMenu()
+    Main.Visible = not Main.Visible
+end
+
+FPSBar.MouseButton1Click:Connect(function()
+    ToggleMenu()
+end)
+
+Close.MouseButton1Click:Connect(function()
+    Main.Visible = false
+end)
+
+--============================================================
+-- DRAG
+--============================================================
+
+local dragging = false
+local dragStart
+local startPos
+
+Top.InputBegan:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+
+    if dragging
+    and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+
+        local delta = input.Position - dragStart
+
+        Main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        if dragging then
+
+            local p = Main.Position
+
+            SaveData.MainPosition = {
+                X = p.X.Scale,
+                XOffset = p.X.Offset,
+                Y = p.Y.Scale,
+                YOffset = p.Y.Offset
+            }
+
+            QueueSave()
+        end
+
+        dragging = false
+    end
+end)
+
+--============================================================
+-- BODY
+--============================================================
+
+local Body = Instance.new("Frame")
+
+Body.Name = "Body"
+Body.Parent = Main
+
+Body.Position = UDim2.new(0, 10, 0, 78)
+Body.Size = UDim2.new(1, -20, 1, -88)
+
+Body.BackgroundTransparency = 1
+Body.BorderSizePixel = 0
+Body.ZIndex = 11
+
+--============================================================
+-- LEFT
+--============================================================
+
+local Left = Instance.new("Frame")
+
+Left.Name = "LeftMenu"
+Left.Parent = Body
+
+Left.Size = UDim2.new(0, 135, 1, 0)
+
+Left.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+Left.BackgroundTransparency = 0.12
+
+Left.BorderSizePixel = 0
+Left.ZIndex = 11
+
+Corner(Left, 12)
+Stroke(Left)
+
+--============================================================
+-- TAB SCROLL
+--============================================================
+
+local MenuScroll = Instance.new("ScrollingFrame")
+
+MenuScroll.Parent = Left
+
+MenuScroll.Position = UDim2.new(0, 6, 0, 8)
+MenuScroll.Size = UDim2.new(1, -12, 1, -16)
+
+MenuScroll.BackgroundTransparency = 1
+MenuScroll.BorderSizePixel = 0
+
+MenuScroll.ScrollBarThickness = 2
+
+MenuScroll.AutomaticCanvasSize =
+    Enum.AutomaticSize.Y
+
+MenuScroll.CanvasSize =
+    UDim2.new(0, 0, 0, 0)
+
+MenuScroll.ZIndex = 12
+
+local MenuLayout = Instance.new("UIListLayout")
+
+MenuLayout.Parent = MenuScroll
+
+MenuLayout.Padding = UDim.new(0, 7)
+
+MenuLayout.HorizontalAlignment =
+    Enum.HorizontalAlignment.Center
+
+--============================================================
+-- RIGHT
+--============================================================
+
+local Right = Instance.new("Frame")
+
+Right.Name = "RightContent"
+Right.Parent = Body
+
+Right.Position = UDim2.new(0, 145, 0, 0)
+Right.Size = UDim2.new(1, -145, 1, 0)
+
+Right.BackgroundColor3 =
+    Color3.fromRGB(20, 20, 26)
+
+Right.BackgroundTransparency = 0.08
+
+Right.BorderSizePixel = 0
+Right.ClipsDescendants = true
+Right.ZIndex = 11
+
+Corner(Right, 12)
+Stroke(Right)
+
+--============================================================
+-- CONTENT SCROLL
+--============================================================
+
+local RightScroll = Instance.new("ScrollingFrame")
+
+RightScroll.Parent = Right
+
+RightScroll.Position = UDim2.new(0, 8, 0, 8)
+RightScroll.Size = UDim2.new(1, -16, 1, -16)
+
+RightScroll.BackgroundTransparency = 1
+RightScroll.BorderSizePixel = 0
+
+RightScroll.ScrollBarThickness = 3
+
+RightScroll.AutomaticCanvasSize =
+    Enum.AutomaticSize.Y
+
+RightScroll.CanvasSize =
+    UDim2.new(0, 0, 0, 0)
+
+RightScroll.ZIndex = 12
+
+local RightLayout = Instance.new("UIListLayout")
+
+RightLayout.Parent = RightScroll
+RightLayout.Padding = UDim.new(0, 8)
+
+--============================================================
+-- LIBRARY
+--============================================================
+
+local Pages = {}
+local Tabs = {}
+
+local firstTab = true
+
+local Library = {}
+
+--============================================================
+-- CREATE TAB
+--============================================================
+
+function Library:CreateTab(tabName)
+
+    local page = Instance.new("Frame")
+
+    page.Name = tostring(tabName)
+
+    page.Parent = RightScroll
+
+    page.Size = UDim2.new(1, -4, 0, 0)
+    page.AutomaticSize = Enum.AutomaticSize.Y
+
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.ZIndex = 13
+
+    local layout = Instance.new("UIListLayout")
+
+    layout.Parent = page
+    layout.Padding = UDim.new(0, 8)
+
+    Pages[tabName] = page
+
+    --========================================================
+    -- TAB BUTTON
+    --========================================================
+
+    local tabBtn = Instance.new("TextButton")
+
+    tabBtn.Parent = MenuScroll
+
+    tabBtn.Size = UDim2.new(1, -4, 0, 42)
+
+    tabBtn.BackgroundColor3 =
+        Color3.fromRGB(43, 43, 51)
+
+    tabBtn.BackgroundTransparency = 0.25
+
+    tabBtn.BorderSizePixel = 0
+
+    tabBtn.Text = tostring(tabName)
+
+    tabBtn.TextColor3 =
+        Color3.fromRGB(245, 245, 245)
+
+    tabBtn.TextSize = 13
+    tabBtn.Font = Enum.Font.GothamSemibold
+
+    tabBtn.AutoButtonColor = false
+    tabBtn.ZIndex = 13
+
+    Corner(tabBtn, 9)
+    Stroke(tabBtn)
+
+    Tabs[tabName] = tabBtn
+
+    tabBtn.MouseButton1Click:Connect(function()
+
+        for pName, pObj in pairs(Pages) do
+            pObj.Visible = pName == tabName
+        end
+
+        for tName, tObj in pairs(Tabs) do
+
+            if tName == tabName then
+
+                tObj.BackgroundColor3 =
+                    Theme.BorderColor
+
+                tObj.BackgroundTransparency = 0.05
+
+            else
+
+                tObj.BackgroundColor3 =
+                    Color3.fromRGB(43, 43, 51)
+
+                tObj.BackgroundTransparency = 0.25
+            end
+        end
+
+        RightScroll.CanvasPosition =
+            Vector2.new(0, 0)
+    end)
+
+    if firstTab then
+
+        firstTab = false
+
+        page.Visible = true
+
+        tabBtn.BackgroundColor3 =
+            Theme.BorderColor
+
+        tabBtn.BackgroundTransparency = 0.05
+    end
+
+    --========================================================
+    -- TAB FUNCTIONS
+    --========================================================
+
+    local TabFunctions = {}
+
+    --========================================================
+    -- BUTTON
+    --========================================================
+
+    function TabFunctions:CreateButton(text, callback)
+
+        local btn = Instance.new("TextButton")
+
+        btn.Parent = page
+
+        btn.Size = UDim2.new(1, -4, 0, 46)
+
+        btn.BackgroundColor3 =
+            Color3.fromRGB(27, 27, 34)
+
+        btn.BackgroundTransparency = 0.18
+        btn.BorderSizePixel = 0
+
+        btn.Text = tostring(text)
+
+        btn.TextColor3 =
+            Color3.fromRGB(245, 245, 245)
+
+        btn.TextSize = 13
+        btn.Font = Enum.Font.GothamBold
+
+        btn.AutoButtonColor = false
+        btn.ZIndex = 14
+
+        Corner(btn, 10)
+
+        Stroke(
+            btn,
+            Color3.fromRGB(55,55,65),
+            1,
+            0
+        )
+
+        btn.MouseButton1Click:Connect(function()
+
+            pcall(function()
+                if callback then
+                    callback()
+                end
+            end)
+        end)
+
+        return btn
+    end
+
+    --========================================================
+    -- TOGGLE
+    --========================================================
+
+    function TabFunctions:CreateToggle(text, default, callback)
+
+        local Key =
+            tostring(tabName)
+            .. "_"
+            .. tostring(text)
+
+        local enabled = default == true
+
+        if SaveData.Toggles[Key] ~= nil then
+            enabled = SaveData.Toggles[Key] == true
+        end
+
+        local row = Instance.new("Frame")
+
+        row.Parent = page
+
+        row.Size = UDim2.new(1, -4, 0, 46)
+
+        row.BackgroundColor3 =
+            Color3.fromRGB(27, 27, 34)
+
+        row.BackgroundTransparency = 0.18
+        row.BorderSizePixel = 0
+        row.ZIndex = 14
+
+        Corner(row, 10)
+
+        Stroke(
+            row,
+            Color3.fromRGB(55,55,65),
+            1,
+            0
+        )
+
+        local label = Instance.new("TextLabel")
+
+        label.Parent = row
+
+        label.Size = UDim2.new(1, -65, 1, 0)
+        label.Position = UDim2.new(0, 12, 0, 0)
+
+        label.BackgroundTransparency = 1
+
+        label.Font = Enum.Font.GothamSemibold
+        label.TextSize = 13
+
+        label.TextColor3 =
+            Color3.fromRGB(245,245,245)
+
+        label.TextXAlignment =
+            Enum.TextXAlignment.Left
+
+        label.ZIndex = 15
+
+        local toggleBtn = Instance.new("TextButton")
+
+        toggleBtn.Parent = row
+
+        toggleBtn.Size = UDim2.new(0, 42, 0, 23)
+
+        toggleBtn.Position =
+            UDim2.new(1, -51, 0.5, -11)
+
+        toggleBtn.Text = ""
+
+        toggleBtn.BorderSizePixel = 0
+        toggleBtn.AutoButtonColor = false
+
+        toggleBtn.ZIndex = 15
+
+        Corner(toggleBtn, 12)
+
+        local function update(runCallback)
+
+            label.Text =
+                tostring(text)
+                .. "  ["
+                .. (enabled and "ON" or "OFF")
+                .. "]"
+
+            toggleBtn.BackgroundColor3 =
+                enabled
+                and Theme.BorderColor
+                or Color3.fromRGB(43,43,51)
+
+            SaveData.Toggles[Key] =
+                enabled
+
+            QueueSave()
+
+            if runCallback ~= false then
+
+                pcall(function()
+
+                    if callback then
+                        callback(enabled)
+                    end
+
+                end)
+            end
+        end
+
+        toggleBtn.MouseButton1Click:Connect(function()
+
+            enabled = not enabled
+
+            update(true)
+        end)
+
+        update(true)
+
+        return {
+            Set = function(_, value)
+
+                enabled = value == true
+
+                update(true)
+            end,
+
+            Get = function()
+                return enabled
+            end
+        }
+    end
+
+    --========================================================
+    -- INPUT
+    --========================================================
+
+    function TabFunctions:CreateInput(text, default, callback)
+
+        local Key =
+            tostring(tabName)
+            .. "_"
+            .. tostring(text)
+
+        local savedValue =
+            SaveData.Inputs[Key]
+
+        if savedValue == nil then
+            savedValue = default
+        end
+
+        local holder = Instance.new("Frame")
+
+        holder.Parent = page
+
+        holder.Size = UDim2.new(1, -4, 0, 49)
+
+        holder.BackgroundColor3 =
+            Color3.fromRGB(27,27,34)
+
+        holder.BackgroundTransparency = 0.18
+        holder.BorderSizePixel = 0
+        holder.ZIndex = 14
+
+        Corner(holder, 10)
+
+        Stroke(
+            holder,
+            Color3.fromRGB(55,55,65),
+            1,
+            0
+        )
+
+        local label = Instance.new("TextLabel")
+
+        label.Parent = holder
+
+        label.Size = UDim2.new(0.38, 0, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+
+        label.BackgroundTransparency = 1
+
+        label.Text = tostring(text)
+
+        label.TextColor3 =
+            Color3.fromRGB(245,245,245)
+
+        label.TextSize = 13
+        label.Font = Enum.Font.GothamBold
+
+        label.TextXAlignment =
+            Enum.TextXAlignment.Left
+
+        label.ZIndex = 15
+
+        local box = Instance.new("TextBox")
+
+        box.Parent = holder
+
+        box.Position =
+            UDim2.new(0.40, 0, 0.12, 0)
+
+        box.Size =
+            UDim2.new(0.57, 0, 0.76, 0)
+
+        box.BackgroundColor3 =
+            Color3.fromRGB(12,12,16)
+
+        box.BorderSizePixel = 0
+
+        box.Text = tostring(savedValue)
+
+        box.TextColor3 =
+            Color3.fromRGB(245,245,245)
+
+        box.TextSize = 13
+        box.Font = Enum.Font.Gotham
+
+        box.ClearTextOnFocus = false
+        box.ZIndex = 15
+
+        Corner(box, 7)
+
+        box.FocusLost:Connect(function()
+
+            local value = tonumber(box.Text)
+
+            if value then
+
+                SaveData.Inputs[Key] =
+                    value
+
+                QueueSave()
+
+                pcall(function()
+
+                    if callback then
+                        callback(value)
+                    end
+
+                end)
+            end
+        end)
+
+        return box
+    end
+
+    return TabFunctions
+end
+
+--============================================================
+-- PUBLIC API
+--============================================================
+
+function Library:Save()
+    SaveNow()
+end
+
+function Library:ToggleMenu()
+    ToggleMenu()
+end
+
+function Library:IsMenuVisible()
+    return Main.Visible
+end
+
+function Library:SetMenuVisible(value)
+    Main.Visible = value == true
+end
+
+function Library:GetFPS()
+    return CurrentFPS
+end
+
+--============================================================
+-- AUTO SAVE
+--============================================================
+
+task.spawn(function()
+
+    while Gui.Parent do
+
+        task.wait(10)
+
+        if Gui.Parent then
+            SaveNow()
+        end
+    end
+end)
+
+--============================================================
+-- CLEANUP
+--============================================================
+
+Gui.Destroying:Connect(function()
+    SaveNow()
+end)
+
+--============================================================
+-- READY
+--============================================================
+
+print("==================================================")
+print("MINH KHA HUB • LIBRARY V2")
+print("CHỮ LỚN • FPS BAR • SAVE DATA")
+print("MOBILE • NO KEY • BACKWARD COMPATIBLE")
+print("==================================================")
+
+return Library
