@@ -1,1068 +1,1618 @@
 --============================================================
---        MINH KHA HUB V4 • +1 LOOT TO FORGE
---        TIẾNG VIỆT • TẤT CẢ TẮT MẶC ĐỊNH
---        MOBILE • NO KEY • CHỮ LỚN
+--          MINH KHA HUB V5 • +1 LOOT TO FORGE
+--
+--          UI HIỆN NGAY
+--          ENGINE CHẠY NỀN
+--          TIẾNG VIỆT / ENGLISH
+--          MOBILE
+--          NO KEY
+--          TẤT CẢ AUTO TẮT MẶC ĐỊNH
 --============================================================
 
-if not game:IsLoaded() then
-game.Loaded:Wait()
-end
-
 --============================================================
--- KIỂM TRA GAME
+-- GAME CHECK
 --============================================================
 
 local GAME_ID = 118805555015549
 
 if game.PlaceId ~= GAME_ID then
-warn("MINH KHA HUB: Đây không phải game +1 Loot To Forge!")
-return
+    warn("MINH KHA HUB V5: Đây không phải game +1 Loot To Forge!")
+    return
 end
 
 --============================================================
--- DỊCH VỤ
+-- SERVICES
 --============================================================
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
 local Player = Players.LocalPlayer
 
 --============================================================
--- LINK
+-- URL
 --============================================================
 
 local ENGINE_URL =
-"https://raw.githubusercontent.com/seltonmt012/sel01-rbx/main/games/loottoforge.lua"
+    "https://raw.githubusercontent.com/seltonmt012/sel01-rbx/main/games/loottoforge.lua"
 
 local HUB_URL =
-"https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minh%20kha%20hup%20ui%20l"
+    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minh%20kha%20hup%20ui%20l"
 
 --============================================================
--- KHÔNG NẠP ENGINE 2 LẦN
+-- LANGUAGE
+--============================================================
+
+local Language = "VI"
+
+local LANG = {
+
+    VI = {
+
+        title = "MINH KHA HUB V5",
+
+        settings = "⚙️ CÀI ĐẶT",
+        vietnamese = "🇻🇳 Tiếng Việt",
+        english = "🇬🇧 Tiếng Anh",
+
+        general = "🏠 TỔNG QUÁT",
+        farm = "⚔️ FARM",
+        forge = "🔨 RÈN TRANG BỊ",
+        upgrade = "📈 NÂNG CẤP",
+        index = "📖 CHỈ SỐ",
+        tower = "🏰 THÁP BĂNG",
+        enchant = "✨ CƯỜNG HÓA",
+        race = "🧬 CHỦNG TỘC",
+        rebirth = "🔄 TÁI SINH",
+        player = "👤 NGƯỜI CHƠI",
+        status = "📊 TRẠNG THÁI",
+
+        auto = "Bật hệ thống tự động",
+        autoOn = "▶️ Bật Auto",
+        disable = "⛔ Tắt tất cả",
+        refresh = "🔄 Làm mới dữ liệu",
+        unstuck = "🛠️ Thoát kẹt",
+
+        farmStage = "Tự động farm màn",
+        train = "Tự động luyện sức mạnh",
+        stage = "Màn farm",
+        trainTime = "Thời gian luyện",
+        farmOnce = "⚔️ Farm 1 lần",
+        trainOnce = "🏋️ Luyện 1 lần",
+
+        autoForge = "Tự động rèn",
+        armor = "Rèn thêm giáp",
+        equip = "Tự mặc đồ tốt nhất",
+        sell = "Tự bán đồ yếu",
+        forgeNow = "🔨 Rèn ngay",
+        equipNow = "⭐ Mặc đồ tốt nhất",
+        sellNow = "💰 Bán đồ yếu",
+
+        autoUpgrade = "Tự động nâng cấp",
+        oreFirst = "Ưu tiên túi quặng",
+        oreUpgrade = "Nâng túi quặng",
+        trainUpgrade = "Nâng luyện sức mạnh",
+        luckUpgrade = "Nâng may mắn",
+        upgradeNow = "📈 Nâng cấp ngay",
+
+        autoIndex = "Tự nhận chỉ số",
+        indexNow = "📖 Nhận chỉ số ngay",
+
+        autoTower = "Tự chạy Tháp Băng",
+        dailyTicket = "Tự nhận vé hằng ngày",
+        ticketKeep = "Số vé muốn giữ",
+        towerRun = "🏰 Chạy Tháp Băng",
+        ticketNow = "🎟️ Nhận vé hằng ngày",
+
+        autoEnchant = "Tự động cường hóa",
+        fire = "🔥 Cường hóa Lửa",
+        ice = "❄️ Cường hóa Băng",
+        thunder = "⚡ Cường hóa Sấm",
+        poison = "☠️ Cường hóa Độc",
+        enchantNow = "✨ Cường hóa ngay",
+
+        autoRace = "Tự quay chủng tộc",
+        raceNow = "🧬 Quay / chọn chủng tộc tốt",
+
+        autoRebirth = "Tự động tái sinh",
+        rebirthNow = "🔄 Tái sinh ngay",
+
+        antiAfk = "Chống AFK",
+        infiniteJump = "Nhảy vô hạn",
+        noclip = "Đi xuyên tường",
+        speed = "Tốc độ chạy",
+        resetSpeed = "🏃 Đặt tốc độ về 16",
+
+        refreshStatus = "🔄 Làm mới trạng thái",
+        disableAll = "⛔ TẮT TOÀN BỘ",
+        stuck = "🛠️ THOÁT KẸT",
+
+        engineLoading = "ENGINE: ĐANG TẢI",
+        engineReady = "ENGINE: ĐÃ KẾT NỐI",
+        engineError = "ENGINE: LỖI",
+        languageChanged = "Đã chuyển sang Tiếng Việt"
+    },
+
+    EN = {
+
+        title = "MINH KHA HUB V5",
+
+        settings = "⚙️ SETTINGS",
+        vietnamese = "🇻🇳 Vietnamese",
+        english = "🇬🇧 English",
+
+        general = "🏠 GENERAL",
+        farm = "⚔️ FARM",
+        forge = "🔨 EQUIPMENT",
+        upgrade = "📈 UPGRADES",
+        index = "📖 INDEX",
+        tower = "🏰 ICE TOWER",
+        enchant = "✨ ENCHANT",
+        race = "🧬 RACE",
+        rebirth = "🔄 REBIRTH",
+        player = "👤 PLAYER",
+        status = "📊 STATUS",
+
+        auto = "Enable automation",
+        autoOn = "▶️ Enable Auto",
+        disable = "⛔ Disable All",
+        refresh = "🔄 Refresh Data",
+        unstuck = "🛠️ Unstuck",
+
+        farmStage = "Auto farm stage",
+        train = "Auto train power",
+        stage = "Farm stage",
+        trainTime = "Training time",
+        farmOnce = "⚔️ Farm Once",
+        trainOnce = "🏋️ Train Once",
+
+        autoForge = "Auto forge",
+        armor = "Forge extra armor",
+        equip = "Auto equip best",
+        sell = "Auto sell weak items",
+        forgeNow = "🔨 Forge Now",
+        equipNow = "⭐ Equip Best",
+        sellNow = "💰 Sell Weak Items",
+
+        autoUpgrade = "Auto upgrade",
+        oreFirst = "Prioritize ore bag",
+        oreUpgrade = "Upgrade ore bag",
+        trainUpgrade = "Upgrade training",
+        luckUpgrade = "Upgrade luck",
+        upgradeNow = "📈 Upgrade Now",
+
+        autoIndex = "Auto claim index",
+        indexNow = "📖 Claim Index",
+
+        autoTower = "Auto Ice Tower",
+        dailyTicket = "Auto claim daily ticket",
+        ticketKeep = "Tickets to keep",
+        towerRun = "🏰 Run Ice Tower",
+        ticketNow = "🎟️ Claim Daily Ticket",
+
+        autoEnchant = "Auto enchant",
+        fire = "🔥 Fire Enchant",
+        ice = "❄️ Ice Enchant",
+        thunder = "⚡ Thunder Enchant",
+        poison = "☠️ Poison Enchant",
+        enchantNow = "✨ Enchant Now",
+
+        autoRace = "Auto roll race",
+        raceNow = "🧬 Roll / Select Good Race",
+
+        autoRebirth = "Auto rebirth",
+        rebirthNow = "🔄 Rebirth Now",
+
+        antiAfk = "Anti AFK",
+        infiniteJump = "Infinite Jump",
+        noclip = "Noclip",
+        speed = "Walk Speed",
+        resetSpeed = "🏃 Reset Speed to 16",
+
+        refreshStatus = "🔄 Refresh Status",
+        disableAll = "⛔ DISABLE EVERYTHING",
+        stuck = "🛠️ UNSTUCK",
+
+        engineLoading = "ENGINE: LOADING",
+        engineReady = "ENGINE: CONNECTED",
+        engineError = "ENGINE: ERROR",
+        languageChanged = "Language changed to English"
+    }
+}
+
+local function T(Key)
+    return LANG[Language][Key] or Key
+end
+
+--============================================================
+-- ENGINE STATE
 --============================================================
 
 local Debug = _G.__LOOTTOFORGE_DBG
+local CONFIG = Debug and Debug.CONFIG
+local STATE = Debug and Debug.STATE
 
-if not Debug then
-
-local ok, err = pcall(function()  
-
-    local Source = game:HttpGet(ENGINE_URL)  
-
-    if not Source or #Source < 1000 then  
-        error("Không tải được engine Loot To Forge")  
-    end  
-
-    local Loader, CompileError = loadstring(Source)  
-
-    if not Loader then  
-        error(CompileError or "Không compile được engine")  
-    end  
-
-    Loader()  
-
-end)  
-
-if not ok then  
-    warn("MINH KHA HUB - ENGINE ERROR:", err)  
-    return  
-end
-
-end
+local EngineReady = Debug ~= nil
+local EngineLoading = false
+local EngineError = nil
 
 --============================================================
--- CHỜ ENGINE
+-- UPDATE ENGINE
 --============================================================
 
-local Start = os.clock()
+local function UpdateEngineState()
 
-repeat
+    Debug = _G.__LOOTTOFORGE_DBG
 
-task.wait(0.1)  
+    if Debug then
 
-Debug = _G.__LOOTTOFORGE_DBG
+        EngineReady = true
+        CONFIG = Debug.CONFIG
+        STATE = Debug.STATE
 
-until Debug or os.clock() - Start > 10
+        return true
 
-if not Debug then
-warn("MINH KHA HUB: Engine không tạo được Debug API.")
-return
-end
+    end
 
-local CONFIG = Debug.CONFIG
-local STATE = Debug.STATE
-
-if not CONFIG then
-warn("MINH KHA HUB: Không tìm thấy CONFIG.")
-return
+    return false
 end
 
 --============================================================
--- QUAN TRỌNG:
--- TẤT CẢ CHỨC NĂNG TẮT MẶC ĐỊNH
+-- DEFAULT CONFIG
 --============================================================
 
-CONFIG.auto = false
+local function DisableEverything()
 
-CONFIG.farm = false
-CONFIG.train = false
+    if not UpdateEngineState() then
+        return
+    end
 
-CONFIG.forge = false
-CONFIG.forgeArmor = false
-CONFIG.equip = false
-CONFIG.sell = false
+    if not CONFIG then
+        return
+    end
 
-CONFIG.upgrade = false
-CONFIG.orePackFirst = false
-CONFIG.upgOrePack = false
-CONFIG.upgTrain = false
-CONFIG.upgLuck = false
+    CONFIG.auto = false
 
-CONFIG.rebirth = false
-CONFIG.index = false
+    CONFIG.farm = false
+    CONFIG.train = false
 
-CONFIG.tower = false
-CONFIG.dailyTicket = false
-CONFIG.towerKeep = 0
+    CONFIG.forge = false
+    CONFIG.forgeArmor = false
+    CONFIG.equip = false
+    CONFIG.sell = false
 
-CONFIG.enchant = false
-CONFIG.race = false
+    CONFIG.upgrade = false
+    CONFIG.orePackFirst = false
+    CONFIG.upgOrePack = false
+    CONFIG.upgTrain = false
+    CONFIG.upgLuck = false
 
-CONFIG.antiAfk = false
+    CONFIG.rebirth = false
+    CONFIG.index = false
 
-CONFIG.stage = 0
-CONFIG.trainSecs = 20
-CONFIG.coinKeep = 0
-CONFIG.element = "Fire"
+    CONFIG.tower = false
+    CONFIG.dailyTicket = false
+
+    CONFIG.enchant = false
+    CONFIG.race = false
+
+    CONFIG.antiAfk = false
+end
 
 --============================================================
--- HÀM CONFIG
+-- ENGINE LOADER
+--============================================================
+
+local function LoadEngine()
+
+    if EngineLoading or EngineReady then
+        return
+    end
+
+    EngineLoading = true
+
+    task.spawn(function()
+
+        local ok, err = pcall(function()
+
+            local Source = game:HttpGet(ENGINE_URL)
+
+            if not Source or #Source < 1000 then
+                error("Engine rỗng hoặc không tải được")
+            end
+
+            local Loader, CompileError =
+                loadstring(Source)
+
+            if not Loader then
+                error(
+                    CompileError
+                    or "Không compile được Engine"
+                )
+            end
+
+            Loader()
+
+        end)
+
+        if not ok then
+
+            EngineError = err
+
+            warn(
+                "MINH KHA HUB V5 ENGINE ERROR:",
+                err
+            )
+
+        end
+
+        UpdateEngineState()
+
+        if EngineReady and CONFIG then
+
+            CONFIG.auto = false
+
+            CONFIG.farm = false
+            CONFIG.train = false
+
+            CONFIG.forge = false
+            CONFIG.forgeArmor = false
+            CONFIG.equip = false
+            CONFIG.sell = false
+
+            CONFIG.upgrade = false
+            CONFIG.orePackFirst = false
+            CONFIG.upgOrePack = false
+            CONFIG.upgTrain = false
+            CONFIG.upgLuck = false
+
+            CONFIG.rebirth = false
+            CONFIG.index = false
+
+            CONFIG.tower = false
+            CONFIG.dailyTicket = false
+            CONFIG.towerKeep = 0
+
+            CONFIG.enchant = false
+            CONFIG.race = false
+
+            CONFIG.antiAfk = false
+
+            CONFIG.stage = 0
+            CONFIG.trainSecs = 20
+            CONFIG.coinKeep = 0
+            CONFIG.element = "Fire"
+
+            print(
+                "MINH KHA HUB V5: ENGINE ĐÃ SẴN SÀNG"
+            )
+
+        end
+
+        EngineLoading = false
+
+    end)
+end
+
+--============================================================
+-- START ENGINE NGAY
+--============================================================
+
+LoadEngine()
+
+--============================================================
+-- CONFIG HELPER
 --============================================================
 
 local function SetConfig(Name, Value)
 
-if CONFIG then  
-    CONFIG[Name] = Value  
-end
+    if UpdateEngineState() and CONFIG then
 
+        CONFIG[Name] = Value
+
+        return true
+
+    end
+
+    return false
 end
 
 --============================================================
--- GỌI HÀM THẬT CỦA ENGINE
+-- CALL ENGINE
+--
+-- KHÔNG CHỜ 15 GIÂY
 --============================================================
 
 local function Call(Name, ...)
 
-if not Debug then  
-    return false  
-end  
+    local Args = table.pack(...)
 
-local Function = Debug[Name]  
+    task.spawn(function()
 
-if type(Function) ~= "function" then  
+        if not UpdateEngineState() then
 
-    warn(  
-        "MINH KHA HUB: Không tìm thấy chức năng:",  
-        Name  
-    )  
+            warn(
+                "MINH KHA HUB V5:",
+                Name,
+                "Engine chưa sẵn sàng"
+            )
 
-    return false  
-end  
+            return
+        end
 
-local Args = table.pack(...)  
+        if not Debug then
+            return
+        end
 
-task.spawn(function()  
+        local Function = Debug[Name]
 
-    local ok, err = pcall(function()  
-        return Function(table.unpack(Args, 1, Args.n))  
-    end)  
+        if type(Function) ~= "function" then
 
-    if not ok then  
-        warn(  
-            "MINH KHA HUB:",  
-            Name,  
-            err  
-        )  
-    end  
+            warn(
+                "MINH KHA HUB V5:",
+                "Không tìm thấy chức năng:",
+                Name
+            )
 
-end)  
+            return
+        end
 
-return true
+        local ok, err = pcall(function()
 
+            Function(
+                table.unpack(
+                    Args,
+                    1,
+                    Args.n
+                )
+            )
+
+        end)
+
+        if not ok then
+
+            warn(
+                "MINH KHA HUB V5:",
+                Name,
+                err
+            )
+
+        end
+
+    end)
 end
 
 --============================================================
--- LOAD MINH KHA HUB
+-- PLAYER
 --============================================================
-
-local Library
-
-local ok, result = pcall(function()
-
-local Source = game:HttpGet(HUB_URL)  
-
-if not Source or #Source < 100 then  
-    error("Library Minh Kha Hub rỗng")  
-end  
-
-local Loader, CompileError = loadstring(Source)  
-
-if not Loader then  
-    error(CompileError or "Không compile được Library")  
-end  
-
-return Loader()
-
-end)
-
-if not ok or not result then
-
-warn(  
-    "MINH KHA HUB LIBRARY ERROR:",  
-    result  
-)  
-
-return
-
-end
-
-Library = result
-
---============================================================
--- PHÓNG TO CHỮ
---============================================================
-
-task.defer(function()
-
-task.wait(0.7)  
-
-local Gui =  
-    Player:FindFirstChild("PlayerGui")  
-    and Player.PlayerGui:FindFirstChild(  
-        "MINH_KHA_HUB_COMPLETE"  
-    )  
-
-if not Gui then  
-    return  
-end  
-
-for _, Object in ipairs(Gui:GetDescendants()) do  
-
-    if Object:IsA("TextButton") then  
-
-        Object.TextSize = 14  
-
-        if Object.Text == "MK" then  
-            Object.TextSize = 23  
-        end  
-
-    elseif Object:IsA("TextLabel") then  
-
-        Object.TextSize = 14  
-
-        if Object.Text == "MINH KHA HUB" then  
-            Object.TextSize = 24  
-        end  
-
-    elseif Object:IsA("TextBox") then  
-        Object.TextSize = 14  
-
-    end  
-
-end
-
-end)
-
---============================================================
--- TAB: TỔNG QUÁT
---============================================================
-
-local TongQuat =
-Library:CreateTab("🏠 TỔNG QUÁT")
-
-TongQuat:CreateToggle(
-"Bật hệ thống tự động",
-false,
-function(Value)
-
-CONFIG.auto = Value  
-
-end
-
-)
-
-TongQuat:CreateButton(
-"▶️ Bật Auto",
-function()
-
-CONFIG.auto = true  
-
-end
-
-)
-
-TongQuat:CreateButton(
-"⛔ Tắt tất cả",
-function()
-
-CONFIG.auto = false  
-
-    CONFIG.farm = false  
-    CONFIG.train = false  
-    CONFIG.forge = false  
-    CONFIG.equip = false  
-    CONFIG.sell = false  
-    CONFIG.upgrade = false  
-    CONFIG.rebirth = false  
-    CONFIG.index = false  
-    CONFIG.tower = false  
-    CONFIG.dailyTicket = false  
-    CONFIG.enchant = false  
-    CONFIG.race = false  
-
-end
-
-)
-
-TongQuat:CreateButton(
-"🔄 Làm mới dữ liệu",
-function()
-Call("refresh", true)
-end
-)
-
-TongQuat:CreateButton(
-"🛠️ Thoát kẹt",
-function()
-Call("unstuck")
-end
-)
-
---============================================================
--- TAB: FARM
---============================================================
-
-local Farm =
-Library:CreateTab("⚔️ FARM")
-
-Farm:CreateToggle(
-"Tự động farm màn",
-false,
-function(Value)
-
-CONFIG.farm = Value  
-
-end
-
-)
-
-Farm:CreateToggle(
-"Tự động luyện sức mạnh",
-false,
-function(Value)
-
-CONFIG.train = Value  
-
-end
-
-)
-
-Farm:CreateInput(
-"Màn farm",
-0,
-function(Value)
-
-CONFIG.stage =  
-        math.clamp(  
-            math.floor(Value),  
-            0,  
-            27  
-        )  
-
-end
-
-)
-
-Farm:CreateInput(
-"Thời gian luyện",
-20,
-function(Value)
-
-CONFIG.trainSecs =  
-        math.clamp(Value, 5, 120)  
-
-end
-
-)
-
-Farm:CreateButton(
-"⚔️ Farm 1 lần",
-function()
-
-Call("stageRun")  
-
-end
-
-)
-
-Farm:CreateButton(
-"🏋️ Luyện 1 lần",
-function()
-
--- trainPass của engine phụ thuộc CONFIG.auto.  
-    -- Chỉ chạy tạm trong một khoảng ngắn.  
-    local OldAuto = CONFIG.auto  
-
-    CONFIG.auto = true  
-
-    task.spawn(function()  
-
-        Call("trainPass", CONFIG.trainSecs)  
-
-        task.wait(  
-            CONFIG.trainSecs + 1  
-        )  
-
-        CONFIG.auto = OldAuto  
-
-    end)  
-
-end
-
-)
-
---============================================================
--- TAB: RÈN / TRANG BỊ
---============================================================
-
-local Ren =
-Library:CreateTab("🔨 RÈN TRANG BỊ")
-
-Ren:CreateToggle(
-"Tự động rèn",
-false,
-function(Value)
-
-CONFIG.forge = Value  
-
-end
-
-)
-
-Ren:CreateToggle(
-"Rèn thêm giáp",
-false,
-function(Value)
-
-CONFIG.forgeArmor = Value  
-
-end
-
-)
-
-Ren:CreateToggle(
-"Tự mặc đồ tốt nhất",
-false,
-function(Value)
-
-CONFIG.equip = Value  
-
-end
-
-)
-
-Ren:CreateToggle(
-"Tự bán đồ yếu",
-false,
-function(Value)
-
-CONFIG.sell = Value  
-
-end
-
-)
-
-Ren:CreateButton(
-"🔨 Rèn ngay",
-function()
-
-Call("forgePass")  
-
-end
-
-)
-
-Ren:CreateButton(
-"⭐ Mặc đồ tốt nhất",
-function()
-
-Call("equipPass")  
-
-end
-
-)
-
-Ren:CreateButton(
-"💰 Bán đồ yếu",
-function()
-
-Call("sellPass")  
-
-end
-
-)
-
---============================================================
--- TAB: NÂNG CẤP
---============================================================
-
-local NangCap =
-Library:CreateTab("📈 NÂNG CẤP")
-
-NangCap:CreateToggle(
-"Tự động nâng cấp",
-false,
-function(Value)
-
-CONFIG.upgrade = Value  
-
-end
-
-)
-
-NangCap:CreateToggle(
-"Ưu tiên túi quặng",
-false,
-function(Value)
-
-CONFIG.orePackFirst = Value  
-
-end
-
-)
-
-NangCap:CreateToggle(
-"Nâng túi quặng",
-false,
-function(Value)
-
-CONFIG.upgOrePack = Value  
-
-end
-
-)
-
-NangCap:CreateToggle(
-"Nâng luyện sức mạnh",
-false,
-function(Value)
-
-CONFIG.upgTrain = Value  
-
-end
-
-)
-
-NangCap:CreateToggle(
-"Nâng may mắn",
-false,
-function(Value)
-
-CONFIG.upgLuck = Value  
-
-end
-
-)
-
-NangCap:CreateButton(
-"📈 Nâng cấp ngay",
-function()
-
-Call("upgradePass")  
-
-end
-
-)
-
---============================================================
--- TAB: CHỈ SỐ
---============================================================
-
-local ChiSo =
-Library:CreateTab("📖 CHỈ SỐ")
-
-ChiSo:CreateToggle(
-"Tự nhận chỉ số",
-false,
-function(Value)
-
-CONFIG.index = Value  
-
-end
-
-)
-
-ChiSo:CreateButton(
-"📖 Nhận chỉ số ngay",
-function()
-
-Call("indexPass")  
-
-end
-
-)
-
---============================================================
--- TAB: THÁP BĂNG
---============================================================
-
-local Tower =
-Library:CreateTab("🏰 THÁP BĂNG")
-
-Tower:CreateToggle(
-"Tự chạy Tháp Băng",
-false,
-function(Value)
-
-CONFIG.tower = Value  
-
-end
-
-)
-
-Tower:CreateToggle(
-"Tự nhận vé hằng ngày",
-false,
-function(Value)
-
-CONFIG.dailyTicket = Value  
-
-end
-
-)
-
-Tower:CreateInput(
-"Số vé muốn giữ",
-0,
-function(Value)
-
-CONFIG.towerKeep =  
-        math.max(  
-            0,  
-            math.floor(Value)  
-        )  
-
-end
-
-)
-
-Tower:CreateButton(
-"🏰 Chạy Tháp Băng",
-function()
-
-Call("towerRun")  
-
-end
-
-)
-
-Tower:CreateButton(
-"🎟️ Nhận vé hằng ngày",
-function()
-
-Call("dailyTicketPass")  
-
-end
-
-)
-
---============================================================
--- TAB: CƯỜNG HÓA
---============================================================
-
-local CuongHoa =
-Library:CreateTab("✨ CƯỜNG HÓA")
-
-CuongHoa:CreateToggle(
-"Tự động cường hóa",
-false,
-function(Value)
-
-CONFIG.enchant = Value  
-
-end
-
-)
-
-CuongHoa:CreateButton(
-"🔥 Cường hóa Lửa",
-function()
-
-CONFIG.element = "Fire"  
-
-end
-
-)
-
-CuongHoa:CreateButton(
-"❄️ Cường hóa Băng",
-function()
-
-CONFIG.element = "Ice"  
-
-end
-
-)
-
-CuongHoa:CreateButton(
-"⚡ Cường hóa Sấm",
-function()
-
-CONFIG.element = "Thunder"  
-
-end
-
-)
-
-CuongHoa:CreateButton(
-"☠️ Cường hóa Độc",
-function()
-
-CONFIG.element = "Poison"  
-
-end
-
-)
-
-CuongHoa:CreateButton(
-"✨ Cường hóa ngay",
-function()
-
-Call("enchantPass")  
-
-end
-
-)
-
---============================================================
--- TAB: CHỦNG TỘC
---============================================================
-
-local ChungToc =
-Library:CreateTab("🧬 CHỦNG TỘC")
-
-ChungToc:CreateToggle(
-"Tự quay chủng tộc",
-false,
-function(Value)
-
-CONFIG.race = Value  
-
-end
-
-)
-
-ChungToc:CreateButton(
-"🧬 Quay / chọn chủng tộc tốt",
-function()
-
-Call("racePass")  
-
-end
-
-)
-
---============================================================
--- TAB: TÁI SINH
---============================================================
-
-local TaiSinh =
-Library:CreateTab("🔄 TÁI SINH")
-
-TaiSinh:CreateToggle(
-"Tự động tái sinh",
-false,
-function(Value)
-
-CONFIG.rebirth = Value  
-
-end
-
-)
-
-TaiSinh:CreateButton(
-"🔄 Tái sinh ngay",
-function()
-
-Call("rebirthPass")  
-
-end
-
-)
-
---============================================================
--- TAB: NGƯỜI CHƠI
---============================================================
-
-local PlayerTab =
-Library:CreateTab("👤 NGƯỜI CHƠI")
 
 local AntiAFK = false
 local InfiniteJump = false
 local NoClip = false
 local Speed = 16
 
-PlayerTab:CreateToggle(
-"Chống AFK",
-false,
-function(Value)
+local function SetSpeed(Value)
 
-AntiAFK = Value  
-    CONFIG.antiAfk = Value  
+    Speed = math.clamp(
+        math.floor(
+            tonumber(Value) or 16
+        ),
+        1,
+        250
+    )
 
+    local Character =
+        Player.Character
+
+    local Humanoid =
+        Character
+        and Character:FindFirstChildOfClass(
+            "Humanoid"
+        )
+
+    if Humanoid then
+        Humanoid.WalkSpeed = Speed
+    end
 end
-
-)
-
-PlayerTab:CreateToggle(
-"Nhảy vô hạn",
-false,
-function(Value)
-
-InfiniteJump = Value  
-
-end
-
-)
-
-PlayerTab:CreateToggle(
-"Đi xuyên tường",
-false,
-function(Value)
-
-NoClip = Value  
-
-end
-
-)
-
-PlayerTab:CreateInput(
-"Tốc độ chạy",
-16,
-function(Value)
-
-Speed =  
-        math.clamp(  
-            math.floor(Value),  
-            1,  
-            250  
-        )  
-
-    local Character =  
-        Player.Character  
-
-    local Humanoid =  
-        Character  
-        and Character:FindFirstChildOfClass(  
-            "Humanoid"  
-        )  
-
-    if Humanoid then  
-        Humanoid.WalkSpeed = Speed  
-    end  
-
-end
-
-)
-
-PlayerTab:CreateButton(
-"🏃 Đặt tốc độ về 16",
-function()
-
-Speed = 16  
-
-    local Character =  
-        Player.Character  
-
-    local Humanoid =  
-        Character  
-        and Character:FindFirstChildOfClass(  
-            "Humanoid"  
-        )  
-
-    if Humanoid then  
-        Humanoid.WalkSpeed = 16  
-    end  
-
-end
-
-)
 
 --============================================================
--- PLAYER LOOP
+-- BUILD UI
+--============================================================
+
+local Library = nil
+
+local function LoadLibrary()
+
+    local Source = game:HttpGet(HUB_URL)
+
+    if not Source or #Source < 100 then
+        error("Library rỗng")
+    end
+
+    local Loader, CompileError =
+        loadstring(Source)
+
+    if not Loader then
+        error(
+            CompileError
+            or "Không compile được Library"
+        )
+    end
+
+    return Loader()
+end
+
+local function BuildUI()
+
+    local ok, Result = pcall(function()
+        return LoadLibrary()
+    end)
+
+    if not ok or not Result then
+
+        warn(
+            "MINH KHA HUB V5 LIBRARY ERROR:",
+            Result
+        )
+
+        return false
+    end
+
+    Library = Result
+
+    --========================================================
+    -- TỔNG QUÁT
+    --========================================================
+
+    local TongQuat =
+        Library:CreateTab(T("general"))
+
+    TongQuat:CreateToggle(
+        T("auto"),
+        false,
+        function(Value)
+
+            SetConfig("auto", Value)
+
+        end
+    )
+
+    TongQuat:CreateButton(
+        T("autoOn"),
+        function()
+
+            SetConfig("auto", true)
+
+        end
+    )
+
+    TongQuat:CreateButton(
+        T("disable"),
+        function()
+
+            DisableEverything()
+
+        end
+    )
+
+    TongQuat:CreateButton(
+        T("refresh"),
+        function()
+
+            Call("refresh", true)
+
+        end
+    )
+
+    TongQuat:CreateButton(
+        T("unstuck"),
+        function()
+
+            Call("unstuck")
+
+        end
+    )
+
+    --========================================================
+    -- FARM
+    --========================================================
+
+    local Farm =
+        Library:CreateTab(T("farm"))
+
+    Farm:CreateToggle(
+        T("farmStage"),
+        false,
+        function(Value)
+
+            SetConfig("farm", Value)
+
+        end
+    )
+
+    Farm:CreateToggle(
+        T("train"),
+        false,
+        function(Value)
+
+            SetConfig("train", Value)
+
+        end
+    )
+
+    Farm:CreateInput(
+        T("stage"),
+        0,
+        function(Value)
+
+            SetConfig(
+                "stage",
+                math.clamp(
+                    math.floor(
+                        tonumber(Value) or 0
+                    ),
+                    0,
+                    27
+                )
+            )
+
+        end
+    )
+
+    Farm:CreateInput(
+        T("trainTime"),
+        20,
+        function(Value)
+
+            SetConfig(
+                "trainSecs",
+                math.clamp(
+                    tonumber(Value) or 20,
+                    5,
+                    120
+                )
+            )
+
+        end
+    )
+
+    Farm:CreateButton(
+        T("farmOnce"),
+        function()
+
+            Call("stageRun")
+
+        end
+    )
+
+    Farm:CreateButton(
+        T("trainOnce"),
+        function()
+
+            if not UpdateEngineState() then
+
+                Call(
+                    "trainPass",
+                    20
+                )
+
+                return
+            end
+
+            local OldAuto =
+                CONFIG.auto
+
+            CONFIG.auto = true
+
+            local Duration =
+                CONFIG.trainSecs or 20
+
+            Call(
+                "trainPass",
+                Duration
+            )
+
+            task.delay(
+                Duration + 1,
+                function()
+
+                    if CONFIG then
+                        CONFIG.auto = OldAuto
+                    end
+
+                end
+            )
+
+        end
+    )
+
+    --========================================================
+    -- RÈN
+    --========================================================
+
+    local Ren =
+        Library:CreateTab(T("forge"))
+
+    Ren:CreateToggle(
+        T("autoForge"),
+        false,
+        function(Value)
+
+            SetConfig("forge", Value)
+
+        end
+    )
+
+    Ren:CreateToggle(
+        T("armor"),
+        false,
+        function(Value)
+
+            SetConfig("forgeArmor", Value)
+
+        end
+    )
+
+    Ren:CreateToggle(
+        T("equip"),
+        false,
+        function(Value)
+
+            SetConfig("equip", Value)
+
+        end
+    )
+
+    Ren:CreateToggle(
+        T("sell"),
+        false,
+        function(Value)
+
+            SetConfig("sell", Value)
+
+        end
+    )
+
+    Ren:CreateButton(
+        T("forgeNow"),
+        function()
+
+            Call("forgePass")
+
+        end
+    )
+
+    Ren:CreateButton(
+        T("equipNow"),
+        function()
+
+            Call("equipPass")
+
+        end
+    )
+
+    Ren:CreateButton(
+        T("sellNow"),
+        function()
+
+            Call("sellPass")
+
+        end
+    )
+
+    --========================================================
+    -- NÂNG CẤP
+    --========================================================
+
+    local NangCap =
+        Library:CreateTab(T("upgrade"))
+
+    NangCap:CreateToggle(
+        T("autoUpgrade"),
+        false,
+        function(Value)
+
+            SetConfig("upgrade", Value)
+
+        end
+    )
+
+    NangCap:CreateToggle(
+        T("oreFirst"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "orePackFirst",
+                Value
+            )
+
+        end
+    )
+
+    NangCap:CreateToggle(
+        T("oreUpgrade"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "upgOrePack",
+                Value
+            )
+
+        end
+    )
+
+    NangCap:CreateToggle(
+        T("trainUpgrade"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "upgTrain",
+                Value
+            )
+
+        end
+    )
+
+    NangCap:CreateToggle(
+        T("luckUpgrade"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "upgLuck",
+                Value
+            )
+
+        end
+    )
+
+    NangCap:CreateButton(
+        T("upgradeNow"),
+        function()
+
+            Call("upgradePass")
+
+        end
+    )
+
+    --========================================================
+    -- CHỈ SỐ
+    --========================================================
+
+    local ChiSo =
+        Library:CreateTab(T("index"))
+
+    ChiSo:CreateToggle(
+        T("autoIndex"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "index",
+                Value
+            )
+
+        end
+    )
+
+    ChiSo:CreateButton(
+        T("indexNow"),
+        function()
+
+            Call("indexPass")
+
+        end
+    )
+
+    --========================================================
+    -- THÁP BĂNG
+    --========================================================
+
+    local Tower =
+        Library:CreateTab(T("tower"))
+
+    Tower:CreateToggle(
+        T("autoTower"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "tower",
+                Value
+            )
+
+        end
+    )
+
+    Tower:CreateToggle(
+        T("dailyTicket"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "dailyTicket",
+                Value
+            )
+
+        end
+    )
+
+    Tower:CreateInput(
+        T("ticketKeep"),
+        0,
+        function(Value)
+
+            SetConfig(
+                "towerKeep",
+                math.max(
+                    0,
+                    math.floor(
+                        tonumber(Value) or 0
+                    )
+                )
+            )
+
+        end
+    )
+
+    Tower:CreateButton(
+        T("towerRun"),
+        function()
+
+            Call("towerRun")
+
+        end
+    )
+
+    Tower:CreateButton(
+        T("ticketNow"),
+        function()
+
+            Call(
+                "dailyTicketPass"
+            )
+
+        end
+    )
+
+    --========================================================
+    -- CƯỜNG HÓA
+    --========================================================
+
+    local CuongHoa =
+        Library:CreateTab(T("enchant"))
+
+    CuongHoa:CreateToggle(
+        T("autoEnchant"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "enchant",
+                Value
+            )
+
+        end
+    )
+
+    CuongHoa:CreateButton(
+        T("fire"),
+        function()
+
+            SetConfig(
+                "element",
+                "Fire"
+            )
+
+        end
+    )
+
+    CuongHoa:CreateButton(
+        T("ice"),
+        function()
+
+            SetConfig(
+                "element",
+                "Ice"
+            )
+
+        end
+    )
+
+    CuongHoa:CreateButton(
+        T("thunder"),
+        function()
+
+            SetConfig(
+                "element",
+                "Thunder"
+            )
+
+        end
+    )
+
+    CuongHoa:CreateButton(
+        T("poison"),
+        function()
+
+            SetConfig(
+                "element",
+                "Poison"
+            )
+
+        end
+    )
+
+    CuongHoa:CreateButton(
+        T("enchantNow"),
+        function()
+
+            Call("enchantPass")
+
+        end
+    )
+
+    --========================================================
+    -- CHỦNG TỘC
+    --========================================================
+
+    local ChungToc =
+        Library:CreateTab(T("race"))
+
+    ChungToc:CreateToggle(
+        T("autoRace"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "race",
+                Value
+            )
+
+        end
+    )
+
+    ChungToc:CreateButton(
+        T("raceNow"),
+        function()
+
+            Call("racePass")
+
+        end
+    )
+
+    --========================================================
+    -- TÁI SINH
+    --========================================================
+
+    local TaiSinh =
+        Library:CreateTab(T("rebirth"))
+
+    TaiSinh:CreateToggle(
+        T("autoRebirth"),
+        false,
+        function(Value)
+
+            SetConfig(
+                "rebirth",
+                Value
+            )
+
+        end
+    )
+
+    TaiSinh:CreateButton(
+        T("rebirthNow"),
+        function()
+
+            Call("rebirthPass")
+
+        end
+    )
+
+    --========================================================
+    -- NGƯỜI CHƠI
+    --========================================================
+
+    local PlayerTab =
+        Library:CreateTab(T("player"))
+
+    PlayerTab:CreateToggle(
+        T("antiAfk"),
+        false,
+        function(Value)
+
+            AntiAFK = Value
+
+            SetConfig(
+                "antiAfk",
+                Value
+            )
+
+        end
+    )
+
+    PlayerTab:CreateToggle(
+        T("infiniteJump"),
+        false,
+        function(Value)
+
+            InfiniteJump = Value
+
+        end
+    )
+
+    PlayerTab:CreateToggle(
+        T("noclip"),
+        false,
+        function(Value)
+
+            NoClip = Value
+
+        end
+    )
+
+    PlayerTab:CreateInput(
+        T("speed"),
+        16,
+        function(Value)
+
+            SetSpeed(Value)
+
+        end
+    )
+
+    PlayerTab:CreateButton(
+        T("resetSpeed"),
+        function()
+
+            SetSpeed(16)
+
+        end
+    )
+
+    --========================================================
+    -- TRẠNG THÁI
+    --========================================================
+
+    local Status =
+        Library:CreateTab(T("status"))
+
+    Status:CreateButton(
+        T("refreshStatus"),
+        function()
+
+            Call(
+                "refresh",
+                true
+            )
+
+            task.wait(0.5)
+
+            UpdateEngineState()
+
+            print("==============================")
+            print("       MINH KHA HUB V5")
+            print("==============================")
+
+            print(
+                "Engine:",
+                EngineReady
+                    and "CONNECTED"
+                    or "LOADING"
+            )
+
+            print(
+                "Auto:",
+                CONFIG and CONFIG.auto
+            )
+
+            print(
+                "Phase:",
+                STATE and STATE.phase
+            )
+
+            print(
+                "Level:",
+                STATE and STATE.level
+            )
+
+            print(
+                "Power:",
+                STATE and STATE.power
+            )
+
+            print(
+                "Coin:",
+                STATE and STATE.coin
+            )
+
+            print(
+                "Rebirth:",
+                STATE and STATE.rebirth
+            )
+
+            print(
+                "Stage:",
+                STATE and STATE.stagePass
+            )
+
+            print(
+                "Ore:",
+                STATE and STATE.ore
+            )
+
+            print(
+                "Weapon:",
+                STATE and STATE.weapon
+            )
+
+            print(
+                "Weapon Train:",
+                STATE and STATE.weaponTrain
+            )
+
+            print(
+                "Forged:",
+                STATE and STATE.forged
+            )
+
+            print(
+                "Sold:",
+                STATE and STATE.sold
+            )
+
+            print(
+                "Upgrades:",
+                STATE and STATE.upgrades
+            )
+
+            print(
+                "Tower:",
+                STATE and STATE.towerRuns
+            )
+
+            print(
+                "Enchants:",
+                STATE and STATE.enchants
+            )
+
+            print(
+                "Race:",
+                STATE and STATE.race
+            )
+
+            print(
+                "Note:",
+                STATE and STATE.note
+            )
+
+            print("==============================")
+
+        end
+    )
+
+    Status:CreateButton(
+        T("disableAll"),
+        function()
+
+            DisableEverything()
+
+            AntiAFK = false
+
+            pcall(function()
+                Call("unpin")
+            end)
+
+        end
+    )
+
+    Status:CreateButton(
+        T("stuck"),
+        function()
+
+            Call("unstuck")
+
+        end
+    )
+
+    --========================================================
+    -- SETTINGS
+    --========================================================
+
+    local Settings =
+        Library:CreateTab(T("settings"))
+
+    Settings:CreateButton(
+        T("vietnamese"),
+        function()
+
+            if Language == "VI" then
+                return
+            end
+
+            Language = "VI"
+
+            print(
+                "MINH KHA HUB V5:",
+                T("languageChanged")
+            )
+
+            task.spawn(function()
+
+                task.wait(0.1)
+
+                BuildUI()
+
+            end)
+
+        end
+    )
+
+    Settings:CreateButton(
+        T("english"),
+        function()
+
+            if Language == "EN" then
+                return
+            end
+
+            Language = "EN"
+
+            print(
+                "MINH KHA HUB V5:",
+                T("languageChanged")
+            )
+
+            task.spawn(function()
+
+                task.wait(0.1)
+
+                BuildUI()
+
+            end)
+
+        end
+    )
+
+    --========================================================
+    -- CHỈNH CHỮ
+    --========================================================
+
+    task.defer(function()
+
+        local Gui
+
+        for _ = 1, 30 do
+
+            local PlayerGui =
+                Player:FindFirstChild(
+                    "PlayerGui"
+                )
+
+            if PlayerGui then
+
+                Gui =
+                    PlayerGui:FindFirstChild(
+                        "MINH_KHA_HUB_COMPLETE"
+                    )
+
+                if Gui then
+                    break
+                end
+
+            end
+
+            task.wait(0.1)
+
+        end
+
+        if not Gui then
+            return
+        end
+
+        for _, Object in ipairs(
+            Gui:GetDescendants()
+        ) do
+
+            if Object:IsA("TextButton") then
+
+                Object.TextSize = 16
+
+                if Object.Text == "MK" then
+                    Object.TextSize = 23
+                end
+
+            elseif Object:IsA("TextLabel") then
+
+                Object.TextSize = 16
+
+                if Object.Text ==
+                    "MINH KHA HUB" then
+
+                    Object.TextSize = 24
+
+                end
+
+            elseif Object:IsA("TextBox") then
+
+                Object.TextSize = 16
+
+            end
+
+        end
+
+    end)
+
+    print(
+        "MINH KHA HUB V5:",
+        Language == "VI"
+            and "ĐÃ TẠO MENU TIẾNG VIỆT"
+            or "ENGLISH MENU CREATED"
+    )
+
+    return true
+end
+
+--============================================================
+-- PLAYER FEATURES
 --============================================================
 
 UserInputService.JumpRequest:Connect(function()
 
-if not InfiniteJump then  
-    return  
-end  
+    if not InfiniteJump then
+        return
+    end
 
-local Character =  
-    Player.Character  
+    local Character =
+        Player.Character
 
-local Humanoid =  
-    Character  
-    and Character:FindFirstChildOfClass(  
-        "Humanoid"  
-    )  
+    local Humanoid =
+        Character
+        and Character:FindFirstChildOfClass(
+            "Humanoid"
+        )
 
-if Humanoid then  
+    if Humanoid then
 
-    Humanoid:ChangeState(  
-        Enum.HumanoidStateType.Jumping  
-    )  
+        Humanoid:ChangeState(
+            Enum.HumanoidStateType.Jumping
+        )
 
-end
+    end
 
 end)
 
 RunService.Stepped:Connect(function()
 
-if not NoClip then  
-    return  
-end  
+    if not NoClip then
+        return
+    end
 
-local Character =  
-    Player.Character  
+    local Character =
+        Player.Character
 
-if not Character then  
-    return  
-end  
+    if not Character then
+        return
+    end
 
-for _, Part in ipairs(  
-    Character:GetDescendants()  
-) do  
+    for _, Part in ipairs(
+        Character:GetDescendants()
+    ) do
 
-    if Part:IsA("BasePart") then  
-        Part.CanCollide = false  
-    end  
+        if Part:IsA("BasePart") then
+            Part.CanCollide = false
+        end
 
-end
+    end
 
 end)
 
 pcall(function()
 
-local VirtualUser =  
-    game:GetService("VirtualUser")  
+    local VirtualUser =
+        game:GetService("VirtualUser")
 
-Player.Idled:Connect(function()  
+    Player.Idled:Connect(function()
 
-    if not AntiAFK then  
-        return  
-    end  
+        if not AntiAFK then
+            return
+        end
 
-    VirtualUser:CaptureController()  
+        VirtualUser:CaptureController()
 
-    VirtualUser:ClickButton2(  
-        Vector2.new()  
-    )  
+        VirtualUser:ClickButton2(
+            Vector2.new()
+        )
+
+    end)
 
 end)
 
+--============================================================
+-- TỰ ÁP SPEED SAU RESPAWN
+--============================================================
+
+Player.CharacterAdded:Connect(function(Character)
+
+    task.wait(0.5)
+
+    local Humanoid =
+        Character:FindFirstChildOfClass(
+            "Humanoid"
+        )
+
+    if Humanoid then
+        Humanoid.WalkSpeed = Speed
+    end
+
 end)
 
 --============================================================
--- TAB: TRẠNG THÁI
+-- ENGINE WATCHER
 --============================================================
 
-local Status =
-Library:CreateTab("📊 TRẠNG THÁI")
+task.spawn(function()
 
-Status:CreateButton(
-"🔄 Làm mới trạng thái",
-function()
+    while task.wait(0.5) do
 
-Call("refresh", true)  
+        if not EngineReady then
 
-    task.wait(0.3)  
+            if UpdateEngineState() then
 
-    print("==============================")  
-    print("       MINH KHA HUB V4")  
-    print("==============================")  
-    print("Engine: ĐÃ KẾT NỐI")  
-    print("Tự động:", CONFIG.auto)  
-    print("Giai đoạn:", STATE and STATE.phase)  
-    print("Cấp:", STATE and STATE.level)  
-    print("Sức mạnh:", STATE and STATE.power)  
-    print("Tiền:", STATE and STATE.coin)  
-    print("Tái sinh:", STATE and STATE.rebirth)  
-    print("Màn đã qua:", STATE and STATE.stagePass)  
-    print("Quặng:", STATE and STATE.ore)  
-    print("Vũ khí:", STATE and STATE.weapon)  
-    print("Sức mạnh vũ khí:", STATE and STATE.weaponTrain)  
-    print("Đã rèn:", STATE and STATE.forged)  
-    print("Đã bán:", STATE and STATE.sold)  
-    print("Nâng cấp:", STATE and STATE.upgrades)  
-    print("Tháp Băng:", STATE and STATE.towerRuns)  
-    print("Cường hóa:", STATE and STATE.enchants)  
-    print("Chủng tộc:", STATE and STATE.race)  
-    print("Ghi chú:", STATE and STATE.note)  
-    print("==============================")  
+                CONFIG = Debug.CONFIG
+                STATE = Debug.STATE
 
-end
+                print(
+                    "MINH KHA HUB V5:",
+                    "ENGINE ĐÃ KẾT NỐI"
+                )
 
-)
+            end
 
-Status:CreateButton(
-"⛔ TẮT TOÀN BỘ",
-function()
+        end
 
-CONFIG.auto = false  
+    end
 
-    CONFIG.farm = false  
-    CONFIG.train = false  
-    CONFIG.forge = false  
-    CONFIG.forgeArmor = false  
-    CONFIG.equip = false  
-    CONFIG.sell = false  
-    CONFIG.upgrade = false  
-    CONFIG.rebirth = false  
-    CONFIG.index = false  
-    CONFIG.tower = false  
-    CONFIG.dailyTicket = false  
-    CONFIG.enchant = false  
-    CONFIG.race = false  
-    CONFIG.antiAfk = false  
-
-    AntiAFK = false  
-
-    Call("unpin")  
-
-end
-
-)
-
-Status:CreateButton(
-"🛠️ THOÁT KẸT",
-function()
-
-Call("unstuck")  
-
-end
-
-)
+end)
 
 --============================================================
--- HOÀN TẤT
+-- TẠO UI
+--============================================================
+
+local UI_OK = BuildUI()
+
+if not UI_OK then
+
+    warn(
+        "MINH KHA HUB V5:",
+        "Không thể tạo giao diện."
+    )
+
+    return
+end
+
+--============================================================
+-- COMPLETE
 --============================================================
 
 print("==========================================")
-print(" MINH KHA HUB V4 • +1 LOOT TO FORGE")
-print(" GIAO DIỆN: TIẾNG VIỆT")
-print(" MẶC ĐỊNH: TẤT CẢ ĐÃ TẮT")
-print(" ENGINE: ĐÃ KẾT NỐI")
+print("     MINH KHA HUB V5 • +1 LOOT TO FORGE")
+print("==========================================")
+print("UI       : READY")
+print("LANGUAGE  :", Language)
+print(
+    "ENGINE    :",
+    EngineReady
+        and "CONNECTED"
+        or "LOADING IN BACKGROUND"
+)
+print("AUTO      : OFF")
+print("MOBILE    : YES")
+print("NO KEY    : YES")
 print("==========================================")
