@@ -1,1683 +1,528 @@
---[[
-============================================================
-        MINH KHA TRANSLATOR V9
-        "BÁ CỦA BÁ" • 6K+ TRANSLATION NETWORK
-============================================================
-
-• 6.000+ translation entries
-• English -> Vietnamese
-• PlayerGui / CoreGui / Workspace
-• TextLabel / TextButton / TextBox
-• PlaceholderText
-• BillboardGui / SurfaceGui descendants
-• RichText safe
-• Realtime GUI monitor
-• Fast dictionary lookup
-• Cache
-• Anti translation loop
-• Dynamic sentences
-• Giant Translation Network
-• Search dictionary
-• Rescan / Restore
-• Mobile friendly
-• Top-center rectangle
-• Dark glass
-• Green theme
-• No key
-============================================================
-]]
+--========================================================--
+-- MINH KHA TRANSLATOR V3
+-- CLIENT GUI TRANSLATOR
+-- LOW LAG / EVENT BASED / MOBILE
+--========================================================--
 
 repeat task.wait() until game:IsLoaded()
-
-------------------------------------------------------------
--- SERVICES
-------------------------------------------------------------
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
 
 local LP = Players.LocalPlayer
+local PlayerGui = LP:WaitForChild("PlayerGui")
 
-------------------------------------------------------------
+--========================================================--
 -- CONFIG
-------------------------------------------------------------
+--========================================================--
 
-local CFG = {
-    Enabled = true,
+local ENABLED = true
 
-    PlayerGui = true,
-    CoreGui = true,
-    Workspace = true,
+-- Có quét CoreGui hay không
+local SCAN_CORE_GUI = true
 
-    AutoDetect = true,
+-- GUI nằm trong Workspace
+local SCAN_WORLD_GUI = true
 
-    TranslateTextBox = true,
-    TranslatePlaceholder = true,
-
-    RichText = true,
-
-    MaxLength = 1800,
-
-    Top = 10,
-
-    Width = 220,
-    Height = 46,
-}
-
-------------------------------------------------------------
--- STATE
-------------------------------------------------------------
-
-local Dictionary = {}
+--========================================================--
+-- STORAGE
+--========================================================--
 
 local Original = setmetatable({}, {__mode = "k"})
-local PlaceholderOriginal = setmetatable({}, {__mode = "k"})
-local LastSource = setmetatable({}, {__mode = "k"})
-local LastTranslated = setmetatable({}, {__mode = "k"})
 local Watched = setmetatable({}, {__mode = "k"})
-local RootWatched = setmetatable({}, {__mode = "k"})
 local Busy = setmetatable({}, {__mode = "k"})
 
-local Cache = {}
+--========================================================--
+-- DICTIONARY
+--========================================================--
 
-local Enabled = CFG.Enabled
-local Scanning = false
+local D = {
 
-local Stats = {
-    Scanned = 0,
-    Translated = 0,
-    CacheHits = 0,
-    Watchers = 0,
+    -- UI
+    ["Play"]="Chơi",
+    ["Start"]="Bắt đầu",
+    ["Stop"]="Dừng",
+    ["Pause"]="Tạm dừng",
+    ["Resume"]="Tiếp tục",
+    ["Continue"]="Tiếp tục",
+    ["Close"]="Đóng",
+    ["Open"]="Mở",
+    ["Back"]="Quay lại",
+    ["Next"]="Tiếp",
+    ["Previous"]="Trước",
+    ["Menu"]="Menu",
+    ["Main Menu"]="Menu chính",
+    ["Home"]="Trang chủ",
+    ["Settings"]="Cài đặt",
+    ["Setting"]="Cài đặt",
+    ["Options"]="Tùy chọn",
+    ["Help"]="Trợ giúp",
+    ["About"]="Giới thiệu",
+    ["Info"]="Thông tin",
+    ["Information"]="Thông tin",
+    ["Search"]="Tìm kiếm",
+    ["Refresh"]="Làm mới",
+    ["Apply"]="Áp dụng",
+    ["Save"]="Lưu",
+    ["Load"]="Tải",
+    ["Reset"]="Đặt lại",
+    ["Delete"]="Xóa",
+    ["Remove"]="Xóa",
+    ["Confirm"]="Xác nhận",
+    ["Cancel"]="Hủy",
+    ["Accept"]="Chấp nhận",
+    ["Decline"]="Từ chối",
+    ["Yes"]="Có",
+    ["No"]="Không",
+    ["Done"]="Xong",
+    ["Skip"]="Bỏ qua",
+
+    -- trạng thái
+    ["On"]="Bật",
+    ["Off"]="Tắt",
+    ["ON"]="BẬT",
+    ["OFF"]="TẮT",
+    ["Enable"]="Bật",
+    ["Disable"]="Tắt",
+    ["Enabled"]="Đã bật",
+    ["Disabled"]="Đã tắt",
+    ["Active"]="Đang hoạt động",
+    ["Inactive"]="Không hoạt động",
+    ["Available"]="Có sẵn",
+    ["Unavailable"]="Không khả dụng",
+    ["Locked"]="Đã khóa",
+    ["Unlocked"]="Đã mở khóa",
+    ["Ready"]="Sẵn sàng",
+    ["Loading"]="Đang tải",
+    ["Loading..."]="Đang tải...",
+    ["Waiting"]="Đang chờ",
+    ["Please wait"]="Vui lòng chờ",
+    ["Processing"]="Đang xử lý",
+    ["Success"]="Thành công",
+    ["Failed"]="Thất bại",
+    ["Error"]="Lỗi",
+    ["Warning"]="Cảnh báo",
+
+    -- player
+    ["Player"]="Người chơi",
+    ["Players"]="Người chơi",
+    ["Character"]="Nhân vật",
+    ["Username"]="Tên người chơi",
+    ["Display Name"]="Tên hiển thị",
+    ["Name"]="Tên",
+    ["Level"]="Cấp độ",
+    ["Rank"]="Xếp hạng",
+    ["Health"]="Máu",
+    ["Max Health"]="Máu tối đa",
+    ["Energy"]="Năng lượng",
+    ["Stamina"]="Thể lực",
+    ["Mana"]="Mana",
+    ["Speed"]="Tốc độ",
+    ["WalkSpeed"]="Tốc độ di chuyển",
+    ["Jump"]="Nhảy",
+    ["Jump Power"]="Lực nhảy",
+    ["Damage"]="Sát thương",
+    ["Defense"]="Phòng thủ",
+    ["Attack"]="Tấn công",
+    ["Experience"]="Kinh nghiệm",
+    ["EXP"]="EXP",
+    ["XP"]="XP",
+
+    -- inventory
+    ["Inventory"]="Kho đồ",
+    ["Item"]="Vật phẩm",
+    ["Items"]="Vật phẩm",
+    ["Equipment"]="Trang bị",
+    ["Equip"]="Trang bị",
+    ["Unequip"]="Tháo trang bị",
+    ["Use"]="Sử dụng",
+    ["Drop"]="Vứt",
+    ["Collect"]="Nhặt",
+    ["Collect All"]="Nhặt tất cả",
+    ["Select"]="Chọn",
+    ["Selected"]="Đã chọn",
+    ["Quantity"]="Số lượng",
+    ["Amount"]="Số lượng",
+    ["Storage"]="Kho chứa",
+    ["Capacity"]="Sức chứa",
+    ["Full"]="Đầy",
+    ["Empty"]="Trống",
+
+    -- economy
+    ["Shop"]="Cửa hàng",
+    ["Store"]="Cửa hàng",
+    ["Buy"]="Mua",
+    ["Sell"]="Bán",
+    ["Purchase"]="Mua",
+    ["Price"]="Giá",
+    ["Cost"]="Chi phí",
+    ["Free"]="Miễn phí",
+    ["Money"]="Tiền",
+    ["Cash"]="Tiền",
+    ["Coin"]="Xu",
+    ["Coins"]="Xu",
+    ["Gold"]="Vàng",
+    ["Gem"]="Ngọc",
+    ["Gems"]="Ngọc",
+    ["Diamond"]="Kim cương",
+    ["Currency"]="Tiền tệ",
+    ["Balance"]="Số dư",
+    ["Reward"]="Phần thưởng",
+    ["Rewards"]="Phần thưởng",
+    ["Claim"]="Nhận",
+    ["Gift"]="Quà",
+    ["Gifts"]="Quà tặng",
+
+    -- quest
+    ["Quest"]="Nhiệm vụ",
+    ["Quests"]="Nhiệm vụ",
+    ["Mission"]="Nhiệm vụ",
+    ["Missions"]="Nhiệm vụ",
+    ["Objective"]="Mục tiêu",
+    ["Objectives"]="Mục tiêu",
+    ["Task"]="Nhiệm vụ",
+    ["Tasks"]="Nhiệm vụ",
+    ["Progress"]="Tiến độ",
+    ["Complete"]="Hoàn thành",
+    ["Completed"]="Đã hoàn thành",
+    ["Quest Complete"]="Hoàn thành nhiệm vụ",
+    ["Quest Completed"]="Đã hoàn thành nhiệm vụ",
+    ["Accept Quest"]="Nhận nhiệm vụ",
+    ["Abandon Quest"]="Bỏ nhiệm vụ",
+    ["Daily Quest"]="Nhiệm vụ hằng ngày",
+    ["Weekly Quest"]="Nhiệm vụ hằng tuần",
+
+    -- combat
+    ["Combat"]="Chiến đấu",
+    ["Fight"]="Chiến đấu",
+    ["Battle"]="Trận chiến",
+    ["Defend"]="Phòng thủ",
+    ["Block"]="Đỡ đòn",
+    ["Dodge"]="Né",
+    ["Skill"]="Kỹ năng",
+    ["Skills"]="Kỹ năng",
+    ["Ability"]="Kỹ năng",
+    ["Abilities"]="Kỹ năng",
+    ["Ultimate"]="Chiêu cuối",
+    ["Cooldown"]="Hồi chiêu",
+    ["Enemy"]="Kẻ địch",
+    ["Enemies"]="Kẻ địch",
+    ["Boss"]="Boss",
+    ["Bosses"]="Boss",
+    ["Kill"]="Hạ",
+    ["Kills"]="Số lần hạ",
+    ["Defeat"]="Đánh bại",
+    ["Defeated"]="Đã đánh bại",
+    ["Death"]="Chết",
+    ["Respawn"]="Hồi sinh",
+    ["Revive"]="Hồi sinh",
+
+    -- weapons
+    ["Weapon"]="Vũ khí",
+    ["Weapons"]="Vũ khí",
+    ["Sword"]="Kiếm",
+    ["Swords"]="Kiếm",
+    ["Gun"]="Súng",
+    ["Guns"]="Súng",
+    ["Bow"]="Cung",
+    ["Shield"]="Khiên",
+    ["Armor"]="Giáp",
+    ["Helmet"]="Mũ",
+    ["Tool"]="Công cụ",
+    ["Tools"]="Công cụ",
+
+    -- pets
+    ["Pet"]="Thú cưng",
+    ["Pets"]="Thú cưng",
+    ["Pet Inventory"]="Kho thú cưng",
+    ["Pet Stats"]="Chỉ số thú",
+    ["Hatch"]="Ấp",
+    ["Hatch Egg"]="Ấp trứng",
+    ["Egg"]="Trứng",
+    ["Eggs"]="Trứng",
+    ["Open Egg"]="Mở trứng",
+    ["Auto Hatch"]="Tự động ấp",
+    ["Common"]="Thường",
+    ["Uncommon"]="Không phổ biến",
+    ["Rare"]="Hiếm",
+    ["Epic"]="Sử thi",
+    ["Legendary"]="Huyền thoại",
+    ["Mythic"]="Thần thoại",
+    ["Divine"]="Thần",
+    ["Secret"]="Bí mật",
+
+    -- map
+    ["Teleport"]="Dịch chuyển",
+    ["Teleporting"]="Đang dịch chuyển",
+    ["Location"]="Vị trí",
+    ["Map"]="Bản đồ",
+    ["World"]="Thế giới",
+    ["Zone"]="Khu vực",
+    ["Area"]="Khu vực",
+    ["Island"]="Đảo",
+    ["Spawn"]="Điểm xuất hiện",
+    ["Return"]="Quay về",
+    ["Travel"]="Di chuyển",
+    ["Fast Travel"]="Di chuyển nhanh",
+
+    -- automation
+    ["Auto"]="Tự động",
+    ["Auto Farm"]="Tự động cày",
+    ["Auto Collect"]="Tự động nhặt",
+    ["Auto Sell"]="Tự động bán",
+    ["Auto Buy"]="Tự động mua",
+    ["Auto Equip"]="Tự động trang bị",
+    ["Auto Attack"]="Tự động tấn công",
+    ["Auto Quest"]="Tự động làm nhiệm vụ",
+    ["Auto Kill"]="Tự động hạ",
+    ["Auto Loot"]="Tự động nhặt đồ",
+    ["Auto Rebirth"]="Tự động tái sinh",
+    ["Auto Train"]="Tự động luyện tập",
+
+    -- rebirth
+    ["Rebirth"]="Tái sinh",
+    ["Rebirths"]="Số lần tái sinh",
+    ["Prestige"]="Thăng cấp",
+
+    -- trade
+    ["Trade"]="Giao dịch",
+    ["Trading"]="Đang giao dịch",
+    ["Trade Request"]="Yêu cầu giao dịch",
+    ["Trade Accepted"]="Đã chấp nhận giao dịch",
+    ["Trade Declined"]="Đã từ chối giao dịch",
+    ["Accept Trade"]="Chấp nhận giao dịch",
+    ["Decline Trade"]="Từ chối giao dịch",
+    ["Confirm Trade"]="Xác nhận giao dịch",
+    ["Cancel Trade"]="Hủy giao dịch",
+
+    -- social
+    ["Friend"]="Bạn bè",
+    ["Friends"]="Bạn bè",
+    ["Add Friend"]="Thêm bạn",
+    ["Remove Friend"]="Xóa bạn",
+    ["Follow"]="Theo dõi",
+    ["Unfollow"]="Bỏ theo dõi",
+    ["Invite"]="Mời",
+    ["Party"]="Nhóm",
+    ["Team"]="Đội",
+    ["Clan"]="Bang hội",
+    ["Guild"]="Bang hội",
+    ["Leader"]="Đội trưởng",
+    ["Member"]="Thành viên",
+
+    -- server
+    ["Server"]="Máy chủ",
+    ["Servers"]="Máy chủ",
+    ["Server List"]="Danh sách máy chủ",
+    ["Join"]="Tham gia",
+    ["Join Server"]="Tham gia máy chủ",
+    ["Leave"]="Rời",
+    ["Leave Server"]="Rời máy chủ",
+    ["Private Server"]="Máy chủ riêng",
+    ["Public Server"]="Máy chủ công khai",
+    ["Server Full"]="Máy chủ đầy",
+    ["Reconnecting"]="Đang kết nối lại",
+    ["Disconnected"]="Đã mất kết nối",
+    ["Connection"]="Kết nối",
+
+    -- settings
+    ["Graphics"]="Đồ họa",
+    ["Quality"]="Chất lượng",
+    ["Volume"]="Âm lượng",
+    ["Music"]="Nhạc",
+    ["Sound"]="Âm thanh",
+    ["Brightness"]="Độ sáng",
+    ["Sensitivity"]="Độ nhạy",
+    ["Camera"]="Camera",
+    ["Controls"]="Điều khiển",
+    ["Language"]="Ngôn ngữ",
+    ["English"]="Tiếng Anh",
+    ["Vietnamese"]="Tiếng Việt",
+    ["Fullscreen"]="Toàn màn hình",
+    ["Performance"]="Hiệu năng",
+    ["Low"]="Thấp",
+    ["Medium"]="Trung bình",
+    ["High"]="Cao",
+    ["Ultra"]="Cực cao",
+
+    -- mobile
+    ["Mobile"]="Điện thoại",
+    ["Touch"]="Cảm ứng",
+    ["Joystick"]="Cần điều khiển",
+    ["Interact"]="Tương tác",
+    ["Tap"]="Chạm",
+    ["Hold"]="Giữ",
+    ["Swipe"]="Vuốt",
+    ["Drag"]="Kéo",
+
+    -- time
+    ["Second"]="Giây",
+    ["Seconds"]="Giây",
+    ["Minute"]="Phút",
+    ["Minutes"]="Phút",
+    ["Hour"]="Giờ",
+    ["Hours"]="Giờ",
+    ["Day"]="Ngày",
+    ["Days"]="Ngày",
+    ["Week"]="Tuần",
+    ["Weeks"]="Tuần",
+    ["Today"]="Hôm nay",
+    ["Yesterday"]="Hôm qua",
+    ["Tomorrow"]="Ngày mai",
+    ["Now"]="Bây giờ",
+
+    -- misc
+    ["Get"]="Nhận",
+    ["Give"]="Cho",
+    ["Take"]="Lấy",
+    ["Find"]="Tìm",
+    ["Found"]="Đã tìm thấy",
+    ["Enter"]="Nhập",
+    ["Run"]="Chạy",
+    ["Unlock"]="Mở khóa",
+    ["Upgrade"]="Nâng cấp",
+    ["New"]="Mới",
+    ["Old"]="Cũ",
+    ["Chat"]="Trò chuyện",
+    ["Message"]="Tin nhắn",
+    ["Messages"]="Tin nhắn",
+    ["Notification"]="Thông báo",
+    ["Notifications"]="Thông báo",
+    ["Code"]="Mã",
+    ["Codes"]="Mã",
+    ["Redeem"]="Đổi",
+    ["Redeem Code"]="Đổi mã",
+    ["Enter Code"]="Nhập mã",
+    ["Tutorial"]="Hướng dẫn",
+    ["Congratulations"]="Chúc mừng!",
+    ["You Win"]="Bạn thắng",
+    ["You Lose"]="Bạn thua",
+    ["Game Over"]="Kết thúc trò chơi",
+    ["Not enough"]="Không đủ",
+    ["Not enough money"]="Không đủ tiền",
+    ["Inventory Full"]="Kho đồ đầy",
+    ["Out of Stock"]="Hết hàng",
 }
 
-------------------------------------------------------------
--- DICTIONARY FUNCTIONS
-------------------------------------------------------------
+--========================================================--
+-- SORT CỤM DÀI TRƯỚC
+--========================================================--
 
-local function add(key, value)
-    if type(key) ~= "string" then
-        return
-    end
+local Keys = {}
 
-    if type(value) ~= "string" then
-        return
-    end
-
-    key = key:lower()
-
-    if key == "" then
-        return
-    end
-
-    Dictionary[key] = value
+for k in pairs(D) do
+    table.insert(Keys, k)
 end
 
-local function addTable(t)
-    for k, v in pairs(t) do
-        add(k, v)
-    end
+table.sort(Keys, function(a,b)
+    return #a > #b
+end)
+
+--========================================================--
+-- CHUẨN HÓA
+--========================================================--
+
+local function normalize(s)
+    s = tostring(s or "")
+    s = s:gsub("%s+", " ")
+    return s
 end
 
-------------------------------------------------------------
--- CORE DICTIONARY
-------------------------------------------------------------
+--========================================================--
+-- TRANSLATE
+--========================================================--
 
-addTable({
+local function translate(text)
 
-    menu="Menu",
-    main="Chính",
-    home="Trang chủ",
-    title="Tiêu đề",
-    subtitle="Phụ đề",
-    description="Mô tả",
-    information="Thông tin",
-    info="Thông tin",
-    help="Trợ giúp",
-    guide="Hướng dẫn",
-    tutorial="Hướng dẫn",
-    welcome="Chào mừng",
-
-    loading="Đang tải",
-    loaded="Đã tải",
-    ready="Sẵn sàng",
-    close="Đóng",
-    open="Mở",
-    back="Quay lại",
-    next="Tiếp",
-    previous="Trước",
-    continue="Tiếp tục",
-    exit="Thoát",
-    cancel="Hủy",
-    confirm="Xác nhận",
-    yes="Có",
-    no="Không",
-    ok="OK",
-
-    apply="Áp dụng",
-    save="Lưu",
-    saved="Đã lưu",
-    delete="Xóa",
-    remove="Xóa",
-    clear="Xóa",
-    reset="Đặt lại",
-    refresh="Làm mới",
-    reload="Tải lại",
-    retry="Thử lại",
-
-    search="Tìm kiếm",
-    find="Tìm",
-    select="Chọn",
-    selected="Đã chọn",
-    enable="Bật",
-    enabled="Đã bật",
-    disable="Tắt",
-    disabled="Đã tắt",
-    on="Bật",
-    off="Tắt",
-
-    true="Đúng",
-    false="Sai",
-    none="Không có",
-    default="Mặc định",
-    custom="Tùy chỉnh",
-    advanced="Nâng cao",
-    basic="Cơ bản",
-    general="Chung",
-    options="Tùy chọn",
-    option="Tùy chọn",
-    feature="Tính năng",
-    features="Tính năng",
-
-    status="Trạng thái",
-    details="Chi tiết",
-    more="Thêm",
-    less="Bớt",
-    show="Hiện",
-    hide="Ẩn",
-    visible="Hiển thị",
-    hidden="Đã ẩn",
-
-    notification="Thông báo",
-    notifications="Thông báo",
-    message="Tin nhắn",
-    messages="Tin nhắn",
-    warning="Cảnh báo",
-    error="Lỗi",
-    errors="Lỗi",
-    success="Thành công",
-    failed="Thất bại",
-    failure="Thất bại",
-    unknown="Không xác định",
-
-    button="Nút",
-    buttons="Các nút",
-    toggle="Công tắc",
-    toggles="Các công tắc",
-    slider="Thanh trượt",
-    dropdown="Danh sách",
-    selector="Bộ chọn",
-    input="Ô nhập",
-    output="Kết quả",
-    textbox="Ô nhập",
-    ["text box"]="Ô nhập",
-    ["input box"]="Ô nhập",
-
-    click="Nhấn",
-    clicked="Đã nhấn",
-    tap="Chạm",
-    press="Nhấn",
-    hold="Giữ",
-    release="Thả",
-    drag="Kéo",
-    drop="Thả",
-    scroll="Cuộn",
-    swipe="Vuốt",
-    move="Di chuyển",
-
-    start="Bắt đầu",
-    stop="Dừng",
-    pause="Tạm dừng",
-    resume="Tiếp tục",
-    play="Chơi",
-    edit="Chỉnh sửa",
-    update="Cập nhật",
-    updated="Đã cập nhật",
-
-    player="Người chơi",
-    players="Người chơi",
-    username="Tên người dùng",
-    ["user name"]="Tên người dùng",
-    ["display name"]="Tên hiển thị",
-    name="Tên",
-    owner="Chủ sở hữu",
-    friend="Bạn bè",
-    friends="Bạn bè",
-    enemy="Kẻ địch",
-    enemies="Kẻ địch",
-    target="Mục tiêu",
-    targets="Mục tiêu",
-    character="Nhân vật",
-    avatar="Nhân vật",
-
-    health="Máu",
-    ["max health"]="Máu tối đa",
-    hp="Máu",
-    ["max hp"]="Máu tối đa",
-    energy="Năng lượng",
-    stamina="Thể lực",
-    mana="Mana",
-
-    level="Cấp",
-    levels="Các cấp",
-    xp="Kinh nghiệm",
-    exp="Kinh nghiệm",
-    experience="Kinh nghiệm",
-    rank="Xếp hạng",
-    team="Đội",
-
-    speed="Tốc độ",
-    ["walk speed"]="Tốc độ đi bộ",
-    walkspeed="Tốc độ đi bộ",
-    ["run speed"]="Tốc độ chạy",
-    ["jump power"]="Lực nhảy",
-    jumppower="Lực nhảy",
-    jump="Nhảy",
-    ["infinite jump"]="Nhảy vô hạn",
-
-    fly="Bay",
-    flying="Đang bay",
-    noclip="Xuyên tường",
-    ["no clip"]="Xuyên tường",
-    walk="Đi bộ",
-    run="Chạy",
-    sprint="Chạy nhanh",
-
-    teleport="Dịch chuyển",
-    teleportation="Dịch chuyển",
-    tp="Dịch chuyển",
-    position="Vị trí",
-    coordinates="Tọa độ",
-    distance="Khoảng cách",
-    height="Chiều cao",
-    width="Chiều rộng",
-    length="Chiều dài",
-    direction="Hướng",
-    velocity="Vận tốc",
-    gravity="Trọng lực",
-
-    esp="ESP",
-    ["player esp"]="ESP người chơi",
-    ["npc esp"]="ESP NPC",
-    ["monster esp"]="ESP quái",
-    ["mob esp"]="ESP quái",
-    ["item esp"]="ESP vật phẩm",
-    ["egg esp"]="ESP trứng",
-    ["pet esp"]="ESP thú",
-    ["chest esp"]="ESP rương",
-    ["boss esp"]="ESP boss",
-
-    tracer="Đường chỉ",
-    tracers="Đường chỉ",
-    box="Khung",
-    boxes="Khung",
-    ["name esp"]="ESP tên",
-    ["health bar"]="Thanh máu",
-    ["distance esp"]="ESP khoảng cách",
-    skeleton="Xương",
-    ["skeleton esp"]="ESP xương",
-    highlight="Đánh dấu",
-    outline="Viền",
-
-    color="Màu",
-    red="Đỏ",
-    green="Xanh lá",
-    blue="Xanh dương",
-    white="Trắng",
-    black="Đen",
-    yellow="Vàng",
-    purple="Tím",
-    orange="Cam",
-    pink="Hồng",
-    rainbow="Cầu vồng",
-
-    brightness="Độ sáng",
-    ["full bright"]="Tăng sáng toàn bộ",
-    fullbright="Tăng sáng toàn bộ",
-    ["night vision"]="Nhìn ban đêm",
-    visual="Hiển thị",
-    visibility="Khả năng hiển thị",
-
-    egg="Trứng",
-    eggs="Trứng",
-    hatch="Ấp",
-    hatching="Đang ấp",
-    hatched="Đã ấp",
-    ["egg hatch"]="Ấp trứng",
-    ["open egg"]="Mở trứng",
-    ["open eggs"]="Mở trứng",
-    ["auto hatch"]="Tự động ấp trứng",
-    ["egg luck"]="May mắn trứng",
-    luck="May mắn",
-    ["luck boost"]="Tăng may mắn",
-    ["luck multiplier"]="Hệ số may mắn",
-
-    pet="Thú",
-    pets="Thú",
-    ["pet name"]="Tên thú",
-    ["pet level"]="Cấp thú",
-    ["pet rarity"]="Độ hiếm thú",
-    ["pet power"]="Sức mạnh thú",
-    ["equip pet"]="Trang bị thú",
-    ["unequip pet"]="Tháo thú",
-    ["equip best"]="Trang bị tốt nhất",
-    ["best pets"]="Thú tốt nhất",
-
-    common="Thường",
-    uncommon="Không thường",
-    rare="Hiếm",
-    ["super rare"]="Rất hiếm",
-    epic="Sử thi",
-    legendary="Huyền thoại",
-    mythic="Thần thoại",
-    divine="Thần thánh",
-    ethereal="Siêu việt",
-    secret="Bí mật",
-    exclusive="Độc quyền",
-    limited="Giới hạn",
-    unique="Độc nhất",
-    special="Đặc biệt",
-    ["ultra rare"]="Cực hiếm",
-    godly="Thần cấp",
-    ancient="Cổ đại",
-    celestial="Thiên giới",
-    immortal="Bất tử",
-    supreme="Tối thượng",
-
-    ["auto farm"]="Tự động farm",
-    autofarm="Tự động farm",
-    ["auto collect"]="Tự động nhặt",
-    autocollect="Tự động nhặt",
-    ["auto sell"]="Tự động bán",
-    autosell="Tự động bán",
-    ["auto buy"]="Tự động mua",
-    autobuy="Tự động mua",
-    ["auto equip"]="Tự động trang bị",
-    ["auto upgrade"]="Tự động nâng cấp",
-    ["auto rebirth"]="Tự động tái sinh",
-    autorebirth="Tự động tái sinh",
-    ["auto quest"]="Tự động nhiệm vụ",
-    ["auto complete"]="Tự động hoàn thành",
-    ["auto claim"]="Tự động nhận",
-    ["auto attack"]="Tự động tấn công",
-    ["auto kill"]="Tự động hạ",
-    ["auto loot"]="Tự động nhặt đồ",
-    ["auto craft"]="Tự động chế tạo",
-    ["auto join"]="Tự động tham gia",
-    ["auto leave"]="Tự động rời",
-    ["auto teleport"]="Tự động dịch chuyển",
-    ["auto boss"]="Tự động boss",
-    ["auto chest"]="Tự động rương",
-    ["auto steal"]="Tự động cướp",
-    ["auto raid"]="Tự động đột kích",
-
-    combat="Chiến đấu",
-    attack="Tấn công",
-    attacking="Đang tấn công",
-    defend="Phòng thủ",
-    defense="Phòng thủ",
-    damage="Sát thương",
-    critical="Chí mạng",
-    ["critical hit"]="Đánh chí mạng",
-    ["crit chance"]="Tỉ lệ chí mạng",
-    kill="Hạ",
-    kills="Số mạng",
-    killed="Đã hạ",
-    death="Chết",
-    dead="Đã chết",
-    respawn="Hồi sinh",
-    respawning="Đang hồi sinh",
-    boss="Boss",
-    bosses="Boss",
-    ["mini boss"]="Boss nhỏ",
-    mob="Quái",
-    mobs="Quái",
-    monster="Quái vật",
-    monsters="Quái vật",
-    npc="NPC",
-    hit="Đánh trúng",
-    hitbox="Vùng đánh",
-    hurtbox="Vùng nhận sát thương",
-    range="Tầm",
-    ["attack range"]="Tầm đánh",
-    ["attack speed"]="Tốc độ đánh",
-    ["kill aura"]="Kill Aura",
-    killaura="Kill Aura",
-    ["silent aim"]="Ngắm tự động",
-    aimbot="Tự động ngắm",
-    ["target lock"]="Khóa mục tiêu",
-    nearest="Gần nhất",
-    closest="Gần nhất",
-    ["one shot"]="Một đòn hạ",
-    ["instant kill"]="Hạ ngay",
-
-    weapon="Vũ khí",
-    weapons="Vũ khí",
-    sword="Kiếm",
-    swords="Kiếm",
-    blade="Lưỡi kiếm",
-    gun="Súng",
-    guns="Súng",
-    bow="Cung",
-    axe="Rìu",
-    pickaxe="Cuốc",
-    hammer="Búa",
-    staff="Trượng",
-    spear="Giáo",
-    knife="Dao",
-    tool="Công cụ",
-    tools="Công cụ",
-    melee="Cận chiến",
-    ranged="Tầm xa",
-    magic="Phép thuật",
-    ability="Kỹ năng",
-    abilities="Kỹ năng",
-    skill="Kỹ năng",
-    skills="Kỹ năng",
-    ultimate="Chiêu cuối",
-    power="Sức mạnh",
-
-    money="Tiền",
-    cash="Tiền",
-    coin="Xu",
-    coins="Xu",
-    gold="Vàng",
-    gem="Đá quý",
-    gems="Đá quý",
-    diamond="Kim cương",
-    diamonds="Kim cương",
-    currency="Tiền tệ",
-    price="Giá",
-    cost="Chi phí",
-    buy="Mua",
-    buying="Đang mua",
-    bought="Đã mua",
-    sell="Bán",
-    selling="Đang bán",
-    sold="Đã bán",
-    shop="Cửa hàng",
-    store="Cửa hàng",
-    merchant="Thương nhân",
-    purchase="Mua hàng",
-    purchased="Đã mua",
-    free="Miễn phí",
-    reward="Phần thưởng",
-    rewards="Phần thưởng",
-    claim="Nhận",
-    claimed="Đã nhận",
-    daily="Hằng ngày",
-    weekly="Hằng tuần",
-    monthly="Hằng tháng",
-    gift="Quà",
-    gifts="Quà",
-    balance="Số dư",
-    wallet="Ví",
-    value="Giá trị",
-    worth="Trị giá",
-    expensive="Đắt",
-    cheap="Rẻ",
-
-    inventory="Kho đồ",
-    item="Vật phẩm",
-    items="Vật phẩm",
-    ["item name"]="Tên vật phẩm",
-    ["item count"]="Số lượng vật phẩm",
-    quantity="Số lượng",
-    amount="Số lượng",
-    stack="Xếp chồng",
-    ["stack size"]="Kích thước chồng",
-    collect="Nhặt",
-    ["collect item"]="Nhặt vật phẩm",
-    loot="Chiến lợi phẩm",
-    ["loot all"]="Nhặt tất cả",
-    drop="Vứt",
-    ["drop item"]="Vứt vật phẩm",
-    use="Sử dụng",
-    usable="Có thể sử dụng",
-    used="Đã sử dụng",
-    equip="Trang bị",
-    unequip="Tháo",
-    equipped="Đã trang bị",
-    unequipped="Đã tháo",
-    slot="Ô",
-    slots="Các ô",
-    hotbar="Thanh công cụ",
-    backpack="Ba lô",
-    storage="Kho chứa",
-    material="Nguyên liệu",
-    materials="Nguyên liệu",
-    resource="Tài nguyên",
-    resources="Tài nguyên",
-    ore="Quặng",
-    wood="Gỗ",
-    stone="Đá",
-    iron="Sắt",
-    steel="Thép",
-    crystal="Tinh thể",
-    fragment="Mảnh",
-    shard="Mảnh vỡ",
-    token="Token",
-    ticket="Vé",
-    key="Chìa khóa",
-    keys="Chìa khóa",
-    potion="Thuốc",
-    potions="Thuốc",
-    scroll="Cuộn giấy",
-    chest="Rương",
-    chests="Rương",
-    crate="Thùng",
-    crates="Thùng",
-
-    quest="Nhiệm vụ",
-    quests="Nhiệm vụ",
-    mission="Nhiệm vụ",
-    missions="Nhiệm vụ",
-    objective="Mục tiêu",
-    objectives="Mục tiêu",
-    task="Nhiệm vụ",
-    tasks="Nhiệm vụ",
-    ["quest giver"]="Người giao nhiệm vụ",
-    ["quest reward"]="Phần thưởng nhiệm vụ",
-    ["quest completed"]="Nhiệm vụ hoàn thành",
-    ["complete quest"]="Hoàn thành nhiệm vụ",
-    ["accept quest"]="Nhận nhiệm vụ",
-    ["abandon quest"]="Bỏ nhiệm vụ",
-    ["current quest"]="Nhiệm vụ hiện tại",
-    remaining="Còn lại",
-    progress="Tiến trình",
-    required="Yêu cầu",
-    requirements="Điều kiện",
-    goal="Mục tiêu",
-    goals="Mục tiêu",
-    collectible="Có thể nhặt",
-    completed="Đã hoàn thành",
-    incomplete="Chưa hoàn thành",
-
-    rebirth="Tái sinh",
-    rebirths="Số lần tái sinh",
-    prestige="Uy tín",
-    ["prestige level"]="Cấp uy tín",
-    upgrade="Nâng cấp",
-    upgrades="Nâng cấp",
-    ["upgrade cost"]="Chi phí nâng cấp",
-    ["level up"]="Tăng cấp",
-    leveling="Lên cấp",
-    ["xp required"]="XP yêu cầu",
-    ["next level"]="Cấp tiếp theo",
-    ["max level"]="Cấp tối đa",
-    progression="Tiến trình",
-    ["rank up"]="Tăng hạng",
-    ascend="Thăng cấp",
-    ascension="Thăng cấp",
-    evolution="Tiến hóa",
-    evolve="Tiến hóa",
-    evolved="Đã tiến hóa",
-    unlock="Mở khóa",
-    unlocked="Đã mở khóa",
-    requirement="Điều kiện",
-    ["required level"]="Cấp yêu cầu",
-    multiplier="Hệ số",
-    boost="Tăng cường",
-
-    trade="Giao dịch",
-    trading="Đang giao dịch",
-    ["trade request"]="Yêu cầu giao dịch",
-    ["accept trade"]="Chấp nhận giao dịch",
-    ["decline trade"]="Từ chối giao dịch",
-    ["cancel trade"]="Hủy giao dịch",
-    ["trade complete"]="Giao dịch hoàn tất",
-    offer="Đề nghị",
-    offering="Đang đề nghị",
-    chat="Trò chuyện",
-    chats="Các cuộc trò chuyện",
-    party="Nhóm",
-    invite="Mời",
-    invited="Đã mời",
-    join="Tham gia",
-    joined="Đã tham gia",
-    leave="Rời",
-    left="Đã rời",
-    follow="Theo dõi",
-    following="Đang theo dõi",
-    ["friend request"]="Lời mời kết bạn",
-    block="Chặn",
-    blocked="Đã chặn",
-    report="Báo cáo",
-    mute="Tắt tiếng",
-    unmute="Bật tiếng",
-    guild="Bang hội",
-    clan="Bang",
-    clanmates="Thành viên bang",
-    group="Nhóm",
-    groups="Các nhóm",
-
-    server="Máy chủ",
-    servers="Máy chủ",
-    ["server list"]="Danh sách máy chủ",
-    ["server hop"]="Đổi máy chủ",
-    ["server hopping"]="Đang đổi máy chủ",
-    rejoin="Vào lại",
-    ["rejoin server"]="Vào lại máy chủ",
-    ["join server"]="Vào máy chủ",
-    ["leave server"]="Rời máy chủ",
-    ["private server"]="Máy chủ riêng",
-    ["public server"]="Máy chủ công khai",
-    ["reserved server"]="Máy chủ đặt trước",
-    ["server id"]="ID máy chủ",
-    ["job id"]="Job ID",
-    ["place id"]="Place ID",
-    ["player count"]="Số người chơi",
-    ["max players"]="Số người tối đa",
-    ping="Ping",
-    latency="Độ trễ",
-    region="Khu vực",
-    country="Quốc gia",
-    version="Phiên bản",
-
-    ["anti afk"]="Chống AFK",
-    antiafk="Chống AFK",
-    ["anti kick"]="Chống kick",
-    antikick="Chống kick",
-    ["anti ban"]="Chống ban",
-    antiban="Chống ban",
-    ["anti ragdoll"]="Chống ragdoll",
-    ["anti stun"]="Chống choáng",
-    ["anti slow"]="Chống làm chậm",
-    ["anti knockback"]="Chống đẩy",
-    ["anti fling"]="Chống fling",
-    ["god mode"]="Bất tử",
-    godmode="Bất tử",
-    invincible="Bất tử",
-    ["infinite health"]="Máu vô hạn",
-    ["infinite stamina"]="Thể lực vô hạn",
-    ["infinite energy"]="Năng lượng vô hạn",
-
-    map="Bản đồ",
-    maps="Bản đồ",
-    area="Khu vực",
-    areas="Các khu vực",
-    zone="Vùng",
-    zones="Các vùng",
-    island="Đảo",
-    islands="Các đảo",
-    city="Thành phố",
-    town="Thị trấn",
-    village="Làng",
-    forest="Rừng",
-    desert="Sa mạc",
-    mountain="Núi",
-    cave="Hang động",
-    dungeon="Hầm ngục",
-    castle="Lâu đài",
-    house="Nhà",
-    building="Tòa nhà",
-    buildings="Tòa nhà",
-    spawn="Điểm xuất hiện",
-    ["spawn point"]="Điểm xuất hiện",
-    location="Địa điểm",
-    waypoint="Điểm đánh dấu",
-    checkpoint="Điểm kiểm tra",
-    portal="Cổng",
-    door="Cửa",
-    gate="Cổng",
-    bridge="Cầu",
-    road="Đường",
-    path="Lối đi",
-    river="Sông",
-    lake="Hồ",
-    ocean="Đại dương",
-    beach="Bãi biển",
-    volcano="Núi lửa",
-    sky="Bầu trời",
-    underground="Dưới lòng đất",
-
-    craft="Chế tạo",
-    crafting="Chế tạo",
-    recipe="Công thức",
-    recipes="Công thức",
-    ["craft item"]="Chế tạo vật phẩm",
-    ["crafting table"]="Bàn chế tạo",
-    forge="Lò rèn",
-    forging="Rèn",
-    smelt="Nung",
-    smelting="Đang nung",
-    combine="Kết hợp",
-    combination="Kết hợp",
-    merge="Hợp nhất",
-    fuse="Hợp nhất",
-    fusion="Hợp nhất",
-    ingredients="Nguyên liệu",
-    ingredient="Nguyên liệu",
-    blueprint="Bản thiết kế",
-
-    settings="Cài đặt",
-    setting="Cài đặt",
-    language="Ngôn ngữ",
-    english="Tiếng Anh",
-    vietnamese="Tiếng Việt",
-    translation="Dịch",
-    translator="Trình dịch",
-    theme="Chủ đề",
-    dark="Tối",
-    light="Sáng",
-    transparency="Độ trong suốt",
-    opacity="Độ mờ",
-    volume="Âm lượng",
-    music="Nhạc",
-    sound="Âm thanh",
-    effects="Hiệu ứng",
-    graphics="Đồ họa",
-    quality="Chất lượng",
-    low="Thấp",
-    medium="Trung bình",
-    high="Cao",
-    ultra="Cực cao",
-    performance="Hiệu năng",
-    fps="FPS",
-    ["fps boost"]="Tăng FPS",
-    lag="Lag",
-    ["anti lag"]="Chống lag",
-    ["low graphics"]="Đồ họa thấp",
-    ["mobile mode"]="Chế độ mobile",
-    ["desktop mode"]="Chế độ máy tính",
-    resolution="Độ phân giải",
-    shadows="Bóng",
-    particles="Hạt",
-    textures="Kết cấu",
-    reflections="Phản chiếu",
-    lighting="Ánh sáng",
-
-    mobile="Điện thoại",
-    touch="Cảm ứng",
-    touchscreen="Màn hình cảm ứng",
-    ["mobile friendly"]="Thân thiện mobile",
-    draggable="Có thể kéo",
-    ["tap to open"]="Chạm để mở",
-    ["tap to close"]="Chạm để đóng",
-    ["hold to drag"]="Giữ để kéo",
-    ["mobile button"]="Nút mobile",
-    ["mobile controls"]="Điều khiển mobile",
-    joystick="Cần điều khiển",
-    controller="Tay cầm",
-    keyboard="Bàn phím",
-    mouse="Chuột",
-
-    hub="Hub",
-    script="Script",
-    scripts="Script",
-    executor="Executor",
-    library="Thư viện",
-    loader="Trình tải",
-    load="Tải",
-    config="Cấu hình",
-    configuration="Cấu hình",
-    preset="Thiết lập sẵn",
-    presets="Thiết lập sẵn",
-    profile="Hồ sơ",
-    profiles="Hồ sơ",
-    keybind="Phím tắt",
-    keybinds="Các phím tắt",
-    bind="Gán phím",
-    hotkey="Phím nóng",
-    ["toggle ui"]="Bật/tắt giao diện",
-    ["show ui"]="Hiện giao diện",
-    ["hide ui"]="Ẩn giao diện",
-    ["destroy ui"]="Xóa giao diện",
-    unload="Gỡ script",
-    ["reload ui"]="Tải lại giao diện",
-    retranslate="Dịch lại",
-    translate="Dịch",
-    ["translate all"]="Dịch tất cả",
-    ["minh kha"]="Minh Kha",
-    ["minh kha hub"]="Minh Kha Hub",
-
-    optimize="Tối ưu",
-    optimization="Tối ưu hóa",
-    memory="Bộ nhớ",
-    cpu="CPU",
-    gpu="GPU",
-    network="Mạng",
-    ["network delay"]="Độ trễ mạng",
-    request="Yêu cầu",
-    requests="Các yêu cầu",
-    cache="Bộ nhớ đệm",
-    cached="Đã lưu đệm",
-    scan="Quét",
-    scanning="Đang quét",
-    ["scan complete"]="Quét hoàn tất",
-    ["deep scan"]="Quét sâu",
-    ["fast scan"]="Quét nhanh",
-    thread="Luồng",
-    threads="Các luồng",
-    connection="Kết nối",
-    connections="Các kết nối",
-    signal="Tín hiệu",
-
-    code="Mã",
-    codes="Mã",
-    redeem="Đổi mã",
-    ["redeem code"]="Đổi mã",
-    ["enter code"]="Nhập mã",
-    ["invalid code"]="Mã không hợp lệ",
-    ["expired code"]="Mã đã hết hạn",
-    ["valid code"]="Mã hợp lệ",
-    ["key system"]="Hệ thống key",
-    ["enter key"]="Nhập key",
-    ["get key"]="Lấy key",
-    ["copy key"]="Sao chép key",
-    verify="Xác minh",
-    verification="Xác minh",
-    verified="Đã xác minh",
-    authentication="Xác thực",
-    authenticate="Xác thực",
-
-    time="Thời gian",
-    ["time left"]="Thời gian còn lại",
-    ["remaining time"]="Thời gian còn lại",
-    second="giây",
-    seconds="giây",
-    minute="phút",
-    minutes="phút",
-    hour="giờ",
-    hours="giờ",
-    day="ngày",
-    days="ngày",
-    week="tuần",
-    weeks="tuần",
-    month="tháng",
-    months="tháng",
-    year="năm",
-    years="năm",
-    cooldown="Hồi chiêu",
-    ["cooldown time"]="Thời gian hồi chiêu",
-    duration="Thời lượng",
-    timer="Bộ đếm thời gian",
-    countdown="Đếm ngược",
-    delay="Độ trễ",
-    interval="Khoảng thời gian",
-})
-
-------------------------------------------------------------
--- MASS VOCABULARY
-------------------------------------------------------------
-
-local WORDS = {
-    {"accept","Chấp nhận"},
-    {"accepted","Đã chấp nhận"},
-    {"access","Truy cập"},
-    {"account","Tài khoản"},
-    {"accounts","Tài khoản"},
-    {"action","Hành động"},
-    {"actions","Hành động"},
-    {"active","Đang hoạt động"},
-    {"admin","Quản trị viên"},
-    {"admins","Quản trị viên"},
-    {"adventure","Phiêu lưu"},
-    {"agent","Đặc vụ"},
-    {"air","Không khí"},
-    {"alert","Cảnh báo"},
-    {"all","Tất cả"},
-    {"animation","Hoạt ảnh"},
-    {"armor","Giáp"},
-    {"attribute","Thuộc tính"},
-    {"attributes","Thuộc tính"},
-    {"auto","Tự động"},
-    {"automatic","Tự động"},
-    {"available","Có sẵn"},
-    {"average","Trung bình"},
-    {"bank","Ngân hàng"},
-    {"bar","Thanh"},
-    {"battlepass","Vé chiến đấu"},
-    {"bonus","Thưởng"},
-    {"build","Xây dựng"},
-    {"builder","Người xây dựng"},
-    {"camp","Trại"},
-    {"capture","Chiếm"},
-    {"captured","Đã chiếm"},
-    {"class","Lớp"},
-    {"classes","Các lớp"},
-    {"clicker","Trình nhấp"},
-    {"collection","Bộ sưu tập"},
-    {"complete","Hoàn thành"},
-    {"difficulty","Độ khó"},
-    {"easy","Dễ"},
-    {"hard","Khó"},
-    {"extreme","Cực khó"},
-    {"expert","Chuyên gia"},
-    {"elite","Tinh anh"},
-    {"fire","Lửa"},
-    {"water","Nước"},
-    {"earth","Đất"},
-    {"wind","Gió"},
-    {"ice","Băng"},
-    {"darkness","Bóng tối"},
-    {"poison","Độc"},
-    {"thunder","Sấm sét"},
-    {"golden","Vàng"},
-    {"silver","Bạc"},
-    {"bronze","Đồng"},
-    {"hunt","Săn"},
-    {"hunting","Đang săn"},
-    {"increase","Tăng"},
-    {"decrease","Giảm"},
-    {"increased","Đã tăng"},
-    {"decreased","Đã giảm"},
-    {"leader","Trưởng nhóm"},
-    {"maximum","Tối đa"},
-    {"minimum","Tối thiểu"},
-    {"mode","Chế độ"},
-    {"modes","Các chế độ"},
-    {"night","Ban đêm"},
-    {"offline","Ngoại tuyến"},
-    {"online","Trực tuyến"},
-    {"pass","Vượt qua"},
-    {"premium","Cao cấp"},
-    {"random","Ngẫu nhiên"},
-    {"repair","Sửa chữa"},
-    {"safe","An toàn"},
-    {"stats","Chỉ số"},
-    {"strength","Sức mạnh"},
-    {"victory","Chiến thắng"},
-    {"defeat","Thất bại"},
-    {"winner","Người thắng"},
-    {"loser","Người thua"},
-    {"wave","Làn sóng"},
-    {"waves","Các làn sóng"},
-    {"world","Thế giới"},
-    {"zone","Vùng"},
-    {"zones","Các vùng"},
-}
-
-for _, pair in ipairs(WORDS) do
-    add(pair[1], pair[2])
-end
-
-------------------------------------------------------------
--- GIANT NETWORK SOURCE
-------------------------------------------------------------
-
-local ACTIONS = {
-    {"auto","Tự động"},
-    {"enable","Bật"},
-    {"disable","Tắt"},
-    {"select","Chọn"},
-    {"show","Hiện"},
-    {"hide","Ẩn"},
-    {"find","Tìm"},
-    {"get","Lấy"},
-    {"collect","Nhặt"},
-    {"sell","Bán"},
-    {"buy","Mua"},
-    {"equip","Trang bị"},
-    {"unequip","Tháo"},
-    {"delete","Xóa"},
-    {"use","Sử dụng"},
-    {"open","Mở"},
-    {"close","Đóng"},
-    {"upgrade","Nâng cấp"},
-    {"teleport","Dịch chuyển"},
-    {"target","Mục tiêu"},
-    {"farm","Farm"},
-    {"kill","Hạ"},
-    {"attack","Tấn công"},
-    {"protect","Bảo vệ"},
-    {"save","Lưu"},
-    {"load","Tải"},
-    {"reset","Đặt lại"},
-    {"repair","Sửa chữa"},
-    {"spawn","Tạo"},
-    {"join","Tham gia"},
-    {"leave","Rời"},
-    {"search","Tìm kiếm"},
-    {"track","Theo dõi"},
-    {"follow","Theo dõi"},
-    {"lock","Khóa"},
-    {"unlock","Mở khóa"},
-    {"claim","Nhận"},
-    {"craft","Chế tạo"},
-    {"combine","Kết hợp"},
-    {"merge","Hợp nhất"},
-    {"trade","Giao dịch"},
-    {"drop","Vứt"},
-    {"use","Sử dụng"},
-}
-
-local OBJECTS = {
-    {"player","người chơi"},
-    {"players","người chơi"},
-    {"friend","bạn bè"},
-    {"friends","bạn bè"},
-    {"enemy","kẻ địch"},
-    {"enemies","kẻ địch"},
-    {"boss","boss"},
-    {"bosses","boss"},
-    {"monster","quái vật"},
-    {"monsters","quái vật"},
-    {"mob","quái"},
-    {"mobs","quái"},
-    {"npc","NPC"},
-    {"pet","thú"},
-    {"pets","thú"},
-    {"egg","trứng"},
-    {"eggs","trứng"},
-    {"item","vật phẩm"},
-    {"items","vật phẩm"},
-    {"weapon","vũ khí"},
-    {"weapons","vũ khí"},
-    {"sword","kiếm"},
-    {"swords","kiếm"},
-    {"gun","súng"},
-    {"guns","súng"},
-    {"bow","cung"},
-    {"axe","rìu"},
-    {"tool","công cụ"},
-    {"tools","công cụ"},
-    {"chest","rương"},
-    {"chests","rương"},
-    {"crate","thùng"},
-    {"crates","thùng"},
-    {"loot","đồ rơi"},
-    {"reward","phần thưởng"},
-    {"rewards","phần thưởng"},
-    {"quest","nhiệm vụ"},
-    {"quests","nhiệm vụ"},
-    {"mission","nhiệm vụ"},
-    {"missions","nhiệm vụ"},
-    {"task","nhiệm vụ"},
-    {"tasks","nhiệm vụ"},
-    {"money","tiền"},
-    {"cash","tiền mặt"},
-    {"coin","xu"},
-    {"coins","xu"},
-    {"gem","đá quý"},
-    {"gems","đá quý"},
-    {"diamond","kim cương"},
-    {"diamonds","kim cương"},
-    {"gold","vàng"},
-    {"silver","bạc"},
-    {"token","token"},
-    {"ticket","vé"},
-    {"key","chìa khóa"},
-    {"keys","chìa khóa"},
-    {"potion","thuốc"},
-    {"potions","thuốc"},
-    {"material","nguyên liệu"},
-    {"materials","nguyên liệu"},
-    {"resource","tài nguyên"},
-    {"resources","tài nguyên"},
-    {"wood","gỗ"},
-    {"stone","đá"},
-    {"iron","sắt"},
-    {"steel","thép"},
-    {"crystal","tinh thể"},
-    {"fragment","mảnh"},
-    {"shard","mảnh vỡ"},
-    {"base","căn cứ"},
-    {"character","nhân vật"},
-    {"health","máu"},
-    {"energy","năng lượng"},
-    {"stamina","thể lực"},
-    {"level","cấp"},
-    {"levels","cấp"},
-    {"xp","kinh nghiệm"},
-    {"stats","chỉ số"},
-    {"speed","tốc độ"},
-    {"damage","sát thương"},
-    {"defense","phòng thủ"},
-    {"power","sức mạnh"},
-    {"luck","may mắn"},
-    {"rank","hạng"},
-    {"team","đội"},
-    {"server","máy chủ"},
-    {"servers","máy chủ"},
-    {"world","thế giới"},
-    {"map","bản đồ"},
-    {"area","khu vực"},
-    {"zone","vùng"},
-    {"island","đảo"},
-    {"location","địa điểm"},
-    {"portal","cổng"},
-    {"door","cửa"},
-    {"gate","cổng"},
-    {"shop","cửa hàng"},
-    {"store","cửa hàng"},
-    {"inventory","kho đồ"},
-    {"backpack","ba lô"},
-    {"storage","kho chứa"},
-    {"slot","ô"},
-    {"slots","ô"},
-    {"skill","kỹ năng"},
-    {"skills","kỹ năng"},
-    {"ability","khả năng"},
-    {"abilities","khả năng"},
-    {"effect","hiệu ứng"},
-    {"effects","hiệu ứng"},
-    {"event","sự kiện"},
-    {"events","sự kiện"},
-    {"challenge","thử thách"},
-    {"achievement","thành tựu"},
-    {"badge","huy hiệu"},
-    {"code","mã"},
-    {"codes","mã"},
-    {"settings","cài đặt"},
-    {"option","tùy chọn"},
-    {"options","tùy chọn"},
-    {"feature","tính năng"},
-    {"features","tính năng"},
-    {"target","mục tiêu"},
-    {"position","vị trí"},
-    {"distance","khoảng cách"},
-    {"height","chiều cao"},
-    {"width","chiều rộng"},
-    {"direction","hướng"},
-}
-
-------------------------------------------------------------
--- MODIFIERS
-------------------------------------------------------------
-
-local MODIFIERS = {
-    {"auto","Tự động"},
-    {"automatic","Tự động"},
-    {"instant","Ngay lập tức"},
-    {"fast","Nhanh"},
-    {"slow","Chậm"},
-    {"safe","An toàn"},
-    {"quick","Nhanh"},
-    {"best","Tốt nhất"},
-    {"nearest","Gần nhất"},
-    {"closest","Gần nhất"},
-    {"random","Ngẫu nhiên"},
-    {"current","Hiện tại"},
-    {"next","Tiếp theo"},
-    {"previous","Trước đó"},
-    {"new","Mới"},
-    {"old","Cũ"},
-    {"free","Miễn phí"},
-    {"premium","Cao cấp"},
-    {"basic","Cơ bản"},
-    {"advanced","Nâng cao"},
-    {"normal","Bình thường"},
-    {"special","Đặc biệt"},
-    {"rare","Hiếm"},
-    {"epic","Sử thi"},
-    {"legendary","Huyền thoại"},
-    {"mythic","Thần thoại"},
-    {"divine","Thần thánh"},
-    {"secret","Bí mật"},
-    {"exclusive","Độc quyền"},
-    {"limited","Giới hạn"},
-    {"hidden","Ẩn"},
-    {"visible","Hiển thị"},
-    {"active","Đang hoạt động"},
-    {"inactive","Không hoạt động"},
-    {"enabled","Đã bật"},
-    {"disabled","Đã tắt"},
-    {"maximum","Tối đa"},
-    {"minimum","Tối thiểu"},
-    {"infinite","Vô hạn"},
-    {"full","Đầy"},
-    {"empty","Trống"},
-    {"public","Công khai"},
-    {"private","Riêng tư"},
-}
-
-------------------------------------------------------------
--- GENERATE 6K+ ENTRIES
-------------------------------------------------------------
-
-local Generated = 0
-
-local function giantAdd(key, value)
-    key = tostring(key):lower()
-
-    if not Dictionary[key] then
-        Dictionary[key] = value
-        Generated += 1
-    end
-end
-
--- ACTION + OBJECT
-
-for _, a in ipairs(ACTIONS) do
-    for _, o in ipairs(OBJECTS) do
-
-        giantAdd(
-            a[1] .. " " .. o[1],
-            a[2] .. " " .. o[2]
-        )
-
-        giantAdd(
-            a[1] .. " " .. o[1] .. " all",
-            a[2] .. " tất cả " .. o[2]
-        )
-
-    end
-end
-
--- MODIFIER + OBJECT
-
-for _, m in ipairs(MODIFIERS) do
-    for _, o in ipairs(OBJECTS) do
-
-        giantAdd(
-            m[1] .. " " .. o[1],
-            m[2] .. " " .. o[2]
-        )
-
-    end
-end
-
--- ACTION + MODIFIER + OBJECT
--- Giới hạn để giữ hiệu năng mobile.
-
-for _, a in ipairs(ACTIONS) do
-    for _, m in ipairs(MODIFIERS) do
-        for _, o in ipairs(OBJECTS) do
-
-            if Generated < 7500 then
-
-                giantAdd(
-                    a[1] .. " " .. m[1] .. " " .. o[1],
-                    a[2] .. " " .. m[2] .. " " .. o[2]
-                )
-
-            end
-
-            if Generated >= 7500 then
-                break
-            end
-
-        end
-
-        if Generated >= 7500 then
-            break
-        end
-    end
-
-    if Generated >= 7500 then
-        break
-    end
-end
-
-------------------------------------------------------------
--- COMMON PHRASES
-------------------------------------------------------------
-
-local PHRASES = {
-    {"not enough","Không đủ"},
-    {"not enough money","Không đủ tiền"},
-    {"not enough coins","Không đủ xu"},
-    {"not enough gems","Không đủ đá quý"},
-    {"not enough space","Không đủ chỗ"},
-    {"inventory full","Kho đầy"},
-    {"inventory empty","Kho trống"},
-    {"server full","Máy chủ đầy"},
-    {"server empty","Máy chủ trống"},
-    {"already owned","Đã sở hữu"},
-    {"already equipped","Đã trang bị"},
-    {"already unlocked","Đã mở khóa"},
-    {"already completed","Đã hoàn thành"},
-    {"not available","Không khả dụng"},
-    {"coming soon","Sắp ra mắt"},
-    {"try again","Thử lại"},
-    {"please wait","Vui lòng chờ"},
-    {"loading data","Đang tải dữ liệu"},
-    {"saving data","Đang lưu dữ liệu"},
-    {"data saved","Dữ liệu đã lưu"},
-    {"data loaded","Dữ liệu đã tải"},
-    {"connection lost","Mất kết nối"},
-    {"reconnecting","Đang kết nối lại"},
-    {"connection failed","Kết nối thất bại"},
-    {"invalid target","Mục tiêu không hợp lệ"},
-    {"invalid item","Vật phẩm không hợp lệ"},
-    {"invalid amount","Số lượng không hợp lệ"},
-    {"invalid position","Vị trí không hợp lệ"},
-    {"level too low","Cấp quá thấp"},
-    {"level too high","Cấp quá cao"},
-    {"quest complete","Nhiệm vụ hoàn thành"},
-    {"quest failed","Nhiệm vụ thất bại"},
-    {"mission complete","Nhiệm vụ hoàn thành"},
-    {"mission failed","Nhiệm vụ thất bại"},
-    {"purchase successful","Mua thành công"},
-    {"purchase failed","Mua thất bại"},
-    {"upgrade successful","Nâng cấp thành công"},
-    {"upgrade failed","Nâng cấp thất bại"},
-    {"trade successful","Giao dịch thành công"},
-    {"trade failed","Giao dịch thất bại"},
-    {"teleport successful","Dịch chuyển thành công"},
-    {"teleport failed","Dịch chuyển thất bại"},
-    {"target found","Đã tìm thấy mục tiêu"},
-    {"target lost","Mất mục tiêu"},
-    {"enemy found","Đã tìm thấy kẻ địch"},
-    {"enemy defeated","Đã đánh bại kẻ địch"},
-    {"boss found","Đã tìm thấy boss"},
-    {"boss defeated","Đã đánh bại boss"},
-    {"player found","Đã tìm thấy người chơi"},
-    {"item found","Đã tìm thấy vật phẩm"},
-    {"chest found","Đã tìm thấy rương"},
-    {"egg found","Đã tìm thấy trứng"},
-    {"pet found","Đã tìm thấy thú"},
-    {"quest accepted","Đã nhận nhiệm vụ"},
-    {"quest abandoned","Đã bỏ nhiệm vụ"},
-    {"quest completed","Đã hoàn thành nhiệm vụ"},
-    {"level up","Tăng cấp"},
-    {"rank up","Tăng hạng"},
-    {"new level","Cấp mới"},
-    {"new rank","Hạng mới"},
-    {"new item","Vật phẩm mới"},
-    {"new pet","Thú mới"},
-    {"new weapon","Vũ khí mới"},
-    {"new quest","Nhiệm vụ mới"},
-    {"new mission","Nhiệm vụ mới"},
-    {"new achievement","Thành tựu mới"},
-    {"reward claimed","Đã nhận phần thưởng"},
-    {"reward received","Đã nhận phần thưởng"},
-    {"item purchased","Đã mua vật phẩm"},
-    {"item sold","Đã bán vật phẩm"},
-    {"item equipped","Đã trang bị vật phẩm"},
-    {"weapon equipped","Đã trang bị vũ khí"},
-    {"pet equipped","Đã trang bị thú"},
-    {"loading game","Đang tải trò chơi"},
-    {"loading screen","Màn hình tải"},
-    {"game over","Trò chơi kết thúc"},
-    {"game started","Trò chơi bắt đầu"},
-    {"round start","Bắt đầu vòng"},
-    {"round end","Kết thúc vòng"},
-    {"you need","Bạn cần"},
-    {"you have","Bạn có"},
-    {"you got","Bạn nhận được"},
-    {"you received","Bạn nhận được"},
-    {"you earned","Bạn nhận được"},
-}
-
-for _, p in ipairs(PHRASES) do
-    giantAdd(p[1], p[2])
-end
-
-------------------------------------------------------------
--- DICTIONARY COUNT
-------------------------------------------------------------
-
-local DictionaryCount = 0
-
-for _ in pairs(Dictionary) do
-    DictionaryCount += 1
-end
-
-------------------------------------------------------------
--- SORTED KEYS
-------------------------------------------------------------
-
-local SortedKeys = {}
-
-for key in pairs(Dictionary) do
-    SortedKeys[#SortedKeys + 1] = key
-end
-
-table.sort(
-    SortedKeys,
-    function(a,b)
-        return #a > #b
-    end
-)
-
-------------------------------------------------------------
--- DYNAMIC TRANSLATION
-------------------------------------------------------------
-
-local function dynamic(text)
-
-    local lower = text:lower()
-    local n
-
-    n = lower:match("^level:%s*(.+)$")
-    if n then
-        return "Cấp: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^speed:%s*(.+)$")
-    if n then
-        return "Tốc độ: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^distance:%s*(.+)$")
-    if n then
-        return "Khoảng cách: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^health:%s*(.+)$")
-    if n then
-        return "Máu: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^damage:%s*(.+)$")
-    if n then
-        return "Sát thương: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^luck:%s*(.+)$")
-    if n then
-        return "May mắn: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^progress:%s*(.+)$")
-    if n then
-        return "Tiến trình: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^cooldown:%s*(.+)$")
-    if n then
-        return "Hồi chiêu: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^players:%s*(.+)$")
-    if n then
-        return "Người chơi: " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^you need%s+(.+)$")
-    if n then
-        return "Bạn cần " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^you have%s+(.+)$")
-    if n then
-        return "Bạn có " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^you got%s+(.+)$")
-    if n then
-        return "Bạn nhận được " .. text:sub(#text - #n + 1)
-    end
-
-    n = lower:match("^you received%s+(.+)$")
-    if n then
-        return "Bạn nhận được " .. text:sub(#text - #n + 1)
-    end
-
-    return nil
-end
-
-------------------------------------------------------------
--- FAST TRANSLATOR
-------------------------------------------------------------
-
-local function fastTranslate(text)
-
-    if type(text) ~= "string" then
+    if not text or text == "" then
         return text
     end
 
-    if text == "" then
+    text = normalize(text)
+
+    -- Đã có tiếng Việt
+    if text:find("[ăâđêôơưĂÂĐÊÔƠƯ]") then
         return text
     end
 
-    if #text > CFG.MaxLength then
-        return text
-    end
-
-    local lower = text:lower()
-
-    if lower:find("https://",1,true)
-        or lower:find("http://",1,true)
-        or lower:find("www.",1,true)
-        or lower:find("loadstring",1,true)
-        or lower:find("getgenv",1,true)
-        or lower:find("rbxassetid://",1,true)
-        or lower:find("game:httpget",1,true)
-    then
-        return text
-    end
-
-    local cached = Cache[text]
-
-    if cached then
-        Stats.CacheHits += 1
-        return cached
-    end
-
-    local exact = Dictionary[lower]
-
-    if exact then
-        Cache[text] = exact
-        Stats.Translated += 1
-        return exact
-    end
-
-    local dyn = dynamic(text)
-
-    if dyn then
-        Cache[text] = dyn
-        Stats.Translated += 1
-        return dyn
+    -- Exact match
+    if D[text] then
+        return D[text]
     end
 
     local result = text
-    local changed = false
 
-    for _, key in ipairs(SortedKeys) do
+    -- Cụm dài trước
+    for _, english in ipairs(Keys) do
 
-        if result:lower():find(key,1,true) then
+        local vietnamese = D[english]
 
-            local value = Dictionary[key]
+        local escaped =
+            english:gsub("([^%w%s])","%%%1")
 
-            local escaped =
-                key:gsub("([^%w%s])","%%%1")
+        result = result:gsub(
+            "(%f[%a])" ..
+            escaped ..
+            "(%f[%A])",
+            function(a,b)
+                return a .. vietnamese .. b
+            end
+        )
+    end
 
-            local pattern =
-                "%f[%a]"
-                .. escaped
-                .. "%f[^%a]"
+    return result
+end
 
-            local before = result
+--========================================================--
+-- SAVE / RESTORE
+--========================================================--
 
-            result = result:gsub(
-                pattern,
-                value
-            )
+local function remember(obj, property, value)
 
-            if result ~= before then
-                changed = true
+    Original[obj] =
+        Original[obj] or {}
+
+    if Original[obj][property] == nil then
+        Original[obj][property] = value
+    end
+end
+
+local function restore()
+
+    for obj, props in pairs(Original) do
+
+        if obj and obj.Parent then
+
+            for property, value in pairs(props) do
+
+                pcall(function()
+                    obj[property] = value
+                end)
+
             end
         end
     end
-
-    Cache[text] = result
-
-    if changed then
-        Stats.Translated += 1
-    end
-
-    return result
 end
 
-------------------------------------------------------------
--- RICHTEXT
-------------------------------------------------------------
+--========================================================--
+-- IS TEXT OBJECT
+--========================================================--
 
-local function translateRichText(text)
-
-    if not CFG.RichText then
-        return fastTranslate(text)
-    end
-
-    if not text:find("<",1,true) then
-        return fastTranslate(text)
-    end
-
-    local result = ""
-    local pos = 1
-
-    while true do
-
-        local s,e =
-            text:find("<[^>]->",pos)
-
-        if not s then
-
-            result =
-                result
-                .. fastTranslate(
-                    text:sub(pos)
-                )
-
-            break
-        end
-
-        result =
-            result
-            .. fastTranslate(
-                text:sub(pos,s-1)
-            )
-            .. text:sub(s,e)
-
-        pos = e + 1
-    end
-
-    return result
-end
-
-------------------------------------------------------------
--- TEXT CHECK
-------------------------------------------------------------
-
-local function isText(obj)
+local function isTextObject(obj)
 
     return obj:IsA("TextLabel")
         or obj:IsA("TextButton")
         or obj:IsA("TextBox")
-
 end
 
-------------------------------------------------------------
--- APPLY TEXT
-------------------------------------------------------------
+--========================================================--
+-- TRANSLATE OBJECT
+--========================================================--
 
-local function fastApply(obj)
+local function process(obj)
 
     if not obj or not obj.Parent then
-        return
-    end
-
-    if not isText(obj) then
-        return
-    end
-
-    if obj:IsA("TextBox")
-        and not CFG.TranslateTextBox
-    then
         return
     end
 
@@ -1685,141 +530,143 @@ local function fastApply(obj)
         return
     end
 
-    local source = obj.Text
-
-    if type(source) ~= "string" then
-        return
-    end
-
-    if LastTranslated[obj] == source then
-        return
-    end
-
-    if LastSource[obj] ~= source then
-
-        Original[obj] = source
-        LastSource[obj] = source
-
-    end
-
-    if not Enabled then
+    if not isTextObject(obj) then
         return
     end
 
     Busy[obj] = true
 
-    local result =
-        translateRichText(source)
+    pcall(function()
 
-    if result ~= source then
+        local text = obj.Text
 
-        pcall(function()
-            obj.Text = result
-        end)
+        remember(
+            obj,
+            "Text",
+            text
+        )
 
-        LastTranslated[obj] = result
+        if ENABLED then
 
-    else
+            local newText =
+                translate(text)
 
-        LastTranslated[obj] = source
+            if newText ~= text then
 
-    end
+                obj.Text = newText
+
+            end
+        end
+
+        if obj:IsA("TextBox") then
+
+            local placeholder =
+                obj.PlaceholderText
+
+            remember(
+                obj,
+                "PlaceholderText",
+                placeholder
+            )
+
+            if ENABLED
+                and placeholder ~= "" then
+
+                local newPlaceholder =
+                    translate(placeholder)
+
+                if newPlaceholder
+                    ~= placeholder then
+
+                    obj.PlaceholderText =
+                        newPlaceholder
+                end
+            end
+        end
+
+    end)
 
     Busy[obj] = nil
 end
 
-------------------------------------------------------------
--- PLACEHOLDER
-------------------------------------------------------------
+--========================================================--
+-- SCAN ROOT
+--========================================================--
 
-local function applyPlaceholder(obj)
+local function scanRoot(root)
 
-    if not CFG.TranslatePlaceholder then
+    if not root then
         return
     end
 
-    if not obj:IsA("TextBox") then
-        return
-    end
+    pcall(function()
 
-    local text = obj.PlaceholderText
+        for _, obj in ipairs(
+            root:GetDescendants()
+        ) do
 
-    if not text or text == "" then
-        return
-    end
-
-    if not PlaceholderOriginal[obj] then
-        PlaceholderOriginal[obj] = text
-    end
-
-    if Enabled then
-
-        local result =
-            fastTranslate(text)
-
-        if result ~= text then
-
-            pcall(function()
-                obj.PlaceholderText = result
-            end)
+            if isTextObject(obj) then
+                process(obj)
+            end
 
         end
 
-    else
-
-        local original =
-            PlaceholderOriginal[obj]
-
-        if original then
-
-            pcall(function()
-                obj.PlaceholderText = original
-            end)
-
-        end
-    end
+    end)
 end
 
-------------------------------------------------------------
--- WATCH OBJECT
-------------------------------------------------------------
+--========================================================--
+-- WATCH ROOT
+--========================================================--
 
-local function watch(obj)
+local function watchRoot(root)
+
+    if not root then
+        return
+    end
+
+    root.DescendantAdded:Connect(function(obj)
+
+        task.defer(function()
+
+            if isTextObject(obj) then
+                process(obj)
+            end
+
+        end)
+
+    end)
+
+    scanRoot(root)
+end
+
+--========================================================--
+-- WATCH TEXT
+--========================================================--
+
+local function watchText(obj)
+
+    if not isTextObject(obj) then
+        return
+    end
 
     if Watched[obj] then
         return
     end
 
-    if not isText(obj) then
-        return
-    end
-
     Watched[obj] = true
-    Stats.Watchers += 1
-
-    task.defer(function()
-
-        if Enabled then
-            fastApply(obj)
-            applyPlaceholder(obj)
-        end
-
-    end)
 
     obj:GetPropertyChangedSignal(
         "Text"
     ):Connect(function()
 
-        if Busy[obj] then
+        if not ENABLED then
             return
         end
 
+        -- Không scan toàn bộ GUI.
+        -- Chỉ xử lý object vừa thay đổi.
         task.defer(function()
-
-            if Enabled then
-                fastApply(obj)
-            end
-
+            process(obj)
         end)
 
     end)
@@ -1830,76 +677,85 @@ local function watch(obj)
             "PlaceholderText"
         ):Connect(function()
 
-            task.defer(function()
-
-                if Enabled then
-                    applyPlaceholder(obj)
-                end
-
-            end)
+            if ENABLED then
+                task.defer(function()
+                    process(obj)
+                end)
+            end
 
         end)
 
     end
 end
 
-------------------------------------------------------------
--- ROOT WATCH
-------------------------------------------------------------
+--========================================================--
+-- WATCH ALL TEXT OBJECTS
+--========================================================--
 
-local function watchRoot(root)
+local function watchExisting(root)
 
     if not root then
         return
     end
 
-    if RootWatched[root] then
-        return
-    end
+    for _, obj in ipairs(
+        root:GetDescendants()
+    ) do
 
-    RootWatched[root] = true
+        if isTextObject(obj) then
+            watchText(obj)
+        end
+
+    end
 
     root.DescendantAdded:Connect(function(obj)
 
-        if not CFG.AutoDetect then
-            return
-        end
-
-        if isText(obj) then
-
-            task.defer(function()
-                watch(obj)
-            end)
-
+        if isTextObject(obj) then
+            watchText(obj)
         end
 
     end)
 end
 
-------------------------------------------------------------
--- SCAN
-------------------------------------------------------------
+--========================================================--
+-- PLAYER GUI
+--========================================================--
 
-local function scan(root)
+watchRoot(PlayerGui)
+watchExisting(PlayerGui)
 
-    if not root then
-        return 0
-    end
+--========================================================--
+-- CORE GUI
+--========================================================--
 
-    local count = 0
+if SCAN_CORE_GUI then
+
+    pcall(function()
+
+        watchRoot(CoreGui)
+        watchExisting(CoreGui)
+
+    end)
+
+end
+
+--========================================================--
+-- WORLD GUI
+--========================================================--
+
+if SCAN_WORLD_GUI then
 
     pcall(function()
 
         for _, obj in ipairs(
-            root:GetDescendants()
+            workspace:GetDescendants()
         ) do
 
-            if isText(obj) then
+            if obj:IsA("BillboardGui")
+                or obj:IsA("SurfaceGui") then
 
-                count += 1
-                Stats.Scanned += 1
-
-                watch(obj)
+                scanRoot(obj)
+                watchExisting(obj)
 
             end
 
@@ -1907,187 +763,59 @@ local function scan(root)
 
     end)
 
-    return count
 end
 
-------------------------------------------------------------
--- FULL SCAN
-------------------------------------------------------------
+--========================================================--
+-- CONTROL UI
+--========================================================--
 
-local function fullScan()
+local old = PlayerGui:FindFirstChild(
+    "MINH_KHA_TRANSLATOR_V3"
+)
 
-    if Scanning then
-        return 0
-    end
-
-    Scanning = true
-
-    Cache = {}
-
-    local count = 0
-
-    if CFG.PlayerGui and LP then
-
-        local pg =
-            LP:FindFirstChildOfClass(
-                "PlayerGui"
-            )
-
-        if pg then
-
-            watchRoot(pg)
-            count += scan(pg)
-
-        end
-    end
-
-    if CFG.CoreGui then
-
-        pcall(function()
-
-            watchRoot(CoreGui)
-            count += scan(CoreGui)
-
-        end)
-
-    end
-
-    if CFG.Workspace then
-
-        pcall(function()
-
-            watchRoot(workspace)
-            count += scan(workspace)
-
-        end)
-
-    end
-
-    Scanning = false
-
-    return count
+if old then
+    old:Destroy()
 end
 
-------------------------------------------------------------
--- RESTORE
-------------------------------------------------------------
-
-local function restore()
-
-    local count = 0
-
-    for obj, text in pairs(Original) do
-
-        if typeof(obj) == "Instance"
-            and obj.Parent
-            and isText(obj)
-        then
-
-            pcall(function()
-
-                Busy[obj] = true
-
-                obj.Text = text
-
-                LastSource[obj] = text
-                LastTranslated[obj] = text
-
-                Busy[obj] = nil
-
-                count += 1
-
-            end)
-
-        end
-    end
-
-    for obj, text in pairs(
-        PlaceholderOriginal
-    ) do
-
-        if typeof(obj) == "Instance"
-            and obj.Parent
-            and obj:IsA("TextBox")
-        then
-
-            pcall(function()
-                obj.PlaceholderText = text
-            end)
-
-        end
-    end
-
-    return count
-end
-
-------------------------------------------------------------
--- GUI
-------------------------------------------------------------
-
-local Gui =
-    Instance.new("ScreenGui")
+local Gui = Instance.new("ScreenGui")
 
 Gui.Name =
-    "MINH_KHA_TRANSLATOR_BA_CUA_BA"
+    "MINH_KHA_TRANSLATOR_V3"
 
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
-Gui.ZIndexBehavior =
-    Enum.ZIndexBehavior.Global
+Gui.DisplayOrder = 999999
+Gui.Parent = PlayerGui
 
-local parented = false
+local Button = Instance.new("TextButton")
 
-pcall(function()
+Button.Name = "TranslatorButton"
 
-    Gui.Parent = CoreGui
-    parented = true
+Button.Size =
+    UDim2.fromOffset(205, 44)
 
-end)
+-- GIỮA TRÊN
+Button.Position =
+    UDim2.new(0.5, -102, 0, 12)
 
-if not parented then
+Button.BackgroundColor3 =
+    Color3.fromRGB(5,5,5)
 
-    Gui.Parent =
-        LP:WaitForChild(
-            "PlayerGui"
-        )
+Button.BackgroundTransparency =
+    0.08
 
-end
+Button.TextColor3 =
+    Color3.fromRGB(255,255,255)
 
-------------------------------------------------------------
--- TOP RECTANGLE
-------------------------------------------------------------
+Button.TextSize = 16
 
-local Main =
-    Instance.new("Frame")
+Button.Font =
+    Enum.Font.GothamBold
 
-Main.Name = "TopRectangle"
+Button.Text =
+    "🇻🇳 VIỆT HÓA • BẬT"
 
-Main.Size =
-    UDim2.fromOffset(
-        CFG.Width,
-        CFG.Height
-    )
-
-Main.Position =
-    UDim2.new(
-        0.5,
-        -CFG.Width / 2,
-        0,
-        CFG.Top
-    )
-
-Main.BackgroundColor3 =
-    Color3.fromRGB(
-        4,
-        8,
-        5
-    )
-
-Main.BackgroundTransparency = 0.05
-Main.BorderSizePixel = 0
-Main.Active = true
-Main.ZIndex = 999999
-Main.Parent = Gui
+Button.Parent = Gui
 
 local Corner =
     Instance.new("UICorner")
@@ -2095,1121 +823,133 @@ local Corner =
 Corner.CornerRadius =
     UDim.new(0,10)
 
-Corner.Parent = Main
+Corner.Parent = Button
 
 local Stroke =
     Instance.new("UIStroke")
 
-Stroke.Color =
-    Color3.fromRGB(
-        0,
-        255,
-        100
-    )
-
 Stroke.Thickness = 1.5
-Stroke.Parent = Main
 
-------------------------------------------------------------
--- TOP TITLE
-------------------------------------------------------------
+Stroke.Color =
+    Color3.fromRGB(0,255,120)
 
-local Title =
-    Instance.new("TextLabel")
+Stroke.Parent = Button
 
-Title.BackgroundTransparency = 1
-
-Title.Size =
-    UDim2.new(
-        1,
-        -10,
-        0,
-        22
-    )
-
-Title.Position =
-    UDim2.fromOffset(5,2)
-
-Title.Font =
-    Enum.Font.GothamBold
-
-Title.TextSize = 14
-
-Title.TextColor3 =
-    Color3.fromRGB(
-        255,
-        255,
-        255
-    )
-
-Title.Text =
-    "👑 MINH KHA • BÁ CỦA BÁ"
-
-Title.ZIndex = 1000000
-Title.Parent = Main
-
-------------------------------------------------------------
--- TOP STATUS
-------------------------------------------------------------
-
-local Status =
-    Instance.new("TextLabel")
-
-Status.BackgroundTransparency = 1
-
-Status.Size =
-    UDim2.new(
-        1,
-        -10,
-        0,
-        16
-    )
-
-Status.Position =
-    UDim2.fromOffset(5,25)
-
-Status.Font =
-    Enum.Font.Gotham
-
-Status.TextSize = 10
-
-Status.TextColor3 =
-    Color3.fromRGB(
-        170,
-        255,
-        190
-    )
-
-Status.Text =
-    "VIỆT HÓA • "
-    .. tostring(DictionaryCount)
-    .. " TỪ"
-
-Status.ZIndex = 1000000
-Status.Parent = Main
-
-------------------------------------------------------------
--- CLICK
-------------------------------------------------------------
-
-local Click =
-    Instance.new("TextButton")
-
-Click.BackgroundTransparency = 1
-
-Click.Size =
-    UDim2.fromScale(1,1)
-
-Click.Text = ""
-
-Click.AutoButtonColor = false
-
-Click.ZIndex = 1000001
-Click.Parent = Main
-
-------------------------------------------------------------
--- GIANT MENU
-------------------------------------------------------------
-
-local Panel =
-    Instance.new("Frame")
-
-Panel.Name =
-    "GiantTranslationNetwork"
-
-Panel.Size =
-    UDim2.new(
-        0.92,
-        0,
-        0.78,
-        0
-    )
-
-Panel.Position =
-    UDim2.new(
-        0.5,
-        0,
-        0.5,
-        20
-    )
-
-Panel.AnchorPoint =
-    Vector2.new(
-        0.5,
-        0.5
-    )
-
-Panel.BackgroundColor3 =
-    Color3.fromRGB(
-        4,
-        7,
-        5
-    )
-
-Panel.BackgroundTransparency = 0.04
-Panel.BorderSizePixel = 0
-Panel.Visible = false
-Panel.Active = true
-Panel.ZIndex = 900000
-Panel.Parent = Gui
-
-local PanelCorner =
-    Instance.new("UICorner")
-
-PanelCorner.CornerRadius =
-    UDim.new(0,14)
-
-PanelCorner.Parent = Panel
-
-local PanelStroke =
-    Instance.new("UIStroke")
-
-PanelStroke.Color =
-    Color3.fromRGB(
-        0,
-        255,
-        100
-    )
-
-PanelStroke.Thickness = 1.5
-PanelStroke.Parent = Panel
-
-------------------------------------------------------------
--- PANEL HEADER
-------------------------------------------------------------
-
-local Header =
-    Instance.new("TextLabel")
-
-Header.BackgroundTransparency = 1
-
-Header.Size =
-    UDim2.new(
-        1,
-        -20,
-        0,
-        45
-    )
-
-Header.Position =
-    UDim2.fromOffset(
-        10,
-        5
-    )
-
-Header.Font =
-    Enum.Font.GothamBold
-
-Header.TextSize = 17
-
-Header.TextXAlignment =
-    Enum.TextXAlignment.Left
-
-Header.TextColor3 =
-    Color3.fromRGB(
-        255,
-        255,
-        255
-    )
-
-Header.Text =
-    "👑 MINH KHA TRANSLATOR"
-
-Header.ZIndex = 900001
-Header.Parent = Panel
-
-------------------------------------------------------------
--- SUB HEADER
-------------------------------------------------------------
-
-local SubHeader =
-    Instance.new("TextLabel")
-
-SubHeader.BackgroundTransparency = 1
-
-SubHeader.Size =
-    UDim2.new(
-        1,
-        -20,
-        0,
-        20
-    )
-
-SubHeader.Position =
-    UDim2.fromOffset(
-        10,
-        38
-    )
-
-SubHeader.Font =
-    Enum.Font.Gotham
-
-SubHeader.TextSize = 10
-
-SubHeader.TextXAlignment =
-    Enum.TextXAlignment.Left
-
-SubHeader.TextColor3 =
-    Color3.fromRGB(
-        120,
-        255,
-        150
-    )
-
-SubHeader.Text =
-    "BÁ CỦA BÁ • GIANT TRANSLATION NETWORK"
-
-SubHeader.ZIndex = 900001
-SubHeader.Parent = Panel
-
-------------------------------------------------------------
--- SCROLL
-------------------------------------------------------------
-
-local Scroll =
-    Instance.new("ScrollingFrame")
-
-Scroll.Name =
-    "NetworkScroll"
-
-Scroll.Size =
-    UDim2.new(
-        1,
-        -16,
-        1,
-        -72
-    )
-
-Scroll.Position =
-    UDim2.fromOffset(
-        8,
-        68
-    )
-
-Scroll.BackgroundTransparency = 1
-
-Scroll.BorderSizePixel = 0
-
-Scroll.ScrollBarThickness = 4
-
-Scroll.ScrollBarImageColor3 =
-    Color3.fromRGB(
-        0,
-        255,
-        100
-    )
-
-Scroll.AutomaticCanvasSize =
-    Enum.AutomaticSize.Y
-
-Scroll.CanvasSize =
-    UDim2.new(0,0,0,0)
-
-Scroll.ZIndex = 900001
-Scroll.Parent = Panel
-
-local Layout =
-    Instance.new("UIListLayout")
-
-Layout.Padding =
-    UDim.new(0,6)
-
-Layout.SortOrder =
-    Enum.SortOrder.LayoutOrder
-
-Layout.Parent = Scroll
-
-------------------------------------------------------------
--- SECTION
-------------------------------------------------------------
-
-local function section(text)
-
-    local label =
-        Instance.new("TextLabel")
-
-    label.Size =
-        UDim2.new(
-            1,
-            -4,
-            0,
-            27
-        )
-
-    label.BackgroundColor3 =
-        Color3.fromRGB(
-            0,
-            30,
-            12
-        )
-
-    label.BackgroundTransparency = 0.15
-
-    label.BorderSizePixel = 0
-
-    label.Font =
-        Enum.Font.GothamBold
-
-    label.TextSize = 11
-
-    label.TextColor3 =
-        Color3.fromRGB(
-            80,
-            255,
-            130
-        )
-
-    label.TextXAlignment =
-        Enum.TextXAlignment.Left
-
-    label.Text =
-        "  " .. text
-
-    label.ZIndex = 900002
-    label.Parent = Scroll
-
-    local c =
-        Instance.new("UICorner")
-
-    c.CornerRadius =
-        UDim.new(0,7)
-
-    c.Parent = label
-
-    return label
-end
-
-------------------------------------------------------------
--- BUTTON
-------------------------------------------------------------
-
-local function button(text, callback)
-
-    local b =
-        Instance.new("TextButton")
-
-    b.Size =
-        UDim2.new(
-            1,
-            -4,
-            0,
-            38
-        )
-
-    b.BackgroundColor3 =
-        Color3.fromRGB(
-            10,
-            18,
-            12
-        )
-
-    b.BackgroundTransparency = 0.1
-
-    b.BorderSizePixel = 0
-
-    b.Font =
-        Enum.Font.GothamSemibold
-
-    b.TextSize = 12
-
-    b.TextColor3 =
-        Color3.fromRGB(
-            235,
-            255,
-            240
-        )
-
-    b.Text =
-        text
-
-    b.AutoButtonColor = true
-
-    b.ZIndex = 900002
-    b.Parent = Scroll
-
-    local c =
-        Instance.new("UICorner")
-
-    c.CornerRadius =
-        UDim.new(0,8)
-
-    c.Parent = b
-
-    b.MouseButton1Click:Connect(
-        function()
-
-            if callback then
-                callback(b)
-            end
-
-        end
-    )
-
-    return b
-end
-
-------------------------------------------------------------
--- GIANT MENU CONTENT
-------------------------------------------------------------
-
-section("🌐 TRANSLATION NETWORK")
-
-button(
-    "🇻🇳 Bật / Tắt Việt Hóa",
-    function()
-
-        Enabled = not Enabled
-
-        if Enabled then
-
-            Cache = {}
-            fullScan()
-
-        else
-
-            restore()
-
-        end
-
-    end
-)
-
-button(
-    "🔄 Dịch lại toàn bộ",
-    function()
-
-        Cache = {}
-
-        fullScan()
-
-    end
-)
-
-button(
-    "🧹 Khôi phục tiếng Anh",
-    function()
-
-        Enabled = false
-        restore()
-
-    end
-)
-
-button(
-    "⚡ Quét nhanh",
-    function()
-
-        Cache = {}
-        fullScan()
-
-    end
-)
-
-button(
-    "🔎 Quét sâu",
-    function()
-
-        Cache = {}
-
-        task.spawn(function()
-
-            fullScan()
-
-        end)
-
-    end
-)
-
-button(
-    "🗑️ Xóa Cache",
-    function()
-
-        Cache = {}
-
-    end
-)
-
-section("🧠 GIANT DICTIONARY")
-
-button(
-    "📚 Dictionary: "
-    .. tostring(DictionaryCount)
-    .. " entry",
-    function()
-        print(
-            "[MINH KHA] Dictionary:",
-            DictionaryCount
-        )
-    end
-)
-
-button(
-    "🔤 English → Vietnamese",
-    function()
-        Enabled = true
-        fullScan()
-    end
-)
-
-button(
-    "📝 TextLabel + TextButton",
-    function()
-        CFG.TranslateTextBox = false
-        fullScan()
-    end
-)
-
-button(
-    "⌨️ TextBox + Placeholder",
-    function()
-        CFG.TranslateTextBox = true
-        CFG.TranslatePlaceholder = true
-        fullScan()
-    end
-)
-
-section("📡 LIVE GUI NETWORK")
-
-button(
-    "👤 PlayerGui: ON",
-    function()
-        CFG.PlayerGui = not CFG.PlayerGui
-        if CFG.PlayerGui then
-            fullScan()
-        end
-    end
-)
-
-button(
-    "🖥️ CoreGui: ON",
-    function()
-        CFG.CoreGui = not CFG.CoreGui
-        if CFG.CoreGui then
-            fullScan()
-        end
-    end
-)
-
-button(
-    "🌎 Workspace: ON",
-    function()
-        CFG.Workspace = not CFG.Workspace
-        if CFG.Workspace then
-            fullScan()
-        end
-    end
-)
-
-button(
-    "👁️ Realtime Monitor",
-    function()
-
-        CFG.AutoDetect =
-            not CFG.AutoDetect
-
-    end
-)
-
-section("📊 NETWORK STATUS")
-
-local Info =
-    button(
-        "Đang tải thống kê...",
-        nil
-    )
-
-local FPS =
-    button(
-        "FPS: --",
-        nil
-    )
-
-local WatchInfo =
-    button(
-        "Watchers: 0",
-        nil
-    )
-
-local CacheInfo =
-    button(
-        "Cache: 0",
-        nil
-    )
-
-section("👑 MINH KHA")
-
-button(
-    "💚 BÁ CỦA BÁ • ACTIVE",
-    function()
-        print(
-            "MINH KHA TRANSLATOR • BÁ CỦA BÁ"
-        )
-    end
-)
-
-button(
-    "❌ Đóng Menu",
-    function()
-        Panel.Visible = false
-    end
-)
-
-------------------------------------------------------------
--- PANEL DRAG
-------------------------------------------------------------
-
-local panelDragging = false
-local panelDragStart
-local panelStart
-
-Header.InputBegan:Connect(
-    function(input)
-
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-            Enum.UserInputType.Touch
-        then
-
-            panelDragging = true
-            panelDragStart =
-                input.Position
-
-            panelStart =
-                Panel.Position
-
-        end
-
-    end
-)
-
-UserInputService.InputChanged:Connect(
-    function(input)
-
-        if not panelDragging then
-            return
-        end
-
-        if input.UserInputType ==
-            Enum.UserInputType.MouseMovement
-            or input.UserInputType ==
-            Enum.UserInputType.Touch
-        then
-
-            local delta =
-                input.Position
-                - panelDragStart
-
-            Panel.Position =
-                UDim2.new(
-                    panelStart.X.Scale,
-                    panelStart.X.Offset
-                        + delta.X,
-                    panelStart.Y.Scale,
-                    panelStart.Y.Offset
-                        + delta.Y
-                )
-
-        end
-
-    end
-)
-
-UserInputService.InputEnded:Connect(
-    function(input)
-
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-            Enum.UserInputType.Touch
-        then
-
-            panelDragging = false
-
-        end
-
-    end
-)
-
-------------------------------------------------------------
--- MAIN DRAG
-------------------------------------------------------------
+--========================================================--
+-- DRAG MOBILE
+--========================================================--
 
 local dragging = false
 local dragStart
-local startPosition
+local startPos
 
-Main.InputBegan:Connect(
-    function(input)
+Button.InputBegan:Connect(function(input)
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-            Enum.UserInputType.Touch
-        then
+    if input.UserInputType ==
+        Enum.UserInputType.MouseButton1
+        or input.UserInputType ==
+        Enum.UserInputType.Touch then
 
-            dragging = true
+        dragging = true
 
-            dragStart =
-                input.Position
+        dragStart =
+            input.Position
 
-            startPosition =
-                Main.Position
+        startPos =
+            Button.Position
 
+        input.Changed:Connect(function()
+
+            if input.UserInputState ==
+                Enum.UserInputState.End then
+
+                dragging = false
+            end
+
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+
+    if not dragging then
+        return
+    end
+
+    if input.UserInputType ~=
+        Enum.UserInputType.MouseMovement
+        and input.UserInputType ~=
+        Enum.UserInputType.Touch then
+
+        return
+    end
+
+    local delta =
+        input.Position - dragStart
+
+    Button.Position =
+        UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+end)
+
+--========================================================--
+-- TOGGLE
+--========================================================--
+
+Button.MouseButton1Click:Connect(function()
+
+    ENABLED = not ENABLED
+
+    if ENABLED then
+
+        Button.Text =
+            "🇻🇳 VIỆT HÓA • BẬT"
+
+        Stroke.Color =
+            Color3.fromRGB(0,255,120)
+
+        -- Chỉ scan một lần khi bật
+        scanRoot(PlayerGui)
+
+        if SCAN_CORE_GUI then
+            pcall(function()
+                scanRoot(CoreGui)
+            end)
         end
+
+    else
+
+        Button.Text =
+            "🇬🇧 TIẾNG GỐC"
+
+        Stroke.Color =
+            Color3.fromRGB(255,70,70)
+
+        restore()
 
     end
-)
+end)
 
-UserInputService.InputChanged:Connect(
-    function(input)
+--========================================================--
+-- INITIAL
+--========================================================--
 
-        if not dragging then
-            return
-        end
+task.defer(function()
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseMovement
-            or input.UserInputType ==
-            Enum.UserInputType.Touch
-        then
+    scanRoot(PlayerGui)
 
-            local delta =
-                input.Position
-                - dragStart
-
-            Main.Position =
-                UDim2.new(
-                    startPosition.X.Scale,
-                    startPosition.X.Offset
-                        + delta.X,
-                    startPosition.Y.Scale,
-                    startPosition.Y.Offset
-                        + delta.Y
-                )
-
-        end
-
-    end
-)
-
-UserInputService.InputEnded:Connect(
-    function(input)
-
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or input.UserInputType ==
-            Enum.UserInputType.Touch
-        then
-
-            dragging = false
-
-        end
-
-    end
-)
-
-------------------------------------------------------------
--- OPEN / CLOSE
-------------------------------------------------------------
-
-Click.MouseButton1Click:Connect(
-    function()
-
-        Panel.Visible =
-            not Panel.Visible
-
-    end
-)
-
-------------------------------------------------------------
--- FPS
-------------------------------------------------------------
-
-local frames = 0
-local lastFPS = os.clock()
-local currentFPS = 60
-
-RunService.RenderStepped:Connect(
-    function()
-
-        frames += 1
-
-        local now = os.clock()
-
-        if now - lastFPS >= 1 then
-
-            currentFPS =
-                frames
-                / (now - lastFPS)
-
-            frames = 0
-            lastFPS = now
-
-        end
-
-    end
-)
-
-------------------------------------------------------------
--- STATUS UPDATE
-------------------------------------------------------------
-
-task.spawn(function()
-
-    while Gui.Parent do
-
-        task.wait(0.5)
-
-        if Enabled then
-
-            Status.Text =
-                "🇻🇳 VIỆT HÓA • "
-                .. tostring(DictionaryCount)
-                .. " ENTRY"
-
-            Stroke.Color =
-                Color3.fromRGB(
-                    0,
-                    255,
-                    100
-                )
-
-        else
-
-            Status.Text =
-                "🇬🇧 TIẾNG ANH • TẮT"
-
-            Stroke.Color =
-                Color3.fromRGB(
-                    255,
-                    70,
-                    70
-                )
-
-        end
-
-        Info.Text =
-            "📊 Scanned: "
-            .. tostring(Stats.Scanned)
-            .. " • Translated: "
-            .. tostring(Stats.Translated)
-
-        FPS.Text =
-            "⚡ FPS: "
-            .. tostring(
-                math.floor(currentFPS)
-            )
-
-        WatchInfo.Text =
-            "👁️ Watchers: "
-            .. tostring(
-                Stats.Watchers
-            )
-
-        local cacheCount = 0
-
-        for _ in pairs(Cache) do
-            cacheCount += 1
-        end
-
-        CacheInfo.Text =
-            "💾 Cache: "
-            .. tostring(cacheCount)
-
+    if SCAN_CORE_GUI then
+        pcall(function()
+            scanRoot(CoreGui)
+        end)
     end
 
 end)
 
-------------------------------------------------------------
--- CHARACTER RESPAWN
-------------------------------------------------------------
-
-LP.CharacterAdded:Connect(
-    function()
-
-        task.delay(
-            1,
-            function()
-
-                if not Enabled then
-                    return
-                end
-
-                local pg =
-                    LP:FindFirstChildOfClass(
-                        "PlayerGui"
-                    )
-
-                if pg then
-                    watchRoot(pg)
-                    scan(pg)
-                end
-
-            end
-        )
-
-    end
-)
-
-------------------------------------------------------------
--- CACHE CLEANER
-------------------------------------------------------------
-
-task.spawn(function()
-
-    while Gui.Parent do
-
-        task.wait(30)
-
-        local count = 0
-
-        for _ in pairs(Cache) do
-
-            count += 1
-
-            if count > 5000 then
-
-                Cache = {}
-
-                break
-
-            end
-
-        end
-
-    end
-
-end)
-
-------------------------------------------------------------
--- INITIAL ROOT SETUP
-------------------------------------------------------------
-
-if CFG.PlayerGui and LP then
-
-    local pg =
-        LP:WaitForChild(
-            "PlayerGui"
-        )
-
-    watchRoot(pg)
-
-    task.defer(
-        function()
-
-            if Enabled then
-                scan(pg)
-            end
-
-        end
-    )
-
-end
-
-if CFG.CoreGui then
-
-    pcall(function()
-
-        watchRoot(CoreGui)
-
-        task.defer(
-            function()
-
-                if Enabled then
-                    scan(CoreGui)
-                end
-
-            end
-        )
-
-    end)
-
-end
-
-if CFG.Workspace then
-
-    pcall(function()
-
-        watchRoot(workspace)
-
-        task.defer(
-            function()
-
-                if Enabled then
-                    scan(workspace)
-                end
-
-            end
-        )
-
-    end)
-
-end
-
-------------------------------------------------------------
--- FINAL INITIAL SCAN
-------------------------------------------------------------
-
-task.delay(
-    0.5,
-    function()
-
-        if Enabled then
-
-            local total =
-                fullScan()
-
-            print(
-                "========================================"
-            )
-
-            print(
-                " 👑 MINH KHA TRANSLATOR"
-            )
-
-            print(
-                " 👑 BÁ CỦA BÁ"
-            )
-
-            print(
-                " 🌐 GIANT TRANSLATION NETWORK"
-            )
-
-            print(
-                " 📚 DICTIONARY:",
-                DictionaryCount
-            )
-
-            print(
-                " 🔎 TEXT SCANNED:",
-                total
-            )
-
-            print(
-                "========================================"
-            )
-
-        end
-
-    end
-)
-
-------------------------------------------------------------
--- FINAL
-------------------------------------------------------------
-
 print(
-    "[MINH KHA TRANSLATOR] READY"
-)
-
-print(
-    "[MINH KHA TRANSLATOR] " ..
-    "Dictionary = " ..
-    tostring(DictionaryCount)
-)
-
-print(
-    "[MINH KHA TRANSLATOR] " ..
-    "BÁ CỦA BÁ MODE = ON"
+    "[MINH KHA TRANSLATOR V3] Loaded"
 )
