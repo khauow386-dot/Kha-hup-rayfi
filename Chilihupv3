@@ -1,12 +1,5 @@
--- Script 1: Chilli
-loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"
-))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()
 
--- Chờ 20 giây
-task.wait(20)
-
--- Script 2: Minh Kha Việt Nam
-loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minhkha%20Vi%E1%BB%87t%20Nam"
-))()
+task.delay(10, function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minhkha%20Vi%E1%BB%87t%20Nam"))()
+end)
