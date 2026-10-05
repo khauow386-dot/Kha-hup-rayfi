@@ -1,14 +1,22 @@
 --========================================================--
--- MINH KHA TRANSLATOR V3
--- CLIENT GUI TRANSLATOR
--- LOW LAG / EVENT BASED / MOBILE
+--          MINH KHA TRANSLATOR V5
+--       STEAL AN EGG • FULL TRANSLATOR
+--========================================================--
+-- • KHÔNG TẠO MENU RIÊNG
+-- • CHỈ 1 NÚT CHỮ NHẬT
+-- • GIỮA TRÊN MÀN HÌNH
+-- • PROGRESS 10% -> 100%
+-- • REALTIME
+-- • PLAYERGUI / COREGUI / WORLD GUI
+-- • MOBILE
+-- • NO KEY
 --========================================================--
 
 repeat task.wait() until game:IsLoaded()
 
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
 
 local LP = Players.LocalPlayer
 local PlayerGui = LP:WaitForChild("PlayerGui")
@@ -18,20 +26,20 @@ local PlayerGui = LP:WaitForChild("PlayerGui")
 --========================================================--
 
 local ENABLED = true
-
--- Có quét CoreGui hay không
 local SCAN_CORE_GUI = true
-
--- GUI nằm trong Workspace
 local SCAN_WORLD_GUI = true
+
+local Translating = false
+local Progress = 0
 
 --========================================================--
 -- STORAGE
 --========================================================--
 
-local Original = setmetatable({}, {__mode = "k"})
-local Watched = setmetatable({}, {__mode = "k"})
-local Busy = setmetatable({}, {__mode = "k"})
+local Original = setmetatable({}, {__mode="k"})
+local Watched = setmetatable({}, {__mode="k"})
+local WatchedRoots = setmetatable({}, {__mode="k"})
+local Busy = setmetatable({}, {__mode="k"})
 
 --========================================================--
 -- DICTIONARY
@@ -39,398 +47,545 @@ local Busy = setmetatable({}, {__mode = "k"})
 
 local D = {
 
-    -- UI
-    ["Play"]="Chơi",
-    ["Start"]="Bắt đầu",
-    ["Stop"]="Dừng",
-    ["Pause"]="Tạm dừng",
-    ["Resume"]="Tiếp tục",
-    ["Continue"]="Tiếp tục",
-    ["Close"]="Đóng",
-    ["Open"]="Mở",
-    ["Back"]="Quay lại",
-    ["Next"]="Tiếp",
-    ["Previous"]="Trước",
-    ["Menu"]="Menu",
-    ["Main Menu"]="Menu chính",
-    ["Home"]="Trang chủ",
-    ["Settings"]="Cài đặt",
-    ["Setting"]="Cài đặt",
-    ["Options"]="Tùy chọn",
-    ["Help"]="Trợ giúp",
-    ["About"]="Giới thiệu",
-    ["Info"]="Thông tin",
-    ["Information"]="Thông tin",
-    ["Search"]="Tìm kiếm",
-    ["Refresh"]="Làm mới",
-    ["Apply"]="Áp dụng",
-    ["Save"]="Lưu",
-    ["Load"]="Tải",
-    ["Reset"]="Đặt lại",
-    ["Delete"]="Xóa",
-    ["Remove"]="Xóa",
-    ["Confirm"]="Xác nhận",
-    ["Cancel"]="Hủy",
-    ["Accept"]="Chấp nhận",
-    ["Decline"]="Từ chối",
-    ["Yes"]="Có",
-    ["No"]="Không",
-    ["Done"]="Xong",
-    ["Skip"]="Bỏ qua",
+-- MENU
+["Farm"]="Nông trại / Cày cuốc",
+["Player"]="Người chơi",
+["Predictor"]="Dự đoán",
+["Progress"]="Tiến độ",
+["Server"]="Máy chủ",
+["Misc"]="Khác / Tùy chọn khác",
+["Auto Hop"]="Tự động đổi Server",
 
-    -- trạng thái
-    ["On"]="Bật",
-    ["Off"]="Tắt",
-    ["ON"]="BẬT",
-    ["OFF"]="TẮT",
-    ["Enable"]="Bật",
-    ["Disable"]="Tắt",
-    ["Enabled"]="Đã bật",
-    ["Disabled"]="Đã tắt",
-    ["Active"]="Đang hoạt động",
-    ["Inactive"]="Không hoạt động",
-    ["Available"]="Có sẵn",
-    ["Unavailable"]="Không khả dụng",
-    ["Locked"]="Đã khóa",
-    ["Unlocked"]="Đã mở khóa",
-    ["Ready"]="Sẵn sàng",
-    ["Loading"]="Đang tải",
-    ["Loading..."]="Đang tải...",
-    ["Waiting"]="Đang chờ",
-    ["Please wait"]="Vui lòng chờ",
-    ["Processing"]="Đang xử lý",
-    ["Success"]="Thành công",
-    ["Failed"]="Thất bại",
-    ["Error"]="Lỗi",
-    ["Warning"]="Cảnh báo",
+-- BASIC UI
+["Play"]="Chơi",
+["Start"]="Bắt đầu",
+["Stop"]="Dừng",
+["Pause"]="Tạm dừng",
+["Resume"]="Tiếp tục",
+["Continue"]="Tiếp tục",
+["Close"]="Đóng",
+["Open"]="Mở",
+["Back"]="Quay lại",
+["Next"]="Tiếp",
+["Previous"]="Trước",
+["Menu"]="Menu",
+["Main Menu"]="Menu chính",
+["Home"]="Trang chủ",
+["Settings"]="Cài đặt",
+["Setting"]="Cài đặt",
+["Options"]="Tùy chọn",
+["Help"]="Trợ giúp",
+["About"]="Giới thiệu",
+["Info"]="Thông tin",
+["Information"]="Thông tin",
+["Search"]="Tìm kiếm",
+["Refresh"]="Làm mới",
+["Apply"]="Áp dụng",
+["Save"]="Lưu",
+["Load"]="Tải",
+["Reset"]="Đặt lại",
+["Delete"]="Xóa",
+["Remove"]="Xóa",
+["Confirm"]="Xác nhận",
+["Cancel"]="Hủy",
+["Accept"]="Chấp nhận",
+["Decline"]="Từ chối",
+["Yes"]="Có",
+["No"]="Không",
+["Done"]="Xong",
+["Skip"]="Bỏ qua",
 
-    -- player
-    ["Player"]="Người chơi",
-    ["Players"]="Người chơi",
-    ["Character"]="Nhân vật",
-    ["Username"]="Tên người chơi",
-    ["Display Name"]="Tên hiển thị",
-    ["Name"]="Tên",
-    ["Level"]="Cấp độ",
-    ["Rank"]="Xếp hạng",
-    ["Health"]="Máu",
-    ["Max Health"]="Máu tối đa",
-    ["Energy"]="Năng lượng",
-    ["Stamina"]="Thể lực",
-    ["Mana"]="Mana",
-    ["Speed"]="Tốc độ",
-    ["WalkSpeed"]="Tốc độ di chuyển",
-    ["Jump"]="Nhảy",
-    ["Jump Power"]="Lực nhảy",
-    ["Damage"]="Sát thương",
-    ["Defense"]="Phòng thủ",
-    ["Attack"]="Tấn công",
-    ["Experience"]="Kinh nghiệm",
-    ["EXP"]="EXP",
-    ["XP"]="XP",
+-- STATUS
+["On"]="Bật",
+["Off"]="Tắt",
+["ON"]="BẬT",
+["OFF"]="TẮT",
+["Enable"]="Bật",
+["Disable"]="Tắt",
+["Enabled"]="Đã bật",
+["Disabled"]="Đã tắt",
+["Active"]="Đang hoạt động",
+["Inactive"]="Không hoạt động",
+["Available"]="Có sẵn",
+["Unavailable"]="Không khả dụng",
+["Locked"]="Đã khóa",
+["Unlocked"]="Đã mở khóa",
+["Ready"]="Sẵn sàng",
+["Loading"]="Đang tải",
+["Loading..."]="Đang tải...",
+["Waiting"]="Đang chờ",
+["Please wait"]="Vui lòng chờ",
+["Processing"]="Đang xử lý",
+["Success"]="Thành công",
+["Failed"]="Thất bại",
+["Error"]="Lỗi",
+["Warning"]="Cảnh báo",
 
-    -- inventory
-    ["Inventory"]="Kho đồ",
-    ["Item"]="Vật phẩm",
-    ["Items"]="Vật phẩm",
-    ["Equipment"]="Trang bị",
-    ["Equip"]="Trang bị",
-    ["Unequip"]="Tháo trang bị",
-    ["Use"]="Sử dụng",
-    ["Drop"]="Vứt",
-    ["Collect"]="Nhặt",
-    ["Collect All"]="Nhặt tất cả",
-    ["Select"]="Chọn",
-    ["Selected"]="Đã chọn",
-    ["Quantity"]="Số lượng",
-    ["Amount"]="Số lượng",
-    ["Storage"]="Kho chứa",
-    ["Capacity"]="Sức chứa",
-    ["Full"]="Đầy",
-    ["Empty"]="Trống",
+-- PLAYER
+["Players"]="Người chơi",
+["Character"]="Nhân vật",
+["Username"]="Tên người chơi",
+["Display Name"]="Tên hiển thị",
+["Name"]="Tên",
+["Level"]="Cấp độ",
+["Rank"]="Xếp hạng",
+["Health"]="Máu",
+["Max Health"]="Máu tối đa",
+["Energy"]="Năng lượng",
+["Stamina"]="Thể lực",
+["Mana"]="Mana",
+["Speed"]="Tốc độ",
+["WalkSpeed"]="Tốc độ di chuyển",
+["Jump"]="Nhảy",
+["Jump Power"]="Lực nhảy",
+["Damage"]="Sát thương",
+["Defense"]="Phòng thủ",
+["Attack"]="Tấn công",
+["Experience"]="Kinh nghiệm",
+["EXP"]="EXP",
+["XP"]="XP",
 
-    -- economy
-    ["Shop"]="Cửa hàng",
-    ["Store"]="Cửa hàng",
-    ["Buy"]="Mua",
-    ["Sell"]="Bán",
-    ["Purchase"]="Mua",
-    ["Price"]="Giá",
-    ["Cost"]="Chi phí",
-    ["Free"]="Miễn phí",
-    ["Money"]="Tiền",
-    ["Cash"]="Tiền",
-    ["Coin"]="Xu",
-    ["Coins"]="Xu",
-    ["Gold"]="Vàng",
-    ["Gem"]="Ngọc",
-    ["Gems"]="Ngọc",
-    ["Diamond"]="Kim cương",
-    ["Currency"]="Tiền tệ",
-    ["Balance"]="Số dư",
-    ["Reward"]="Phần thưởng",
-    ["Rewards"]="Phần thưởng",
-    ["Claim"]="Nhận",
-    ["Gift"]="Quà",
-    ["Gifts"]="Quà tặng",
+-- INSTANT STEAL
+["Dr Scramble Lab & Mech"]="Phòng thí nghiệm Dr Scramble & Mech",
+["Butterfly Bloom"]="Hoa nở bướm",
+["Wisp Companion"]="Bạn đồng hành Wisp",
+["Auto Steal"]="Tự động trộm",
+["Instant Steal"]="Trộm tức thì",
+["Instant Steal V2"]="Trộm tức thì V2",
+["Only works in Titan Temple, Light Dark and Enchanted Forest"]="Chỉ hoạt động ở Đền Titan, Rừng Sáng Tối và Rừng Mê Hoặc",
+["Other Zones Delivery"]="Giao hàng khu vực khác",
+["Target Areas"]="Khu vực mục tiêu",
+["Min Rarity"]="Độ hiếm tối thiểu",
+["Steal eggs of the chosen rarity and every rarity above it"]="Trộm trứng có độ hiếm đã chọn và mọi độ hiếm cao hơn",
+["Min Steal Value"]="Giá trị trộm tối thiểu",
+["Target Specific Eggs"]="Trứng mục tiêu cụ thể",
+["Only steal these eggs (empty = all)"]="Chỉ trộm những quả trứng này (trống = tất cả)",
+["Steal Missing Lab Eggs"]="Trộm trứng phòng thí nghiệm còn thiếu",
+["Also steal eggs missing from your index, highest area first"]="Đồng thời trộm trứng còn thiếu trong chỉ mục của bạn, ưu tiên khu vực cao nhất",
+["Steal Missing Index Eggs"]="Trộm trứng chỉ mục còn thiếu",
+["Steal Priority"]="Ưu tiên trộm",
+["Highest Value"]="Giá trị cao nhất",
+["Tween Speed"]="Tốc độ dịch chuyển mượt (Tween)",
+["Over 100% may glitch"]="Trên 100% có thể bị lỗi",
+["Carry Speed"]="Tốc độ mang vác",
+["Anti Guard Panel"]="Bảng chống bảo vệ / Chống lính canh",
 
-    -- quest
-    ["Quest"]="Nhiệm vụ",
-    ["Quests"]="Nhiệm vụ",
-    ["Mission"]="Nhiệm vụ",
-    ["Missions"]="Nhiệm vụ",
-    ["Objective"]="Mục tiêu",
-    ["Objectives"]="Mục tiêu",
-    ["Task"]="Nhiệm vụ",
-    ["Tasks"]="Nhiệm vụ",
-    ["Progress"]="Tiến độ",
-    ["Complete"]="Hoàn thành",
-    ["Completed"]="Đã hoàn thành",
-    ["Quest Complete"]="Hoàn thành nhiệm vụ",
-    ["Quest Completed"]="Đã hoàn thành nhiệm vụ",
-    ["Accept Quest"]="Nhận nhiệm vụ",
-    ["Abandon Quest"]="Bỏ nhiệm vụ",
-    ["Daily Quest"]="Nhiệm vụ hằng ngày",
-    ["Weekly Quest"]="Nhiệm vụ hằng tuần",
+-- EGG / PET
+["Pet"]="Thú cưng",
+["Pets"]="Thú cưng",
+["Pet Inventory"]="Kho thú cưng",
+["Pet Stats"]="Chỉ số thú",
+["Egg"]="Trứng",
+["Eggs"]="Trứng",
+["Hatch"]="Ấp",
+["Hatch Egg"]="Ấp trứng",
+["Open Egg"]="Mở trứng",
+["Auto Hatch"]="Tự động ấp",
+["Auto Hatch & Equip"]="Tự động ấp & trang bị",
+["Hatch Min Rarity"]="Độ hiếm ấp tối thiểu",
+["Min Hatch Value"]="Giá trị ấp tối thiểu",
+["Hatch Specific Eggs"]="Trứng ấp cụ thể",
+["Auto Equip Best"]="Tự động trang bị tốt nhất",
+["Equip Best when a better pet appears"]="Trang bị tốt nhất khi có thú cưng ngon hơn xuất hiện",
+["Auto Place Egg"]="Tự động đặt trứng",
+["Eggs placed 0/30 - 18/18 pets equipped, 85 in bag"]="Đã đặt trứng 0/30 - 18/18 thú đã trang bị, 85 trong túi",
+["Place Egg Rule"]="Quy tắc đặt trứng",
+["Place Egg Order"]="Thứ tự đặt trứng",
+["Place Rarities"]="Độ hiếm để đặt",
+["Place Specific Eggs"]="Trứng cụ thể để đặt",
+["Min Place Value"]="Giá trị đặt tối thiểu",
+["Skip eggs worth less than this (= off)"]="Bỏ qua trứng có giá trị thấp hơn mức này (= tắt)",
+["Auto Treadmill"]="Tự động chạy máy chạy bộ",
+["Stay On Treadmill"]="Ở lại trên máy chạy bộ",
+["Treadmill"]="Máy chạy bộ",
 
-    -- combat
-    ["Combat"]="Chiến đấu",
-    ["Fight"]="Chiến đấu",
-    ["Battle"]="Trận chiến",
-    ["Defend"]="Phòng thủ",
-    ["Block"]="Đỡ đòn",
-    ["Dodge"]="Né",
-    ["Skill"]="Kỹ năng",
-    ["Skills"]="Kỹ năng",
-    ["Ability"]="Kỹ năng",
-    ["Abilities"]="Kỹ năng",
-    ["Ultimate"]="Chiêu cuối",
-    ["Cooldown"]="Hồi chiêu",
-    ["Enemy"]="Kẻ địch",
-    ["Enemies"]="Kẻ địch",
-    ["Boss"]="Boss",
-    ["Bosses"]="Boss",
-    ["Kill"]="Hạ",
-    ["Kills"]="Số lần hạ",
-    ["Defeat"]="Đánh bại",
-    ["Defeated"]="Đã đánh bại",
-    ["Death"]="Chết",
-    ["Respawn"]="Hồi sinh",
-    ["Revive"]="Hồi sinh",
+-- SELL
+["Auto Sell"]="Tự động bán",
+["Pet matches - 0 pets for $0"]="Thú cưng phù hợp - 0 con với giá $0",
+["Auto Sell Pet"]="Tự động bán thú cưng",
+["Sell Pets Now"]="Bán thú cưng ngay",
+["Sell Pet Rule"]="Quy tắc bán thú cưng",
+["Which chests must to pass"]="Rương nào phải vượt qua",
+["Pet Max Rarity"]="Độ hiếm tối đa của thú",
+["Sell pets at or below this rarity"]="Bán thú cưng ở hoặc dưới độ hiếm này",
+["Keep Mutated Pets"]="Giữ lại thú cưng đột biến",
+["Never sell mutated pets"]="Không bao giờ bán thú đột biến",
+["Blacklist Sell Pets"]="Danh sách đen thú bán",
+["These eggs are never sold"]="Những quả trứng này không bao giờ bị bán",
+["Egg matches - 0 eggs for $0"]="Trứng phù hợp - 0 quả với giá $0",
+["Sell Auto Egg"]="Tự động bán trứng",
+["Sell Eggs Now"]="Bán trứng ngay",
+["Sell Egg Rule"]="Quy tắc bán trứng",
+["Egg Max Rarity"]="Độ hiếm tối đa của trứng",
+["Egg Sell Value"]="Giá trị bán trứng",
+["Keep Mutated Eggs"]="Giữ lại trứng đột biến",
+["Blacklist Sell Eggs"]="Danh sách đen trứng bán",
+["Auto Sell Lab Egg"]="Tự động bán trứng Lab",
 
-    -- weapons
-    ["Weapon"]="Vũ khí",
-    ["Weapons"]="Vũ khí",
-    ["Sword"]="Kiếm",
-    ["Swords"]="Kiếm",
-    ["Gun"]="Súng",
-    ["Guns"]="Súng",
-    ["Bow"]="Cung",
-    ["Shield"]="Khiên",
-    ["Armor"]="Giáp",
-    ["Helmet"]="Mũ",
-    ["Tool"]="Công cụ",
-    ["Tools"]="Công cụ",
+-- FUSE
+["Auto Fuse Machine"]="Máy tự động hợp nhất (Fuse)",
+["Fuse Priority Mode"]="Chế độ ưu tiên hợp nhất",
+["Lowest Body First"]="Thân thấp nhất trước",
+["Pets To Use"]="Thú cưng để sử dụng",
+["Lowest To Highest"]="Thấp đến cao",
+["Max Rarity to Fuse"]="Độ hiếm tối đa để hợp nhất",
+["Specific Species to Fuse"]="Loài cụ thể để hợp nhất",
+["Skip Mutated Pets"]="Bỏ qua thú cưng đột biến",
+["Eject Incomplete Slots"]="Đẩy các ô chưa hoàn thành ra",
+["Take out pets that can't make a set"]="Lấy ra thú cưng không thể tạo thành bộ",
 
-    -- pets
-    ["Pet"]="Thú cưng",
-    ["Pets"]="Thú cưng",
-    ["Pet Inventory"]="Kho thú cưng",
-    ["Pet Stats"]="Chỉ số thú",
-    ["Hatch"]="Ấp",
-    ["Hatch Egg"]="Ấp trứng",
-    ["Egg"]="Trứng",
-    ["Eggs"]="Trứng",
-    ["Open Egg"]="Mở trứng",
-    ["Auto Hatch"]="Tự động ấp",
-    ["Common"]="Thường",
-    ["Uncommon"]="Không phổ biến",
-    ["Rare"]="Hiếm",
-    ["Epic"]="Sử thi",
-    ["Legendary"]="Huyền thoại",
-    ["Mythic"]="Thần thoại",
-    ["Divine"]="Thần",
-    ["Secret"]="Bí mật",
+-- FAVORITE
+["Auto Favorite"]="Tự động yêu thích",
+["Priority"]="Ưu tiên",
+["Favorite matches - 0 pets, 0 to mark | 1 favorited"]="Thú cưng khớp yêu thích - 0 con, 0 đánh dấu | 1 đã thích",
+["Auto Favorite Pet"]="Tự động yêu thích thú cưng",
+["Favorite pets matching the rules below"]="Yêu thích thú cưng khớp với các quy tắc dưới đây",
+["Favorite"]="Yêu thích",
+["Favorite Rule"]="Quy tắc yêu thích",
+["Pass any check or all checks"]="Vượt qua bất kỳ kiểm tra hoặc tất cả kiểm tra",
+["Match All"]="Khớp tất cả",
+["Favorite Min Rarity"]="Độ hiếm tối thiểu để yêu thích",
+["Favorite Mutations"]="Đột biến yêu thích",
+["Min Favorite Value"]="Giá trị yêu thích tối thiểu",
+["Value check (= skip)"]="Kiểm tra giá trị (= bỏ qua)",
+["Always Favorite Species"]="Luôn yêu thích loài này",
+["Always favorite these species"]="Luôn yêu thích các loài này",
+["Auto Favorite Equipped"]="Tự động yêu thích trang bị",
+["Keep equipped pets favorites"]="Giữ thú cưng đang trang bị ở trạng thái yêu thích",
+["Auto Unfavorite Equipped"]="Tự động hủy yêu thích trang bị",
+["Unfavorite equipped pets not in the rules"]="Hủy yêu thích thú cưng đang trang bị không có trong quy tắc",
+["Favorite Equipped Now"]="Yêu thích đồ đang trang bị ngay",
+["Favorite all equipped pets once"]="Yêu thích tất cả thú đang trang bị một lần",
+["Unfavorite Equipped Now"]="Hủy yêu thích đồ đang trang bị ngay",
+["Unfavorite all equipped pets once"]="Hủy yêu thích tất cả thú đang trang bị một lần",
 
-    -- map
-    ["Teleport"]="Dịch chuyển",
-    ["Teleporting"]="Đang dịch chuyển",
-    ["Location"]="Vị trí",
-    ["Map"]="Bản đồ",
-    ["World"]="Thế giới",
-    ["Zone"]="Khu vực",
-    ["Area"]="Khu vực",
-    ["Island"]="Đảo",
-    ["Spawn"]="Điểm xuất hiện",
-    ["Return"]="Quay về",
-    ["Travel"]="Di chuyển",
-    ["Fast Travel"]="Di chuyển nhanh",
+-- RARITY
+["Common"]="Thường",
+["Uncommon"]="Không phổ biến",
+["Rare"]="Hiếm",
+["Epic"]="Sử thi",
+["Legendary"]="Huyền thoại",
+["Mythic"]="Thần thoại",
+["Divine"]="Thần",
+["Secret"]="Bí mật",
 
-    -- automation
-    ["Auto"]="Tự động",
-    ["Auto Farm"]="Tự động cày",
-    ["Auto Collect"]="Tự động nhặt",
-    ["Auto Sell"]="Tự động bán",
-    ["Auto Buy"]="Tự động mua",
-    ["Auto Equip"]="Tự động trang bị",
-    ["Auto Attack"]="Tự động tấn công",
-    ["Auto Quest"]="Tự động làm nhiệm vụ",
-    ["Auto Kill"]="Tự động hạ",
-    ["Auto Loot"]="Tự động nhặt đồ",
-    ["Auto Rebirth"]="Tự động tái sinh",
-    ["Auto Train"]="Tự động luyện tập",
+-- TASK
+["Steal Filter Eggs"]="Trộm trứng lọc",
+["Mech Boss"]="Trùm Mech",
+["Steal Wisp Quest Eggs"]="Trộm trứng nhiệm vụ Wisp",
+["Auto Use Scrambled"]="Tự động dùng món trứng đảo (Scrambled)",
+["Auto Use Enchanted Essence"]="Tự động dùng tinh chất mê hoặc",
 
-    -- rebirth
-    ["Rebirth"]="Tái sinh",
-    ["Rebirths"]="Số lần tái sinh",
-    ["Prestige"]="Thăng cấp",
+-- ESP
+["ESP"]="Hiển thị xuyên tường (ESP)",
+["Movement"]="Di chuyển",
+["Speed Boost"]="Tăng tốc độ chạy",
+["Boost Speed"]="Tốc độ tăng cường",
+["Infinite Jump"]="Nhảy vô cực",
+["Invisibility"]="Tàng hình",
+["Makes you invisible to other players"]="Giúp bạn tàng hình trước người chơi khác",
+["Anti Ragdoll"]="Chống rớt người (Ragdoll)",
+["Anti Trap"]="Chống bẫy",
+["Traps from other players cannot catch you"]="Bẫy từ người chơi khác không thể bắt được bạn",
+["Instant Prompts"]="Tương tác tức thì",
+["ESP Eggs"]="Hiển thị trứng (ESP)",
+["ESP Fixed Size"]="Kích thước cố định ESP",
+["ESP Own Base Eggs"]="Hiển thị trứng căn cứ của chính bạn",
+["Also show the eggs placed in your own base"]="Đồng thời hiển thị trứng được đặt trong căn cứ của bạn",
+["ESP Min Rarity"]="Độ hiếm ESP tối thiểu",
+["ESP Show Info"]="Hiển thị thông tin ESP",
+["Min ESP Value"]="Giá trị ESP tối thiểu",
+["ESP Egg Size"]="Kích thước trứng ESP",
+["ESP Guards"]="Hiển thị lính canh ESP",
+["ESP Guard Size"]="Kích thước lính canh ESP",
+["ESP Lost Parts"]="Hiển thị bộ phận bị mất ESP",
+["ESP Players"]="Hiển thị người chơi ESP",
+["ESP Player Info"]="Thông tin người chơi ESP",
 
-    -- trade
-    ["Trade"]="Giao dịch",
-    ["Trading"]="Đang giao dịch",
-    ["Trade Request"]="Yêu cầu giao dịch",
-    ["Trade Accepted"]="Đã chấp nhận giao dịch",
-    ["Trade Declined"]="Đã từ chối giao dịch",
-    ["Accept Trade"]="Chấp nhận giao dịch",
-    ["Decline Trade"]="Từ chối giao dịch",
-    ["Confirm Trade"]="Xác nhận giao dịch",
-    ["Cancel Trade"]="Hủy giao dịch",
+-- COMBAT
+["Combat"]="Chiến đấu",
+["Idle"]="Đứng yên",
+["Auto Hit Nearest Player"]="Tự động đánh người chơi gần nhất",
+["Auto Hit Egg Holders"]="Tự động đánh người giữ trứng",
+["Auto Hit Specific Player"]="Tự động đánh người chơi cụ thể",
+["Hit Player"]="Đánh người chơi",
+["Hit Aura"]="Hào quang đòn đánh",
+["Chase Settings"]="Cài đặt đuổi theo",
+["Chase Cài đặt"]="Cài đặt đuổi theo",
+["Hit Tween Speed"]="Tốc độ Tween đánh",
+["Hit Max Speed"]="Tốc độ tối đa đánh",
+["Hit Lead"]="Độ dẫn trước đòn đánh",
+["Hit Sweep"]="Tốc độ quét đòn đánh",
+["Add/Remove Hits on Quick Bar 2"]="Thêm/Xóa đòn đánh trên thanh nhanh 2",
+["Pin or unpin the hit toggles on Quick Bar 2"]="Ghim hoặc bỏ ghim công tắc đòn đánh trên thanh nhanh 2",
 
-    -- social
-    ["Friend"]="Bạn bè",
-    ["Friends"]="Bạn bè",
-    ["Add Friend"]="Thêm bạn",
-    ["Remove Friend"]="Xóa bạn",
-    ["Follow"]="Theo dõi",
-    ["Unfollow"]="Bỏ theo dõi",
-    ["Invite"]="Mời",
-    ["Party"]="Nhóm",
-    ["Team"]="Đội",
-    ["Clan"]="Bang hội",
-    ["Guild"]="Bang hội",
-    ["Leader"]="Đội trưởng",
-    ["Member"]="Thành viên",
+-- PREDICTOR
+["Discord"]="Discord",
+["Quick & Keys"]="Phím tắt & Phím nhanh",
+["Config"]="Cấu hình",
+["Sort By"]="Sắp xếp theo",
+["Value"]="Giá trị",
+["Preview Card"]="Xem trước thẻ",
+["Egg Predictor"]="Dự đoán trứng",
+["Stored Webhook"]="Webhook đã lưu",
+["Webhook URL"]="URL Webhook",
+["Ping @everyone"]="Ping @everyone",
+["Notifiy Stolen Eggs"]="Thông báo trứng bị trộm",
+["Notify Stolen Eggs"]="Thông báo trứng bị trộm",
+["Post every egg you bring home"]="Đăng mọi quả trứng bạn mang về nhà",
 
-    -- server
-    ["Server"]="Máy chủ",
-    ["Servers"]="Máy chủ",
-    ["Server List"]="Danh sách máy chủ",
-    ["Join"]="Tham gia",
-    ["Join Server"]="Tham gia máy chủ",
-    ["Leave"]="Rời",
-    ["Leave Server"]="Rời máy chủ",
-    ["Private Server"]="Máy chủ riêng",
-    ["Public Server"]="Máy chủ công khai",
-    ["Server Full"]="Máy chủ đầy",
-    ["Reconnecting"]="Đang kết nối lại",
-    ["Disconnected"]="Đã mất kết nối",
-    ["Connection"]="Kết nối",
+-- SERVER
+["Auto Load Script"]="Tự động tải Script",
+["Server Hop Mode"]="Chế độ đổi Server",
+["Least Players"]="Ít người chơi nhất",
+["Server Hop"]="Đổi Server",
+["Job ID"]="ID phiên chơi (Job ID)",
+["Paste a server job ID..."]="Dán ID phiên chơi máy chủ...",
+["Join Job ID"]="Tham gia theo Job ID",
+["Copy Current Job ID"]="Sao chép Job ID hiện tại",
+["Rejoin Server"]="Vào lại máy chủ",
+["Auto Rejoin When Disconnect"]="Tự động vào lại khi mất kết nối",
+["Servers"]="Máy chủ",
+["Server List"]="Danh sách máy chủ",
+["Join"]="Tham gia",
+["Join Server"]="Tham gia máy chủ",
+["Leave"]="Rời",
+["Leave Server"]="Rời máy chủ",
+["Private Server"]="Máy chủ riêng",
+["Public Server"]="Máy chủ công khai",
+["Server Full"]="Máy chủ đầy",
+["Reconnecting"]="Đang kết nối lại",
+["Disconnected"]="Đã mất kết nối",
+["Connection"]="Kết nối",
 
-    -- settings
-    ["Graphics"]="Đồ họa",
-    ["Quality"]="Chất lượng",
-    ["Volume"]="Âm lượng",
-    ["Music"]="Nhạc",
-    ["Sound"]="Âm thanh",
-    ["Brightness"]="Độ sáng",
-    ["Sensitivity"]="Độ nhạy",
-    ["Camera"]="Camera",
-    ["Controls"]="Điều khiển",
-    ["Language"]="Ngôn ngữ",
-    ["English"]="Tiếng Anh",
-    ["Vietnamese"]="Tiếng Việt",
-    ["Fullscreen"]="Toàn màn hình",
-    ["Performance"]="Hiệu năng",
-    ["Low"]="Thấp",
-    ["Medium"]="Trung bình",
-    ["High"]="Cao",
-    ["Ultra"]="Cực cao",
+-- PERFORMANCE
+["Performance"]="Hiệu năng",
+["FPS Cap"]="Giới hạn FPS",
+["Optimizer"]="Trình tối ưu hóa",
+["Strip shadows, textures and effects for the highest FPS"]="Loại bỏ bóng, kết cấu và hiệu ứng để có FPS cao nhất",
+["FPS and Ping"]="FPS và Ping",
+["FPS and Ping Size"]="Kích thước FPS và Ping",
+["Disable 3D Render"]="Tắt kết xuất 3D",
+["Farm HUD"]="Giao diện Farm (HUD)",
+["Drag any panel to place it where you like"]="Kéo bất kỳ bảng nào để đặt nó vào nơi bạn thích",
+["Utility"]="Tiện ích",
+["Anti AFK"]="Chống treo máy (Anti-AFK)",
+["Egg Finder"]="Tìm trứng",
+["Hop Mode"]="Chế độ nhảy server",
+["Move on to the next server"]="Chuyển sang máy chủ tiếp theo",
+["Rarity To Wait For"]="Độ hiếm để chờ đợi",
+["For a Rare-Spawned this, this rarity or higher"]="Đối với loại xuất hiện hiếm này, độ hiếm này hoặc cao hơn",
+["Sync With Auto Steal Filters"]="Đồng bộ với bộ lọc tự động trộm",
+["Syncs the rarity filters with it in Auto Steal, and hash"]="Đồng bộ các bộ lọc độ hiếm với nó trong Tự động trộm, và hàm băm",
 
-    -- mobile
-    ["Mobile"]="Điện thoại",
-    ["Touch"]="Cảm ứng",
-    ["Joystick"]="Cần điều khiển",
-    ["Interact"]="Tương tác",
-    ["Tap"]="Chạm",
-    ["Hold"]="Giữ",
-    ["Swipe"]="Vuốt",
-    ["Drag"]="Kéo",
+-- INVENTORY
+["Inventory"]="Kho đồ",
+["Item"]="Vật phẩm",
+["Items"]="Vật phẩm",
+["Equipment"]="Trang bị",
+["Equip"]="Trang bị",
+["Unequip"]="Tháo trang bị",
+["Use"]="Sử dụng",
+["Drop"]="Vứt",
+["Collect"]="Nhặt",
+["Collect All"]="Nhặt tất cả",
+["Select"]="Chọn",
+["Selected"]="Đã chọn",
+["Quantity"]="Số lượng",
+["Amount"]="Số lượng",
+["Storage"]="Kho chứa",
+["Capacity"]="Sức chứa",
+["Full"]="Đầy",
+["Empty"]="Trống",
+["Shop"]="Cửa hàng",
+["Store"]="Cửa hàng",
+["Buy"]="Mua",
+["Sell"]="Bán",
+["Purchase"]="Mua",
+["Price"]="Giá",
+["Cost"]="Chi phí",
+["Free"]="Miễn phí",
+["Money"]="Tiền",
+["Cash"]="Tiền",
+["Coin"]="Xu",
+["Coins"]="Xu",
+["Gold"]="Vàng",
+["Gem"]="Ngọc",
+["Gems"]="Ngọc",
+["Diamond"]="Kim cương",
+["Currency"]="Tiền tệ",
+["Balance"]="Số dư",
+["Reward"]="Phần thưởng",
+["Rewards"]="Phần thưởng",
+["Claim"]="Nhận",
+["Gift"]="Quà",
+["Gifts"]="Quà tặng",
 
-    -- time
-    ["Second"]="Giây",
-    ["Seconds"]="Giây",
-    ["Minute"]="Phút",
-    ["Minutes"]="Phút",
-    ["Hour"]="Giờ",
-    ["Hours"]="Giờ",
-    ["Day"]="Ngày",
-    ["Days"]="Ngày",
-    ["Week"]="Tuần",
-    ["Weeks"]="Tuần",
-    ["Today"]="Hôm nay",
-    ["Yesterday"]="Hôm qua",
-    ["Tomorrow"]="Ngày mai",
-    ["Now"]="Bây giờ",
+-- QUEST
+["Quest"]="Nhiệm vụ",
+["Quests"]="Nhiệm vụ",
+["Mission"]="Nhiệm vụ",
+["Missions"]="Nhiệm vụ",
+["Objective"]="Mục tiêu",
+["Objectives"]="Mục tiêu",
+["Task"]="Nhiệm vụ",
+["Tasks"]="Nhiệm vụ",
+["Complete"]="Hoàn thành",
+["Completed"]="Đã hoàn thành",
+["Quest Complete"]="Hoàn thành nhiệm vụ",
+["Quest Completed"]="Đã hoàn thành nhiệm vụ",
+["Accept Quest"]="Nhận nhiệm vụ",
+["Abandon Quest"]="Bỏ nhiệm vụ",
+["Daily Quest"]="Nhiệm vụ hằng ngày",
+["Weekly Quest"]="Nhiệm vụ hằng tuần",
 
-    -- misc
-    ["Get"]="Nhận",
-    ["Give"]="Cho",
-    ["Take"]="Lấy",
-    ["Find"]="Tìm",
-    ["Found"]="Đã tìm thấy",
-    ["Enter"]="Nhập",
-    ["Run"]="Chạy",
-    ["Unlock"]="Mở khóa",
-    ["Upgrade"]="Nâng cấp",
-    ["New"]="Mới",
-    ["Old"]="Cũ",
-    ["Chat"]="Trò chuyện",
-    ["Message"]="Tin nhắn",
-    ["Messages"]="Tin nhắn",
-    ["Notification"]="Thông báo",
-    ["Notifications"]="Thông báo",
-    ["Code"]="Mã",
-    ["Codes"]="Mã",
-    ["Redeem"]="Đổi",
-    ["Redeem Code"]="Đổi mã",
-    ["Enter Code"]="Nhập mã",
-    ["Tutorial"]="Hướng dẫn",
-    ["Congratulations"]="Chúc mừng!",
-    ["You Win"]="Bạn thắng",
-    ["You Lose"]="Bạn thua",
-    ["Game Over"]="Kết thúc trò chơi",
-    ["Not enough"]="Không đủ",
-    ["Not enough money"]="Không đủ tiền",
-    ["Inventory Full"]="Kho đồ đầy",
-    ["Out of Stock"]="Hết hàng",
+-- MAP
+["Teleport"]="Dịch chuyển",
+["Teleporting"]="Đang dịch chuyển",
+["Location"]="Vị trí",
+["Map"]="Bản đồ",
+["World"]="Thế giới",
+["Zone"]="Khu vực",
+["Area"]="Khu vực",
+["Island"]="Đảo",
+["Spawn"]="Điểm xuất hiện",
+["Return"]="Quay về",
+["Travel"]="Di chuyển",
+["Fast Travel"]="Di chuyển nhanh",
+
+-- AUTOMATION
+["Auto"]="Tự động",
+["Auto Farm"]="Tự động cày",
+["Auto Collect"]="Tự động nhặt",
+["Auto Sell"]="Tự động bán",
+["Auto Buy"]="Tự động mua",
+["Auto Equip"]="Tự động trang bị",
+["Auto Attack"]="Tự động tấn công",
+["Auto Quest"]="Tự động làm nhiệm vụ",
+["Auto Kill"]="Tự động hạ",
+["Auto Loot"]="Tự động nhặt đồ",
+["Auto Rebirth"]="Tự động tái sinh",
+["Auto Train"]="Tự động luyện tập",
+
+-- SOCIAL
+["Friend"]="Bạn bè",
+["Friends"]="Bạn bè",
+["Add Friend"]="Thêm bạn",
+["Remove Friend"]="Xóa bạn",
+["Follow"]="Theo dõi",
+["Unfollow"]="Bỏ theo dõi",
+["Invite"]="Mời",
+["Party"]="Nhóm",
+["Team"]="Đội",
+["Clan"]="Bang hội",
+["Guild"]="Bang hội",
+["Leader"]="Đội trưởng",
+["Member"]="Thành viên",
+
+-- SETTINGS
+["Graphics"]="Đồ họa",
+["Quality"]="Chất lượng",
+["Volume"]="Âm lượng",
+["Music"]="Nhạc",
+["Sound"]="Âm thanh",
+["Brightness"]="Độ sáng",
+["Sensitivity"]="Độ nhạy",
+["Camera"]="Camera",
+["Controls"]="Điều khiển",
+["Language"]="Ngôn ngữ",
+["English"]="Tiếng Anh",
+["Vietnamese"]="Tiếng Việt",
+["Fullscreen"]="Toàn màn hình",
+["Low"]="Thấp",
+["Medium"]="Trung bình",
+["High"]="Cao",
+["Ultra"]="Cực cao",
+
+-- MOBILE
+["Mobile"]="Điện thoại",
+["Touch"]="Cảm ứng",
+["Joystick"]="Cần điều khiển",
+["Interact"]="Tương tác",
+["Tap"]="Chạm",
+["Hold"]="Giữ",
+["Swipe"]="Vuốt",
+["Drag"]="Kéo",
+
+-- TIME / MISC
+["Second"]="Giây",
+["Seconds"]="Giây",
+["Minute"]="Phút",
+["Minutes"]="Phút",
+["Hour"]="Giờ",
+["Hours"]="Giờ",
+["Day"]="Ngày",
+["Days"]="Ngày",
+["Week"]="Tuần",
+["Weeks"]="Tuần",
+["Today"]="Hôm nay",
+["Yesterday"]="Hôm qua",
+["Tomorrow"]="Ngày mai",
+["Now"]="Bây giờ",
+["Get"]="Nhận",
+["Give"]="Cho",
+["Take"]="Lấy",
+["Find"]="Tìm",
+["Found"]="Đã tìm thấy",
+["Enter"]="Nhập",
+["Run"]="Chạy",
+["Unlock"]="Mở khóa",
+["Upgrade"]="Nâng cấp",
+["New"]="Mới",
+["Old"]="Cũ",
+["Chat"]="Trò chuyện",
+["Message"]="Tin nhắn",
+["Messages"]="Tin nhắn",
+["Notification"]="Thông báo",
+["Notifications"]="Tin nhắn",
+["Code"]="Mã",
+["Codes"]="Mã",
+["Redeem"]="Đổi",
+["Redeem Code"]="Đổi mã",
+["Enter Code"]="Nhập mã",
+["Tutorial"]="Hướng dẫn",
+["Congratulations"]="Chúc mừng!",
+["You Win"]="Bạn thắng",
+["You Lose"]="Bạn thua",
+["Game Over"]="Kết thúc trò chơi",
+["Not enough"]="Không đủ",
+["Not enough money"]="Không đủ tiền",
+["Inventory Full"]="Kho đồ đầy",
+["Out of Stock"]="Hết hàng",
 }
 
 --========================================================--
--- SORT CỤM DÀI TRƯỚC
+-- SORT KEYS
 --========================================================--
 
 local Keys = {}
 
-for k in pairs(D) do
-    table.insert(Keys, k)
+for key in pairs(D) do
+    table.insert(Keys,key)
 end
 
-table.sort(Keys, function(a,b)
+table.sort(Keys,function(a,b)
     return #a > #b
 end)
 
 --========================================================--
--- CHUẨN HÓA
+-- NORMALIZE
 --========================================================--
 
-local function normalize(s)
-    s = tostring(s or "")
-    s = s:gsub("%s+", " ")
-    return s
+local function normalize(text)
+
+    text = tostring(text or "")
+    text = text:gsub("%s+"," ")
+
+    return text
 end
 
 --========================================================--
--- TRANSLATE
+-- TRANSLATE TEXT
 --========================================================--
 
 local function translate(text)
@@ -441,72 +596,49 @@ local function translate(text)
 
     text = normalize(text)
 
-    -- Đã có tiếng Việt
-    if text:find("[ăâđêôơưĂÂĐÊÔƠƯ]") then
-        return text
-    end
-
-    -- Exact match
     if D[text] then
         return D[text]
     end
 
+    -- Không dịch lại chuỗi đã có ký tự tiếng Việt
+    if text:find("[ăâđêôơưĂÂĐÊÔƠƯ]") then
+        return text
+    end
+
     local result = text
 
-    -- Cụm dài trước
-    for _, english in ipairs(Keys) do
+    for _,english in ipairs(Keys) do
 
         local vietnamese = D[english]
 
         local escaped =
-            english:gsub("([^%w%s])","%%%1")
+            english:gsub(
+                "([^%w%s])",
+                "%%%1"
+            )
 
-        result = result:gsub(
-            "(%f[%a])" ..
-            escaped ..
-            "(%f[%A])",
-            function(a,b)
-                return a .. vietnamese .. b
-            end
-        )
+        local pattern =
+            "(%f[%a])"
+            .. escaped ..
+            "(%f[%A])"
+
+        result =
+            result:gsub(
+                pattern,
+                function(a,b)
+                    return a ..
+                        vietnamese ..
+                        b
+                end
+            )
+
     end
 
     return result
 end
 
 --========================================================--
--- SAVE / RESTORE
---========================================================--
-
-local function remember(obj, property, value)
-
-    Original[obj] =
-        Original[obj] or {}
-
-    if Original[obj][property] == nil then
-        Original[obj][property] = value
-    end
-end
-
-local function restore()
-
-    for obj, props in pairs(Original) do
-
-        if obj and obj.Parent then
-
-            for property, value in pairs(props) do
-
-                pcall(function()
-                    obj[property] = value
-                end)
-
-            end
-        end
-    end
-end
-
---========================================================--
--- IS TEXT OBJECT
+-- TEXT CHECK
 --========================================================--
 
 local function isTextObject(obj)
@@ -514,23 +646,42 @@ local function isTextObject(obj)
     return obj:IsA("TextLabel")
         or obj:IsA("TextButton")
         or obj:IsA("TextBox")
+
 end
 
 --========================================================--
--- TRANSLATE OBJECT
+-- SAVE ORIGINAL
+--========================================================--
+
+local function remember(
+    obj,
+    property,
+    value
+)
+
+    Original[obj] =
+        Original[obj] or {}
+
+    if Original[obj][property] == nil then
+
+        Original[obj][property] =
+            value
+
+    end
+
+end
+
+--========================================================--
+-- PROCESS
 --========================================================--
 
 local function process(obj)
 
-    if not obj or not obj.Parent then
-        return
-    end
+    if not obj
+        or not obj.Parent
+        or Busy[obj]
+        or not isTextObject(obj) then
 
-    if Busy[obj] then
-        return
-    end
-
-    if not isTextObject(obj) then
         return
     end
 
@@ -552,10 +703,9 @@ local function process(obj)
                 translate(text)
 
             if newText ~= text then
-
                 obj.Text = newText
-
             end
+
         end
 
         if obj:IsA("TextBox") then
@@ -580,63 +730,42 @@ local function process(obj)
 
                     obj.PlaceholderText =
                         newPlaceholder
+
                 end
+
             end
+
         end
 
     end)
 
     Busy[obj] = nil
+
 end
 
 --========================================================--
--- SCAN ROOT
+-- RESTORE
 --========================================================--
 
-local function scanRoot(root)
+local function restore()
 
-    if not root then
-        return
-    end
+    for obj,properties in pairs(Original) do
 
-    pcall(function()
+        if obj and obj.Parent then
 
-        for _, obj in ipairs(
-            root:GetDescendants()
-        ) do
+            for property,value
+                in pairs(properties) do
 
-            if isTextObject(obj) then
-                process(obj)
+                pcall(function()
+                    obj[property] = value
+                end)
+
             end
 
         end
 
-    end)
-end
-
---========================================================--
--- WATCH ROOT
---========================================================--
-
-local function watchRoot(root)
-
-    if not root then
-        return
     end
 
-    root.DescendantAdded:Connect(function(obj)
-
-        task.defer(function()
-
-            if isTextObject(obj) then
-                process(obj)
-            end
-
-        end)
-
-    end)
-
-    scanRoot(root)
 end
 
 --========================================================--
@@ -645,11 +774,9 @@ end
 
 local function watchText(obj)
 
-    if not isTextObject(obj) then
-        return
-    end
+    if not isTextObject(obj)
+        or Watched[obj] then
 
-    if Watched[obj] then
         return
     end
 
@@ -663,10 +790,12 @@ local function watchText(obj)
             return
         end
 
-        -- Không scan toàn bộ GUI.
-        -- Chỉ xử lý object vừa thay đổi.
         task.defer(function()
-            process(obj)
+
+            if obj.Parent then
+                process(obj)
+            end
+
         end)
 
     end)
@@ -677,85 +806,107 @@ local function watchText(obj)
             "PlaceholderText"
         ):Connect(function()
 
-            if ENABLED then
-                task.defer(function()
-                    process(obj)
-                end)
+            if not ENABLED then
+                return
             end
+
+            task.defer(function()
+
+                if obj.Parent then
+                    process(obj)
+                end
+
+            end)
 
         end)
 
     end
+
 end
 
 --========================================================--
--- WATCH ALL TEXT OBJECTS
+-- WATCH ROOT
 --========================================================--
 
-local function watchExisting(root)
+local function watchRoot(root)
+
+    if not root
+        or WatchedRoots[root] then
+
+        return
+    end
+
+    WatchedRoots[root] = true
+
+    pcall(function()
+
+        for _,obj in ipairs(
+            root:GetDescendants()
+        ) do
+
+            if isTextObject(obj) then
+                watchText(obj)
+            end
+
+        end
+
+        root.DescendantAdded:Connect(
+            function(obj)
+
+                if isTextObject(obj) then
+
+                    watchText(obj)
+
+                    if ENABLED then
+
+                        task.defer(function()
+                            process(obj)
+                        end)
+
+                    end
+
+                end
+
+            end
+        )
+
+    end)
+
+end
+
+--========================================================--
+-- COLLECT TEXT OBJECTS
+--========================================================--
+
+local function collectRoot(
+    root,
+    list,
+    seen
+)
 
     if not root then
         return
     end
 
-    for _, obj in ipairs(
-        root:GetDescendants()
-    ) do
-
-        if isTextObject(obj) then
-            watchText(obj)
-        end
-
-    end
-
-    root.DescendantAdded:Connect(function(obj)
-
-        if isTextObject(obj) then
-            watchText(obj)
-        end
-
-    end)
-end
-
---========================================================--
--- PLAYER GUI
---========================================================--
-
-watchRoot(PlayerGui)
-watchExisting(PlayerGui)
-
---========================================================--
--- CORE GUI
---========================================================--
-
-if SCAN_CORE_GUI then
-
     pcall(function()
 
-        watchRoot(CoreGui)
-        watchExisting(CoreGui)
+        if isTextObject(root)
+            and not seen[root] then
 
-    end)
+            seen[root] = true
+            table.insert(list,root)
 
-end
+        end
 
---========================================================--
--- WORLD GUI
---========================================================--
-
-if SCAN_WORLD_GUI then
-
-    pcall(function()
-
-        for _, obj in ipairs(
-            workspace:GetDescendants()
+        for _,obj in ipairs(
+            root:GetDescendants()
         ) do
 
-            if obj:IsA("BillboardGui")
-                or obj:IsA("SurfaceGui") then
+            if isTextObject(obj)
+                and not seen[obj] then
 
-                scanRoot(obj)
-                watchExisting(obj)
+                seen[obj] = true
+                table.insert(list,obj)
 
             end
 
@@ -766,97 +917,387 @@ if SCAN_WORLD_GUI then
 end
 
 --========================================================--
--- CONTROL UI
+-- CREATE ONLY BUTTON
 --========================================================--
 
-local old = PlayerGui:FindFirstChild(
-    "MINH_KHA_TRANSLATOR_V3"
-)
+pcall(function()
 
-if old then
-    old:Destroy()
-end
+    local old =
+        PlayerGui:FindFirstChild(
+            "MINH_KHA_TRANSLATOR_V5"
+        )
 
-local Gui = Instance.new("ScreenGui")
+    if old then
+        old:Destroy()
+    end
+
+end)
+
+local Gui =
+    Instance.new("ScreenGui")
 
 Gui.Name =
-    "MINH_KHA_TRANSLATOR_V3"
+    "MINH_KHA_TRANSLATOR_V5"
 
 Gui.ResetOnSpawn = false
 Gui.IgnoreGuiInset = true
 Gui.DisplayOrder = 999999
 Gui.Parent = PlayerGui
 
-local Button = Instance.new("TextButton")
+local Toggle =
+    Instance.new("TextButton")
 
-Button.Name = "TranslatorButton"
+Toggle.Name =
+    "TranslatorButton"
 
-Button.Size =
-    UDim2.fromOffset(205, 44)
+Toggle.Size =
+    UDim2.fromOffset(
+        180,
+        40
+    )
 
--- GIỮA TRÊN
-Button.Position =
-    UDim2.new(0.5, -102, 0, 12)
+Toggle.AnchorPoint =
+    Vector2.new(
+        0.5,
+        0
+    )
 
-Button.BackgroundColor3 =
-    Color3.fromRGB(5,5,5)
+Toggle.Position =
+    UDim2.new(
+        0.5,
+        0,
+        0,
+        8
+    )
 
-Button.BackgroundTransparency =
+Toggle.BackgroundColor3 =
+    Color3.fromRGB(
+        5,
+        5,
+        5
+    )
+
+Toggle.BackgroundTransparency =
     0.08
 
-Button.TextColor3 =
-    Color3.fromRGB(255,255,255)
+Toggle.TextColor3 =
+    Color3.fromRGB(
+        255,
+        255,
+        255
+    )
 
-Button.TextSize = 16
+Toggle.Text =
+    "🇻🇳 VIỆT HÓA • 100%"
 
-Button.Font =
+Toggle.TextSize = 14
+
+Toggle.Font =
     Enum.Font.GothamBold
 
-Button.Text =
-    "🇻🇳 VIỆT HÓA • BẬT"
-
-Button.Parent = Gui
+Toggle.Parent = Gui
 
 local Corner =
     Instance.new("UICorner")
 
 Corner.CornerRadius =
-    UDim.new(0,10)
+    UDim.new(
+        0,
+        10
+    )
 
-Corner.Parent = Button
+Corner.Parent = Toggle
 
 local Stroke =
     Instance.new("UIStroke")
 
+Stroke.Color =
+    Color3.fromRGB(
+        0,
+        255,
+        120
+    )
+
 Stroke.Thickness = 1.5
 
-Stroke.Color =
-    Color3.fromRGB(0,255,120)
-
-Stroke.Parent = Button
+Stroke.Parent = Toggle
 
 --========================================================--
--- DRAG MOBILE
+-- UPDATE BUTTON
+--========================================================--
+
+local function updateButton(percent)
+
+    if not ENABLED then
+
+        Toggle.Text =
+            "🇬🇧 TIẾNG GỐC • TẮT"
+
+        Toggle.BackgroundColor3 =
+            Color3.fromRGB(
+                55,
+                10,
+                10
+            )
+
+        Stroke.Color =
+            Color3.fromRGB(
+                255,
+                70,
+                70
+            )
+
+        return
+    end
+
+    percent =
+        math.clamp(
+            tonumber(percent) or 0,
+            0,
+            100
+        )
+
+    Toggle.Text =
+        "🇻🇳 VIỆT HÓA • "
+        .. percent
+        .. "%"
+
+    Toggle.BackgroundColor3 =
+        Color3.fromRGB(
+            5,
+            55,
+            32
+        )
+
+    Stroke.Color =
+        Color3.fromRGB(
+            0,
+            255,
+            120
+        )
+
+end
+
+--========================================================--
+-- FULL GLOBAL SCAN
+--========================================================--
+
+local function translateAll()
+
+    if Translating then
+        return
+    end
+
+    Translating = true
+    Progress = 0
+
+    local objects = {}
+    local seen = {}
+
+    -- PLAYER GUI
+    collectRoot(
+        PlayerGui,
+        objects,
+        seen
+    )
+
+    -- CORE GUI
+    if SCAN_CORE_GUI then
+
+        pcall(function()
+
+            collectRoot(
+                CoreGui,
+                objects,
+                seen
+            )
+
+        end)
+
+    end
+
+    -- WORLD GUI
+    if SCAN_WORLD_GUI then
+
+        pcall(function()
+
+            for _,obj in ipairs(
+                workspace:GetDescendants()
+            ) do
+
+                if obj:IsA("BillboardGui")
+                    or obj:IsA("SurfaceGui") then
+
+                    collectRoot(
+                        obj,
+                        objects,
+                        seen
+                    )
+
+                end
+
+            end
+
+        end)
+
+    end
+
+    local total =
+        #objects
+
+    if total == 0 then
+
+        updateButton(100)
+        Translating = false
+
+        return
+    end
+
+    local lastStep = 0
+
+    for index,obj in ipairs(objects) do
+
+        if not ENABLED then
+            break
+        end
+
+        watchText(obj)
+        process(obj)
+
+        local percent =
+            math.floor(
+                index / total * 100
+            )
+
+        local step =
+            math.floor(
+                percent / 10
+            ) * 10
+
+        if step >= 10
+            and step <= 100
+            and step ~= lastStep then
+
+            lastStep = step
+            Progress = step
+
+            updateButton(step)
+
+            task.wait()
+
+        end
+
+    end
+
+    if ENABLED then
+
+        Progress = 100
+        updateButton(100)
+
+    end
+
+    Translating = false
+
+end
+
+--========================================================--
+-- WORLD WATCH
+--========================================================--
+
+if SCAN_WORLD_GUI then
+
+    pcall(function()
+
+        for _,obj in ipairs(
+            workspace:GetDescendants()
+        ) do
+
+            if obj:IsA("BillboardGui")
+                or obj:IsA("SurfaceGui") then
+
+                watchRoot(obj)
+
+            end
+
+        end
+
+        workspace.DescendantAdded:Connect(
+            function(obj)
+
+                if obj:IsA("BillboardGui")
+                    or obj:IsA("SurfaceGui") then
+
+                    watchRoot(obj)
+
+                end
+
+            end
+        )
+
+    end)
+
+end
+
+--========================================================--
+-- PLAYER / CORE WATCH
+--========================================================--
+
+watchRoot(PlayerGui)
+
+if SCAN_CORE_GUI then
+
+    pcall(function()
+        watchRoot(CoreGui)
+    end)
+
+end
+
+--========================================================--
+-- TOGGLE BUTTON
+--========================================================--
+
+Toggle.MouseButton1Click:Connect(function()
+
+    if Translating then
+        return
+    end
+
+    ENABLED =
+        not ENABLED
+
+    if ENABLED then
+
+        task.spawn(function()
+            translateAll()
+        end)
+
+    else
+
+        restore()
+        updateButton(0)
+
+    end
+
+end)
+
+--========================================================--
+-- MOBILE DRAG
 --========================================================--
 
 local dragging = false
 local dragStart
-local startPos
+local startPosition
 
-Button.InputBegan:Connect(function(input)
+Toggle.InputBegan:Connect(function(input)
 
     if input.UserInputType ==
-        Enum.UserInputType.MouseButton1
+        Enum.UserInputType.Touch
         or input.UserInputType ==
-        Enum.UserInputType.Touch then
+        Enum.UserInputType.MouseButton1 then
 
         dragging = true
-
-        dragStart =
-            input.Position
-
-        startPos =
-            Button.Position
+        dragStart = input.Position
+        startPosition = Toggle.Position
 
         input.Changed:Connect(function()
 
@@ -867,7 +1308,9 @@ Button.InputBegan:Connect(function(input)
             end
 
         end)
+
     end
+
 end)
 
 UserInputService.InputChanged:Connect(function(input)
@@ -877,9 +1320,9 @@ UserInputService.InputChanged:Connect(function(input)
     end
 
     if input.UserInputType ~=
-        Enum.UserInputType.MouseMovement
+        Enum.UserInputType.Touch
         and input.UserInputType ~=
-        Enum.UserInputType.Touch then
+        Enum.UserInputType.MouseMovement then
 
         return
     end
@@ -887,69 +1330,60 @@ UserInputService.InputChanged:Connect(function(input)
     local delta =
         input.Position - dragStart
 
-    Button.Position =
+    Toggle.Position =
         UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
         )
+
 end)
 
 --========================================================--
--- TOGGLE
+-- INITIAL START
 --========================================================--
 
-Button.MouseButton1Click:Connect(function()
+task.spawn(function()
 
-    ENABLED = not ENABLED
+    task.wait(0.5)
 
     if ENABLED then
-
-        Button.Text =
-            "🇻🇳 VIỆT HÓA • BẬT"
-
-        Stroke.Color =
-            Color3.fromRGB(0,255,120)
-
-        -- Chỉ scan một lần khi bật
-        scanRoot(PlayerGui)
-
-        if SCAN_CORE_GUI then
-            pcall(function()
-                scanRoot(CoreGui)
-            end)
-        end
-
+        translateAll()
     else
-
-        Button.Text =
-            "🇬🇧 TIẾNG GỐC"
-
-        Stroke.Color =
-            Color3.fromRGB(255,70,70)
-
-        restore()
-
-    end
-end)
-
---========================================================--
--- INITIAL
---========================================================--
-
-task.defer(function()
-
-    scanRoot(PlayerGui)
-
-    if SCAN_CORE_GUI then
-        pcall(function()
-            scanRoot(CoreGui)
-        end)
+        updateButton(0)
     end
 
 end)
+
+--========================================================--
+-- CONSOLE
+--========================================================--
 
 print(
-    "[MINH KHA TRANSLATOR V3] Loaded"
+    "[MINH KHA TRANSLATOR V5] Loaded"
+)
+
+print(
+    "[MINH KHA TRANSLATOR V5] Dictionary:",
+    #Keys,
+    "entries"
+)
+
+print(
+    "[MINH KHA TRANSLATOR V5] Realtime: ON"
+)
+
+print(
+    "[MINH KHA TRANSLATOR V5] PlayerGui: ON"
+)
+
+print(
+    "[MINH KHA TRANSLATOR V5] CoreGui:",
+    SCAN_CORE_GUI
+)
+
+print(
+    "[MINH KHA TRANSLATOR V5] World GUI:",
+    SCAN_WORLD_GUI
 )
