@@ -1,9 +1,7 @@
-for _, u in ipairs({
-    "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua",
-    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minhkha%20Vi%E1%BB%87t%20Nam",
-    "https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Kha%20click"
-}) do
-    task.spawn(function()
-        loadstring(game:HttpGet(u))()
-    end)
-end
+task.spawn(function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()
+end)
+
+task.spawn(function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/khauow386-dot/Kha-hup-rayfi/refs/heads/main/Minhkha%20Vi%E1%BB%87t%20Nam"))()
+end)
