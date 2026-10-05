@@ -1,0 +1,133 @@
+--========================================================--
+-- MINH KHA GLOBAL BUTTON SOUND
+-- NO MENU • MOBILE • PC
+--========================================================--
+
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local SoundService = game:GetService("SoundService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+--========================================================--
+-- CONFIG
+--========================================================--
+
+local SOUND_ID = "rbxassetid://7147420522"
+local VOLUME = 1
+local DELAY = 0.005
+
+--========================================================--
+-- SOUND
+--========================================================--
+
+local Sound = Instance.new("Sound")
+Sound.Name = "MinhKhaGlobalButtonSound"
+Sound.SoundId = SOUND_ID
+Sound.Volume = VOLUME
+Sound.Parent = SoundService
+
+local LastPlay = 0
+
+local function PlaySound()
+    local now = os.clock()
+
+    if now - LastPlay < DELAY then
+        return
+    end
+
+    LastPlay = now
+
+    pcall(function()
+        Sound:Stop()
+        Sound.TimePosition = 0
+        SoundService:PlayLocalSound(Sound)
+    end)
+end
+
+--========================================================--
+-- BUTTON HOOK
+--========================================================--
+
+local Hooked = setmetatable({}, {
+    __mode = "k"
+})
+
+local function HookButton(Object)
+
+    if not Object then
+        return
+    end
+
+    if not (
+        Object:IsA("TextButton")
+        or Object:IsA("ImageButton")
+    ) then
+        return
+    end
+
+    if Hooked[Object] then
+        return
+    end
+
+    Hooked[Object] = true
+
+    pcall(function()
+
+        Object.Activated:Connect(function()
+            PlaySound()
+        end)
+
+    end)
+end
+
+--========================================================--
+-- HOOK ROOT
+--========================================================--
+
+local function HookRoot(Root)
+
+    if not Root then
+        return
+    end
+
+    pcall(function()
+
+        -- Các nút đang có
+        for _,Object in ipairs(
+            Root:GetDescendants()
+        ) do
+
+            HookButton(Object)
+
+        end
+
+        -- Các nút được tạo sau
+        Root.DescendantAdded:Connect(function(Object)
+
+            HookButton(Object)
+
+        end)
+
+    end)
+end
+
+--========================================================--
+-- PLAYER GUI
+--========================================================--
+
+HookRoot(PlayerGui)
+
+--========================================================--
+-- CORE GUI
+--========================================================--
+
+pcall(function()
+
+    HookRoot(CoreGui)
+
+end)
+
+print("MINH KHA GLOBAL BUTTON SOUND: ON")
+print("Delay:", DELAY, "seconds")
