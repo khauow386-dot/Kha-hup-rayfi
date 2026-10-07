@@ -1,5 +1,5 @@
 -- MINH KHA HUB | MEME SEA 📍
--- Auto Farm Only (Tween Movement) - Rayfield UI
+-- Tối ưu bay mượt (Lerp) + Sàn mỏng + Inf Jump + Tấn công người chơi
 
 print("📍 Loading Minh Kha Hub for Meme Sea...")
 
@@ -10,11 +10,12 @@ local _env = getgenv and getgenv() or {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualUser = game:GetService("VirtualUser")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local Player = Players.LocalPlayer
 
-local rs_Monsters = ReplicatedStorage:WaitForChild("MonsterSpawn")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Modules = ReplicatedStorage:WaitForChild("ModuleScript")
 local OtherEvent = ReplicatedStorage:WaitForChild("OtherEvent")
 local Monsters = workspace:WaitForChild("Monster")
@@ -40,18 +41,13 @@ local CFrame_Angles = CFrame.Angles
 local CFrame_new = CFrame.new
 local _huge = math.huge
 
--- Anti-AFK
-Player.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
-
--- Initialize Data
+-- Khởi tạo dữ liệu
 local Loaded, Funcs = {}, {} do
   Loaded.WeaponsList = { "Fight", "Power", "Weapon" }
   Loaded.EnemeiesList = {}
   Loaded.EnemiesQuests = {}
   Loaded.Quests = {}
+  Loaded.PlayersList = {}
   
   Funcs.GetPlayerLevel = function(self)
     return PlayerLevel.Value
@@ -96,9 +92,27 @@ local Loaded, Funcs = {}, {} do
     table.insert(Loaded.EnemeiesList, v.Enemy)
     Loaded.EnemiesQuests[v.Enemy] = v.NpcName
   end
+
+  for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= Player then
+      table.insert(Loaded.PlayersList, p.Name)
+    end
+  end
+  Players.PlayerAdded:Connect(function(p)
+    if p ~= Player then
+      table.insert(Loaded.PlayersList, p.Name)
+    end
+  end)
+  Players.PlayerRemoving:Connect(function(p)
+    for i, name in ipairs(Loaded.PlayersList) do
+      if name == p.Name then
+        table.remove(Loaded.PlayersList, i)
+      end
+    end
+  end)
 end
 
--- Settings
+-- Cài đặt
 local Settings = {} do
   Settings.AutoStats_Points = 1
   Settings.BringMobs = true
@@ -106,11 +120,69 @@ local Settings = {} do
   Settings.AutoHaki = true
   Settings.AutoClick = true
   Settings.ToolFarm = "Fight"
-  Settings.TweenSpeed = 300 -- Tốc độ bay (càng cao bay càng nhanh, chỉnh thấp lại để bay mượt giống người chơi thật)
+  Settings.FlightSpeed = 300 -- Tốc độ bay mượt
   Settings.FarmCFrame = CFrame_new(0, Settings.FarmDistance, 0) * CFrame_Angles(math.rad(-90), 0, 0)
+  
+  -- Tính năng người chơi
+  Settings.InfJump = false
+  Settings.ThinFloor = true
+  Settings.TargetPlayerName = ""
+  Settings.AttackPlayer = false
 end
 
--- Helper Functions
+-- Sàn mỏng (Thin Floor)
+local THIN_HEIGHT = 0.15
+local PLATFORM_SIZE = Vector3.new(8, THIN_HEIGHT, 8)
+local floorDown = 3.05
+local platform
+
+local function createPlatform()
+    if platform then platform:Destroy() end
+    platform = Instance.new("Part")
+    platform.Name = "MinhKha_ThinFloor"
+    platform.Size = PLATFORM_SIZE
+    platform.Anchored = true
+    platform.CanCollide = true
+    platform.CanTouch = false
+    platform.CanQuery = false
+    platform.Transparency = 0.15
+    platform.Material = Enum.Material.SmoothPlastic
+    platform.Parent = workspace
+end
+
+local function removePlatform()
+    if platform then
+        platform:Destroy()
+        platform = nil
+    end
+end
+
+local function getSafeFloorY(root)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    local ignore = { Player.Character }
+    if platform then table.insert(ignore, platform) end
+    params.FilterDescendantsInstances = ignore
+    params.IgnoreWater = false
+
+    local origin = root.Position + Vector3.new(0, 2, 0)
+    local result = workspace:Raycast(origin, Vector3.new(0, -500, 0), params)
+    if result then return result.Position.Y end
+    return nil
+end
+
+-- Nhảy vô hạn
+UserInputService.JumpRequest:Connect(function()
+    if Settings.InfJump then
+        local Char = Player.Character
+        if Char then
+            local Hum = Char:FindFirstChildOfClass("Humanoid")
+            if Hum then Hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        end
+    end
+end)
+
+-- Tiện ích chung
 local function PlayerClick()
   local Char = Player.Character
   if Char then
@@ -140,24 +212,24 @@ local function GetNextEnemie(EnemieName)
   return false
 end
 
--- Thay đổi cơ chế từ Teleport sang bay mượt (Tween)
-local CurrentTween = nil
+-- Hệ thống bay mượt mà bằng CFrame Lerp (Không giật, giữ nguyên tốc độ đánh)
 local function GoTo(TargetCFrame)
   local Char = Player.Character
   if IsAlive(Char) and Char:FindFirstChild("HumanoidRootPart") then
     local RootPart = Char.HumanoidRootPart
-    local Distance = (RootPart.Position - TargetCFrame.p).Magnitude
+    local CurrentPos = RootPart.CFrame
+    local Distance = (CurrentPos.p - TargetCFrame.p).Magnitude
     
-    if CurrentTween then
-      CurrentTween:Cancel()
+    if Distance < 5 then
+      RootPart.CFrame = TargetCFrame
+      RootPart.AssemblyLinearVelocity = Vector3.new(0,0,0)
+      return
     end
-    
-    local Speed = Settings.TweenSpeed or 300
-    local Time = Distance / Speed
-    
-    local TweenInfoObj = TweenInfo.new(Time, Enum.EasingStyle.Linear)
-    CurrentTween = TweenService:Create(RootPart, TweenInfoObj, {CFrame = TargetCFrame})
-    CurrentTween:Play()
+
+    local Speed = Settings.FlightSpeed or 300
+    local Step = math.min(1, (Speed * RunService.RenderStepped:Wait()) / Distance)
+    RootPart.CFrame = CurrentPos:Lerp(TargetCFrame, Step)
+    RootPart.AssemblyLinearVelocity = Vector3.new(0,0,0)
   end
 end
 
@@ -227,7 +299,7 @@ local function VerifyQuest(QName)
   return Quest and Quest.QuestGiver.Value == QName
 end
 
--- Farm Functions
+-- Chức năng Auto Farm
 _env.FarmFuncs = {
   {"Level Farm", (function()
     local Quest, QuestChecker = Funcs:GetCurrentQuest(), Funcs:CheckQuest()
@@ -248,166 +320,190 @@ _env.FarmFuncs = {
     local Quest = Loaded.EnemiesQuests[Enemy]
     if VerifyQuest(Quest) or not _env["FS Take Quest"] then
       if KillMonster(Enemy) then else GoTo(EnemyLocation[Enemy].CFrame) end
-    else ClearQuests(Quest)TakeQuest(Quest) end
+    else ClearQuests(Quest) TakeQuest(Quest) end
     return true
   end)},
   {"Nearest Farm", (function() return KillMonster(GetNextEnemie()) end)}
 }
 
--- Start Farm Loop
+-- Vòng lặp chính xử lý Auto Farm và Tấn công người chơi
 if not _env.LoadedFarm then
   _env.LoadedFarm = true
   task.spawn(function()
     while _wait() do
-      for _,f in _env.FarmFuncs do
-        if _env[f[1]] then 
-          local s,r=pcall(f[2])
-          if s and r then break end
+      if Settings.AttackPlayer and Settings.TargetPlayerName ~= "" then
+        pcall(function()
+          local TargetP = Players:FindFirstChild(Settings.TargetPlayerName)
+          if TargetP and TargetP.Character and IsAlive(TargetP.Character) and TargetP.Character:FindFirstChild("HumanoidRootPart") then
+            GoTo(TargetP.Character.HumanoidRootPart.CFrame * CFrame_new(0, Settings.FarmDistance, 0) * CFrame_Angles(math.rad(-90), 0, 0))
+            EquipWeapon()
+            PlayerClick()
+          end
+        end)
+      else
+        for _,f in _env.FarmFuncs do
+          if _env[f[1]] then 
+            local s,r = pcall(f[2])
+            if s and r then break end
+          end
         end
       end
     end
   end)
 end
 
--- Load Rayfield UI
+-- Render loop sàn mỏng chống rơi
+RunService.RenderStepped:Connect(function()
+    if not Settings.ThinFloor then
+        if platform then removePlatform() end
+        return
+    end
+
+    local character = Player.Character
+    if not character then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    if not platform then createPlatform() end
+
+    local wantedY = root.Position.Y - floorDown
+    local gameFloorY = getSafeFloorY(root)
+
+    if gameFloorY then
+        local minimumY = gameFloorY + (THIN_HEIGHT / 2)
+        if wantedY < minimumY then wantedY = minimumY end
+    end
+
+    platform.CFrame = CFrame.new(root.Position.X, wantedY, root.Position.Z)
+end)
+
+-- Giao diện Rayfield UI (Tiếng Việt 100%)
 print("Loading Rayfield UI...")
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
     Name = "📍 Minh Kha Hub | Meme Sea",
-    LoadingTitle = "Minh Kha Hub Loading...",
-    LoadingSubtitle = "by Minh Kha",
+    LoadingTitle = "Minh Kha Hub Đang Tải...",
+    LoadingSubtitle = "bởi Minh Kha",
     ConfigurationSaving = {
         Enabled = true,
         FolderName = "MinhKhaHub",
         FileName = "MemeSeaRayfield"
     },
     Discord = {
-        Enabled = true,
-        Invite = "w7mpnRStv3",
-        RememberJoins = true
+        Enabled = false,
+        Invite = "",
+        RememberJoins = false
     },
     KeySystem = false
 })
 
--- Create Tabs
-local MainTab = Window:CreateTab("⚔️ Auto Farm", "swords")
-local SettingsTab = Window:CreateTab("⚙️ Settings", "settings")
+local MainTab = Window:CreateTab("⚔️ Tự Động Cày", "swords")
+local PlayersTab = Window:CreateTab("👥 Người Chơi", "users")
+local SettingsTab = Window:CreateTab("⚙️ Cài Đặt", "settings")
 
--- MAIN TAB
+-- TAB CÀY CẤP ĐỘ
 MainTab:CreateParagraph({
     Title = "📍 Minh Kha Hub | Meme Sea",
-    Content = "Auto farm levels, enemies, and more with Smooth Flight mechanism!"
+    Content = "Tự động cày cấp độ, quái và các tính năng hỗ trợ người chơi!"
 })
 
 local StatsLabel = MainTab:CreateParagraph({
-    Title = "📊 Current Stats",
-    Content = string.format("Level: %i / %i\nFarm Tool: %s", PlayerLevel.Value, MSetting.Setting.MaxLevel, Settings.ToolFarm)
+    Title = "📊 Chỉ Số Hiện Tại",
+    Content = string.format("Cấp độ: %i / %i\nVũ khí cày: %s", PlayerLevel.Value, MSetting.Setting.MaxLevel, Settings.ToolFarm)
 })
 
 task.spawn(function()
     while _wait(5) do
         pcall(function()
             StatsLabel:Set({
-                Title = "📊 Current Stats",
-                Content = string.format("Level: %i / %i\nFarm Tool: %s", PlayerLevel.Value, MSetting.Setting.MaxLevel, Settings.ToolFarm)
+                Title = "📊 Chỉ Số Hiện Tại",
+                Content = string.format("Cấp độ: %i / %i\nVũ khí cày: %s", PlayerLevel.Value, MSetting.Setting.MaxLevel, Settings.ToolFarm)
             })
         end)
     end
 end)
 
-MainTab:CreateButton({
-    Name = "🎮 Join Discord",
-    Callback = function()
-        setclipboard("https://discord.gg/w7mpnRStv3")
-        Rayfield:Notify({
-            Title = "Discord Copied!",
-            Content = "Discord invite copied to clipboard!",
-            Duration = 3
-        })
-    end
-})
-
-MainTab:CreateSection("Farm Configuration")
+MainTab:CreateSection("Cấu Hình Cày")
 
 MainTab:CreateDropdown({
-    Name = "⚔️ Farm Tool",
+    Name = "⚔️ Vũ Khí Cày",
     Options = Loaded.WeaponsList,
     CurrentOption = Settings.ToolFarm,
     Flag = "FarmTool",
     Callback = function(Option)
         Settings.ToolFarm = Option[1]
         Rayfield:Notify({
-            Title = "Farm Tool Changed!",
-            Content = "Now using: " .. Settings.ToolFarm,
+            Title = "Đã đổi vũ khí!",
+            Content = "Đang dùng: " .. Settings.ToolFarm,
             Duration = 2
         })
     end,
 })
 
-MainTab:CreateSection("Auto Farm Options")
+MainTab:CreateSection("Tùy Chọn Cày")
 
 MainTab:CreateToggle({
-    Name = "⚔️ Auto Farm Level",
+    Name = "⚔️ Tự Động Cày Cấp Độ",
     CurrentValue = false,
     Flag = "LevelFarm",
     Callback = function(Value)
         _env["Level Farm"] = Value
         Rayfield:Notify({
-            Title = Value and "Level Farm ON!" or "Level Farm OFF",
-            Content = Value and "Auto farming levels" or "Stopped level farming",
+            Title = Value and "Bật Cày Cấp Độ!" or "Tắt Cày Cấp Độ",
+            Content = Value and "⚔️ Tự Động Cày Cấp Độ" or "",
             Duration = 3
         })
     end,
 })
 
 MainTab:CreateToggle({
-    Name = "🎯 Auto Farm Nearest",
+    Name = "🎯 Cày Quái Gần Nhất",
     CurrentValue = false,
     Flag = "NearestFarm",
     Callback = function(Value)
         _env["Nearest Farm"] = Value
         Rayfield:Notify({
-            Title = Value and "Nearest Farm ON!" or "Nearest Farm OFF",
-            Content = Value and "Farming nearest enemies" or "Stopped farming",
+            Title = Value and "Bật Cày Gần Nhất!" or "Tắt Cày Gần Nhất",
+            Content = Value and "🎯 Cày Quái Gần Nhất" or "",
             Duration = 3
         })
     end,
 })
 
-MainTab:CreateSection("Enemy Select Farm")
+MainTab:CreateSection("Cày Quái Chỉ Định")
 
 MainTab:CreateDropdown({
-    Name = "🐉 Select Enemy",
+    Name = "🐉 Chọn Quái Muốn Cày",
     Options = Loaded.EnemeiesList,
     CurrentOption = Loaded.EnemeiesList[1] or "",
     Flag = "SelectEnemy",
     Callback = function(Option)
         _env.SelecetedEnemie = Option[1]
         Rayfield:Notify({
-            Title = "Enemy Selected!",
-            Content = "Selected: " .. (_env.SelecetedEnemie or "None"),
+            Title = "Đã chọn quái!",
+            Content = "Đã chọn: " .. (_env.SelecetedEnemie or "Không"),
             Duration = 2
         })
     end,
 })
 
 MainTab:CreateToggle({
-    Name = "⚔️ Auto Farm Selected Enemy",
+    Name = "⚔️ Cày Quái Đã Chọn",
     CurrentValue = false,
     Flag = "EnemyFarm",
     Callback = function(Value)
         _env["FS Enemie"] = Value
         Rayfield:Notify({
-            Title = Value and "Enemy Farm ON!" or "Enemy Farm OFF",
-            Content = Value and ("Farming: " .. (_env.SelecetedEnemie or "None")) or "Stopped farming",
+            Title = Value and "Bật Cày Quái Chọn!" or "Tắt Cày Quái Chọn",
+            Content = Value and ("Đang cày: " .. (_env.SelecetedEnemie or "Không")) or "",
             Duration = 3
         })
     end,
 })
 
 MainTab:CreateToggle({
-    Name = "📜 Take Quest (Selected Enemy)",
+    Name = "📜 Nhận Nhiệm Vụ (Quái Chọn)",
     CurrentValue = true,
     Flag = "TakeQuest",
     Callback = function(Value)
@@ -415,26 +511,91 @@ MainTab:CreateToggle({
     end,
 })
 
--- SETTINGS TAB
-SettingsTab:CreateParagraph({
-    Title = "⚙️ Farm Settings",
-    Content = "Configure farming behavior, flight speed, and preferences"
+-- TAB NGƯỜI CHƠI (Inf Jump, Thin Floor, Attack Player)
+PlayersTab:CreateParagraph({
+    Title = "👥 Tính Năng Người Chơi & Sàn Mỏng",
+    Content = "Quản lý nhảy vô hạn, sàn mỏng chống rơi và tính năng công kích người chơi khác."
 })
 
-SettingsTab:CreateSection("Flight / Movement Settings")
-
-SettingsTab:CreateSlider({
-    Name = "🚀 Flight Speed (Tốc độ bay)",
-    Range = {100, 500},
-    Increment = 10,
-    CurrentValue = Settings.TweenSpeed,
-    Flag = "TweenSpeed",
+PlayersTab:CreateToggle({
+    Name = "🚀 Nhảy Vô Hạn (Inf Jump)",
+    CurrentValue = false,
+    Flag = "InfJumpToggle",
     Callback = function(Value)
-        Settings.TweenSpeed = Value
+        Settings.InfJump = Value
     end,
 })
 
-SettingsTab:CreateSection("Auto Stats Upgrade")
+PlayersTab:CreateToggle({
+    Name = "🧱 Sàn Mỏng Chống Rơi (Thin Floor)",
+    CurrentValue = Settings.ThinFloor,
+    Flag = "ThinFloorToggle",
+    Callback = function(Value)
+        Settings.ThinFloor = Value
+        if not Value then removePlatform() end
+    end,
+})
+
+PlayersTab:CreateSection("PvP / Tấn Công Người Chơi")
+
+PlayersTab:CreateDropdown({
+    Name = "🎯 Chọn Người Chơi Để Đánh",
+    Options = Loaded.PlayersList,
+    CurrentOption = Loaded.PlayersList[1] or "",
+    Flag = "TargetPlayerDropdown",
+    Callback = function(Option)
+        Settings.TargetPlayerName = Option[1]
+        Rayfield:Notify({
+            Title = "Đã chọn người chơi!",
+            Content = "Mục tiêu: " .. Settings.TargetPlayerName,
+            Duration = 2
+        })
+    end,
+})
+
+PlayersTab:CreateToggle({
+    Name = "⚔️ Tự Động Bay Đến Tấn Công Người Chơi",
+    CurrentValue = false,
+    Flag = "AttackPlayerToggle",
+    Callback = function(Value)
+        Settings.AttackPlayer = Value
+        Rayfield:Notify({
+            Title = Value and "Bật Tấn Công Người Chơi" or "Tắt Tấn Công Người Chơi",
+            Content = Value and ("Đang nhắm tới: " .. Settings.TargetPlayerName) or "Đã dừng",
+            Duration = 3
+        })
+    end,
+})
+
+-- TAB CÀI ĐẶT
+SettingsTab:CreateParagraph({
+    Title = "⚙️ Cài Đặt Cày",
+    Content = "Tùy chỉnh hành vi cày, tốc độ bay và nâng chỉ số."
+})
+
+SettingsTab:CreateButton({
+    Name = "🗑️ Xóa Menu (Unload UI)",
+    Callback = function()
+        removePlatform()
+        Rayfield:Destroy()
+        print("🗑️ Minh Kha Hub đã được gỡ khỏi màn hình.")
+    end,
+})
+
+SettingsTab:CreateSection("Cài Đặt Bay & Di Chuyển")
+
+SettingsTab:CreateSlider({
+    Name = "🚀 Tốc Độ Bay",
+    Range = {100, 500},
+    Increment = 10,
+    CurrentValue = Settings.FlightSpeed,
+    Flag = "FlightSpeed",
+    Callback = function(Value)
+        Settings.FlightSpeed = Value
+    end,
+})
+
+SettingsTab:CreateSection("Tự Động Nâng Chỉ Số")
 
 local StatsName = {
     ["Power"] = "MemePowerLevel", 
@@ -446,7 +607,7 @@ local StatsName = {
 local SelectedStats = {}
 
 SettingsTab:CreateSlider({
-    Name = "📊 Points Per Upgrade",
+    Name = "📊 Điểm Nâng Mỗi Lần",
     Range = {1, 100},
     Increment = 1,
     CurrentValue = 1,
@@ -457,15 +618,15 @@ SettingsTab:CreateSlider({
 })
 
 SettingsTab:CreateToggle({
-    Name = "📈 Auto Stats",
+    Name = "📈 Tự Động Nâng Chỉ Số",
     CurrentValue = false,
     Flag = "AutoStats",
     Callback = function(Value)
         _env.AutoStats = Value
         if Value then
             Rayfield:Notify({
-                Title = "Auto Stats ON!",
-                Content = "Upgrading selected stats automatically",
+                Title = "Bật Tự Động Nâng Chỉ Số!",
+                Content = "📈 Tự Động Nâng Chỉ Số",
                 Duration = 3
             })
         end
@@ -488,70 +649,70 @@ SettingsTab:CreateToggle({
     end,
 })
 
-SettingsTab:CreateSection("Select Stats to Upgrade")
+SettingsTab:CreateSection("Chọn Chỉ Số Để Nâng")
 
 SettingsTab:CreateToggle({
-    Name = "⚡ Power",
+    Name = "⚡ Sức Mạnh (Power)",
     CurrentValue = false,
     Flag = "PowerStats",
     Callback = function(Value) SelectedStats["Power"] = Value end,
 })
 
 SettingsTab:CreateToggle({
-    Name = "❤️ Health",
+    Name = "❤️ Máu / Phòng Thủ (Health)",
     CurrentValue = false,
     Flag = "HealthStats",
     Callback = function(Value) SelectedStats["Health"] = Value end,
 })
 
 SettingsTab:CreateToggle({
-    Name = "⚔️ Weapon",
+    Name = "⚔️ Kiếm / Vũ Khí (Weapon)",
     CurrentValue = false,
     Flag = "WeaponStats",
     Callback = function(Value) SelectedStats["Weapon"] = Value end,
 })
 
 SettingsTab:CreateToggle({
-    Name = "👊 Melee",
+    Name = "👊 Cận Chiến (Melee)",
     CurrentValue = false,
     Flag = "MeleeStats",
     Callback = function(Value) SelectedStats["Melee"] = Value end,
 })
 
-SettingsTab:CreateSection("Combat Settings")
+SettingsTab:CreateSection("Cài Đặt Chiến Đấu")
 
 SettingsTab:CreateToggle({
-    Name = "🧲 Bring Mobs",
+    Name = "🧲 Kéo Quái (Bring Mobs)",
     CurrentValue = Settings.BringMobs,
     Flag = "BringMobs",
     Callback = function(Value)
         Settings.BringMobs = Value
         Rayfield:Notify({
-            Title = Value and "Bring Mobs ON!" or "Bring Mobs OFF",
-            Content = Value and "Teleporting mobs to you" or "Disabled mob bringing",
+            Title = Value and "Bật Kéo Quái!" or "Tắt Kéo Quái",
+            Content = "🧲 Kéo Quái",
             Duration = 2
         })
     end,
 })
 
 SettingsTab:CreateToggle({
-    Name = "✨ Auto Haki",
+    Name = "✨ Tự Động Haki",
     CurrentValue = Settings.AutoHaki,
     Flag = "AutoHaki",
     Callback = function(Value) Settings.AutoHaki = Value end,
 })
 
 SettingsTab:CreateToggle({
-    Name = "⚔️ Auto Attack",
+    Name = "⚔️ Tự Động Đánh",
     CurrentValue = Settings.AutoClick,
     Flag = "AutoAttack",
     Callback = function(Value) Settings.AutoClick = Value end,
 })
 
-SettingsTab:CreateSection("Distance Settings")
+SettingsTab:CreateSection("Cài Đặt Khoảng Cách")
 
 SettingsTab:CreateSlider({
-    Name = "📏 Farm Distance",
+    Name = "📏 Khoảng Cách Cày",
     Range = {5, 15},
     Increment = 1,
     CurrentValue = Settings.FarmDistance,
@@ -565,9 +726,9 @@ SettingsTab:CreateSlider({
 Rayfield:LoadConfiguration()
 
 Rayfield:Notify({
-    Title = "📍 Minh Kha Hub Loaded!",
-    Content = "Meme Sea Auto Farm ready with Smooth Flight!",
+    Title = "📍 Minh Kha Hub | Meme Sea",
+    Content = "Minh Kha Hub đã tải xong!",
     Duration = 5
 })
 
-print("✅ Minh Kha Hub fully loaded!")
+print("✅ Minh Kha Hub fully loaded (Smooth Flight, Vietnamese only)!")
