@@ -1,0 +1,573 @@
+-- MINH KHA HUB | MEME SEA 📍
+-- Auto Farm Only (Tween Movement) - Rayfield UI
+
+print("📍 Loading Minh Kha Hub for Meme Sea...")
+
+local _wait = task.wait
+repeat _wait() until game:IsLoaded()
+local _env = getgenv and getgenv() or {}
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local Player = Players.LocalPlayer
+
+local rs_Monsters = ReplicatedStorage:WaitForChild("MonsterSpawn")
+local Modules = ReplicatedStorage:WaitForChild("ModuleScript")
+local OtherEvent = ReplicatedStorage:WaitForChild("OtherEvent")
+local Monsters = workspace:WaitForChild("Monster")
+
+local MQuestSettings = require(Modules:WaitForChild("Quest_Settings"))
+local MSetting = require(Modules:WaitForChild("Setting"))
+
+local NPCs = workspace:WaitForChild("NPCs")
+local Location = workspace:WaitForChild("Location")
+
+local Quests_Npc = NPCs:WaitForChild("Quests_Npc")
+local EnemyLocation = Location:WaitForChild("Enemy_Location")
+local QuestLocation = Location:WaitForChild("QuestLocaion")
+
+local QuestFolder = Player:WaitForChild("QuestFolder")
+local Ability = Player:WaitForChild("Ability")
+local PlayerData = Player:WaitForChild("PlayerData")
+local PlayerLevel = PlayerData:WaitForChild("Level")
+
+local sethiddenproperty = sethiddenproperty or (function()end)
+
+local CFrame_Angles = CFrame.Angles
+local CFrame_new = CFrame.new
+local _huge = math.huge
+
+-- Anti-AFK
+Player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Initialize Data
+local Loaded, Funcs = {}, {} do
+  Loaded.WeaponsList = { "Fight", "Power", "Weapon" }
+  Loaded.EnemeiesList = {}
+  Loaded.EnemiesQuests = {}
+  Loaded.Quests = {}
+  
+  Funcs.GetPlayerLevel = function(self)
+    return PlayerLevel.Value
+  end
+  
+  Funcs.GetCurrentQuest = function(self)
+    for _,Quest in pairs(Loaded.Quests) do
+      if Quest.Level <= self:GetPlayerLevel() and not Quest.RaidBoss and not Quest.SpecialQuest then
+        return Quest
+      end
+    end
+  end
+  
+  Funcs.CheckQuest = function(self)
+    for _,v in ipairs(QuestFolder:GetChildren()) do
+      if v.Target.Value ~= "None" then
+        return v
+      end
+    end
+  end
+  
+  Funcs.AbilityUnlocked = function(self, Ablt)
+    return Ability:FindFirstChild(Ablt) and Ability[Ablt].Value
+  end
+  
+  for Npc,Quest in pairs(MQuestSettings) do
+    if QuestLocation:FindFirstChild(Npc) then
+      table.insert(Loaded.Quests, {
+        RaidBoss = Quest.Raid_Boss,
+        SpecialQuest = Quest.Special_Quest,
+        QuestPos = QuestLocation[Npc].CFrame,
+        EnemyPos = EnemyLocation[Quest.Target].CFrame,
+        Level = Quest.LevelNeed,
+        Enemy = Quest.Target,
+        NpcName = Npc
+      })
+    end
+  end
+  
+  table.sort(Loaded.Quests, function(a, b) return a.Level > b.Level end)
+  for _,v in ipairs(Loaded.Quests) do
+    table.insert(Loaded.EnemeiesList, v.Enemy)
+    Loaded.EnemiesQuests[v.Enemy] = v.NpcName
+  end
+end
+
+-- Settings
+local Settings = {} do
+  Settings.AutoStats_Points = 1
+  Settings.BringMobs = true
+  Settings.FarmDistance = 9
+  Settings.AutoHaki = true
+  Settings.AutoClick = true
+  Settings.ToolFarm = "Fight"
+  Settings.TweenSpeed = 300 -- Tốc độ bay (càng cao bay càng nhanh, chỉnh thấp lại để bay mượt giống người chơi thật)
+  Settings.FarmCFrame = CFrame_new(0, Settings.FarmDistance, 0) * CFrame_Angles(math.rad(-90), 0, 0)
+end
+
+-- Helper Functions
+local function PlayerClick()
+  local Char = Player.Character
+  if Char then
+    if Settings.AutoClick then
+      VirtualUser:CaptureController()
+      VirtualUser:Button1Down(Vector2.new(1e4, 1e4))
+    end
+    if Settings.AutoHaki and Char:FindFirstChild("AuraColor_Folder") and Funcs:AbilityUnlocked("Aura") then
+      if #Char.AuraColor_Folder:GetChildren() < 1 then
+        OtherEvent.MainEvents.Ability:InvokeServer("Aura")
+      end
+    end
+  end
+end
+
+local function IsAlive(Char)
+  local Hum = Char and Char:FindFirstChild("Humanoid")
+  return Hum and Hum.Health > 0
+end
+
+local function GetNextEnemie(EnemieName)
+  for _,v in ipairs(Monsters:GetChildren()) do
+    if (not EnemieName or v.Name == EnemieName) and IsAlive(v) then
+      return v
+    end
+  end
+  return false
+end
+
+-- Thay đổi cơ chế từ Teleport sang bay mượt (Tween)
+local CurrentTween = nil
+local function GoTo(TargetCFrame)
+  local Char = Player.Character
+  if IsAlive(Char) and Char:FindFirstChild("HumanoidRootPart") then
+    local RootPart = Char.HumanoidRootPart
+    local Distance = (RootPart.Position - TargetCFrame.p).Magnitude
+    
+    if CurrentTween then
+      CurrentTween:Cancel()
+    end
+    
+    local Speed = Settings.TweenSpeed or 300
+    local Time = Distance / Speed
+    
+    local TweenInfoObj = TweenInfo.new(Time, Enum.EasingStyle.Linear)
+    CurrentTween = TweenService:Create(RootPart, TweenInfoObj, {CFrame = TargetCFrame})
+    CurrentTween:Play()
+  end
+end
+
+local function EquipWeapon()
+  local Backpack, Char = Player:FindFirstChild("Backpack"), Player.Character
+  if IsAlive(Char) and Backpack then
+    for _,v in ipairs(Backpack:GetChildren()) do
+      if v:IsA("Tool") and v.ToolTip:find(Settings.ToolFarm) then
+        Char.Humanoid:EquipTool(v)
+        return
+      end
+    end
+    for _,v in ipairs(Char:GetChildren()) do
+      if v:IsA("Tool") and v.ToolTip:find(Settings.ToolFarm) then
+        return
+      end
+    end
+  end
+end
+
+local function BringMobsTo(_Enemie, CFrame)
+  for _,v in ipairs(Monsters:GetChildren()) do
+    if v.Name == _Enemie and IsAlive(v) then
+      local PP, Hum = v.PrimaryPart, v.Humanoid
+      if PP and (PP.Position - CFrame.p).Magnitude < 500 then
+        Hum.WalkSpeed = 0
+        Hum:ChangeState(14)
+        PP.CFrame = CFrame
+        PP.CanCollide = false
+        PP.Transparency = 1
+        PP.Size = Vector3.new(50, 50, 50)
+      end
+    end
+  end
+  return pcall(sethiddenproperty, Player, "SimulationRadius", _huge)
+end
+
+local function KillMonster(_Enemie)
+  local Enemy = typeof(_Enemie) == "Instance" and _Enemie or GetNextEnemie(_Enemie)
+  if IsAlive(Enemy) and Enemy.PrimaryPart then
+    GoTo(Enemy.PrimaryPart.CFrame * Settings.FarmCFrame)
+    EquipWeapon()
+    if not Enemy:FindFirstChild("Reverse_Mark") then PlayerClick() end
+    if Settings.BringMobs then BringMobsTo(_Enemie, Enemy.PrimaryPart.CFrame) end
+    return true
+  end
+end
+
+local function TakeQuest(QuestName, CFrame)
+  local QuestGiver = Quests_Npc:FindFirstChild(QuestName)
+  if QuestGiver and Player:DistanceFromCharacter(QuestGiver.WorldPivot.p) < 5 then
+    return fireproximityprompt(QuestGiver.Block.QuestPrompt), _wait(0.1)
+  end
+  GoTo(CFrame or QuestLocation[QuestName].CFrame)
+end
+
+local function ClearQuests(Ignore)
+  for _,v in ipairs(QuestFolder:GetChildren()) do
+    if v.QuestGiver.Value ~= Ignore and v.Target.Value ~= "None" then
+      OtherEvent.QuestEvents.Quest:FireServer("Abandon_Quest", { QuestSlot = v.Name })
+    end
+  end
+end
+
+local function VerifyQuest(QName)
+  local Quest = Funcs:CheckQuest()
+  return Quest and Quest.QuestGiver.Value == QName
+end
+
+-- Farm Functions
+_env.FarmFuncs = {
+  {"Level Farm", (function()
+    local Quest, QuestChecker = Funcs:GetCurrentQuest(), Funcs:CheckQuest()
+    if Quest then
+      if QuestChecker then
+        local _QuestName = QuestChecker.QuestGiver.Value
+        if _QuestName == Quest.NpcName then
+          if KillMonster(Quest.Enemy) then else GoTo(Quest.EnemyPos) end
+        else
+          if KillMonster(QuestChecker.Target.Value) then else GoTo(QuestLocation[_QuestName].CFrame) end
+        end
+      else TakeQuest(Quest.NpcName) end
+    end
+    return true
+  end)},
+  {"FS Enemie", (function()
+    local Enemy = _env.SelecetedEnemie
+    local Quest = Loaded.EnemiesQuests[Enemy]
+    if VerifyQuest(Quest) or not _env["FS Take Quest"] then
+      if KillMonster(Enemy) then else GoTo(EnemyLocation[Enemy].CFrame) end
+    else ClearQuests(Quest)TakeQuest(Quest) end
+    return true
+  end)},
+  {"Nearest Farm", (function() return KillMonster(GetNextEnemie()) end)}
+}
+
+-- Start Farm Loop
+if not _env.LoadedFarm then
+  _env.LoadedFarm = true
+  task.spawn(function()
+    while _wait() do
+      for _,f in _env.FarmFuncs do
+        if _env[f[1]] then 
+          local s,r=pcall(f[2])
+          if s and r then break end
+        end
+      end
+    end
+  end)
+end
+
+-- Load Rayfield UI
+print("Loading Rayfield UI...")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "📍 Minh Kha Hub | Meme Sea",
+    LoadingTitle = "Minh Kha Hub Loading...",
+    LoadingSubtitle = "by Minh Kha",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MinhKhaHub",
+        FileName = "MemeSeaRayfield"
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "w7mpnRStv3",
+        RememberJoins = true
+    },
+    KeySystem = false
+})
+
+-- Create Tabs
+local MainTab = Window:CreateTab("⚔️ Auto Farm", "swords")
+local SettingsTab = Window:CreateTab("⚙️ Settings", "settings")
+
+-- MAIN TAB
+MainTab:CreateParagraph({
+    Title = "📍 Minh Kha Hub | Meme Sea",
+    Content = "Auto farm levels, enemies, and more with Smooth Flight mechanism!"
+})
+
+local StatsLabel = MainTab:CreateParagraph({
+    Title = "📊 Current Stats",
+    Content = string.format("Level: %i / %i\nFarm Tool: %s", PlayerLevel.Value, MSetting.Setting.MaxLevel, Settings.ToolFarm)
+})
+
+task.spawn(function()
+    while _wait(5) do
+        pcall(function()
+            StatsLabel:Set({
+                Title = "📊 Current Stats",
+                Content = string.format("Level: %i / %i\nFarm Tool: %s", PlayerLevel.Value, MSetting.Setting.MaxLevel, Settings.ToolFarm)
+            })
+        end)
+    end
+end)
+
+MainTab:CreateButton({
+    Name = "🎮 Join Discord",
+    Callback = function()
+        setclipboard("https://discord.gg/w7mpnRStv3")
+        Rayfield:Notify({
+            Title = "Discord Copied!",
+            Content = "Discord invite copied to clipboard!",
+            Duration = 3
+        })
+    end
+})
+
+MainTab:CreateSection("Farm Configuration")
+
+MainTab:CreateDropdown({
+    Name = "⚔️ Farm Tool",
+    Options = Loaded.WeaponsList,
+    CurrentOption = Settings.ToolFarm,
+    Flag = "FarmTool",
+    Callback = function(Option)
+        Settings.ToolFarm = Option[1]
+        Rayfield:Notify({
+            Title = "Farm Tool Changed!",
+            Content = "Now using: " .. Settings.ToolFarm,
+            Duration = 2
+        })
+    end,
+})
+
+MainTab:CreateSection("Auto Farm Options")
+
+MainTab:CreateToggle({
+    Name = "⚔️ Auto Farm Level",
+    CurrentValue = false,
+    Flag = "LevelFarm",
+    Callback = function(Value)
+        _env["Level Farm"] = Value
+        Rayfield:Notify({
+            Title = Value and "Level Farm ON!" or "Level Farm OFF",
+            Content = Value and "Auto farming levels" or "Stopped level farming",
+            Duration = 3
+        })
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "🎯 Auto Farm Nearest",
+    CurrentValue = false,
+    Flag = "NearestFarm",
+    Callback = function(Value)
+        _env["Nearest Farm"] = Value
+        Rayfield:Notify({
+            Title = Value and "Nearest Farm ON!" or "Nearest Farm OFF",
+            Content = Value and "Farming nearest enemies" or "Stopped farming",
+            Duration = 3
+        })
+    end,
+})
+
+MainTab:CreateSection("Enemy Select Farm")
+
+MainTab:CreateDropdown({
+    Name = "🐉 Select Enemy",
+    Options = Loaded.EnemeiesList,
+    CurrentOption = Loaded.EnemeiesList[1] or "",
+    Flag = "SelectEnemy",
+    Callback = function(Option)
+        _env.SelecetedEnemie = Option[1]
+        Rayfield:Notify({
+            Title = "Enemy Selected!",
+            Content = "Selected: " .. (_env.SelecetedEnemie or "None"),
+            Duration = 2
+        })
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "⚔️ Auto Farm Selected Enemy",
+    CurrentValue = false,
+    Flag = "EnemyFarm",
+    Callback = function(Value)
+        _env["FS Enemie"] = Value
+        Rayfield:Notify({
+            Title = Value and "Enemy Farm ON!" or "Enemy Farm OFF",
+            Content = Value and ("Farming: " .. (_env.SelecetedEnemie or "None")) or "Stopped farming",
+            Duration = 3
+        })
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "📜 Take Quest (Selected Enemy)",
+    CurrentValue = true,
+    Flag = "TakeQuest",
+    Callback = function(Value)
+        _env["FS Take Quest"] = Value
+    end,
+})
+
+-- SETTINGS TAB
+SettingsTab:CreateParagraph({
+    Title = "⚙️ Farm Settings",
+    Content = "Configure farming behavior, flight speed, and preferences"
+})
+
+SettingsTab:CreateSection("Flight / Movement Settings")
+
+SettingsTab:CreateSlider({
+    Name = "🚀 Flight Speed (Tốc độ bay)",
+    Range = {100, 500},
+    Increment = 10,
+    CurrentValue = Settings.TweenSpeed,
+    Flag = "TweenSpeed",
+    Callback = function(Value)
+        Settings.TweenSpeed = Value
+    end,
+})
+
+SettingsTab:CreateSection("Auto Stats Upgrade")
+
+local StatsName = {
+    ["Power"] = "MemePowerLevel", 
+    ["Health"] = "DefenseLevel",
+    ["Weapon"] = "SwordLevel", 
+    ["Melee"] = "MeleeLevel"
+}
+
+local SelectedStats = {}
+
+SettingsTab:CreateSlider({
+    Name = "📊 Points Per Upgrade",
+    Range = {1, 100},
+    Increment = 1,
+    CurrentValue = 1,
+    Flag = "StatsPoints",
+    Callback = function(Value)
+        Settings.AutoStats_Points = Value
+    end,
+})
+
+SettingsTab:CreateToggle({
+    Name = "📈 Auto Stats",
+    CurrentValue = false,
+    Flag = "AutoStats",
+    Callback = function(Value)
+        _env.AutoStats = Value
+        if Value then
+            Rayfield:Notify({
+                Title = "Auto Stats ON!",
+                Content = "Upgrading selected stats automatically",
+                Duration = 3
+            })
+        end
+        
+        local _Points = PlayerData.SkillPoint
+        while _env.AutoStats do _wait(0.5)
+            for stat, enabled in pairs(SelectedStats) do
+                local _p, _s = _Points.Value, PlayerData[StatsName[stat]]
+                if enabled and _p > 0 and _s.Value < MSetting.Setting.MaxLevel then
+                    pcall(function()
+                        OtherEvent.MainEvents.StatsFunction:InvokeServer({
+                            ["Target"] = StatsName[stat],
+                            ["Action"] = "UpgradeStats",
+                            ["Amount"] = math.clamp(Settings.AutoStats_Points or 1, 0, MSetting.Setting.MaxLevel - _s.Value)
+                        })
+                    end)
+                end
+            end
+        end
+    end,
+})
+
+SettingsTab:CreateSection("Select Stats to Upgrade")
+
+SettingsTab:CreateToggle({
+    Name = "⚡ Power",
+    CurrentValue = false,
+    Flag = "PowerStats",
+    Callback = function(Value) SelectedStats["Power"] = Value end,
+})
+
+SettingsTab:CreateToggle({
+    Name = "❤️ Health",
+    CurrentValue = false,
+    Flag = "HealthStats",
+    Callback = function(Value) SelectedStats["Health"] = Value end,
+})
+
+SettingsTab:CreateToggle({
+    Name = "⚔️ Weapon",
+    CurrentValue = false,
+    Flag = "WeaponStats",
+    Callback = function(Value) SelectedStats["Weapon"] = Value end,
+})
+
+SettingsTab:CreateToggle({
+    Name = "👊 Melee",
+    CurrentValue = false,
+    Flag = "MeleeStats",
+    Callback = function(Value) SelectedStats["Melee"] = Value end,
+})
+
+SettingsTab:CreateSection("Combat Settings")
+
+SettingsTab:CreateToggle({
+    Name = "🧲 Bring Mobs",
+    CurrentValue = Settings.BringMobs,
+    Flag = "BringMobs",
+    Callback = function(Value)
+        Settings.BringMobs = Value
+        Rayfield:Notify({
+            Title = Value and "Bring Mobs ON!" or "Bring Mobs OFF",
+            Content = Value and "Teleporting mobs to you" or "Disabled mob bringing",
+            Duration = 2
+        })
+    end,
+})
+
+SettingsTab:CreateToggle({
+    Name = "✨ Auto Haki",
+    CurrentValue = Settings.AutoHaki,
+    Flag = "AutoHaki",
+    Callback = function(Value) Settings.AutoHaki = Value end,
+})
+
+SettingsTab:CreateToggle({
+    Name = "⚔️ Auto Attack",
+    CurrentValue = Settings.AutoClick,
+    Flag = "AutoAttack",
+    Callback = function(Value) Settings.AutoClick = Value end,
+})
+
+SettingsTab:CreateSection("Distance Settings")
+
+SettingsTab:CreateSlider({
+    Name = "📏 Farm Distance",
+    Range = {5, 15},
+    Increment = 1,
+    CurrentValue = Settings.FarmDistance,
+    Flag = "FarmDistance",
+    Callback = function(Value)
+        Settings.FarmDistance = Value
+        Settings.FarmCFrame = CFrame_new(0, Value, 0) * CFrame_Angles(math.rad(-90), 0, 0)
+    end,
+})
+
+Rayfield:LoadConfiguration()
+
+Rayfield:Notify({
+    Title = "📍 Minh Kha Hub Loaded!",
+    Content = "Meme Sea Auto Farm ready with Smooth Flight!",
+    Duration = 5
+})
+
+print("✅ Minh Kha Hub fully loaded!")
