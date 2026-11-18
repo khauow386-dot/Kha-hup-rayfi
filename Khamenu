@@ -1,0 +1,1537 @@
+
+--========================================================
+--             MINH KHA HUB V5
+--          DELTA ANDROID EDITION
+--========================================================
+-- LANGUAGE : VIETNAMESE / ENGLISH
+-- UI       : DARK GLASS / CUSTOM COLOR
+-- PLATFORM : ANDROID / DELTA
+-- KEY      : NONE
+--
+-- FEATURES:
+-- TELEPORT | SAVE POINT | INFINITE JUMP
+-- NOCLIP | SETTINGS | AUTO SAVE
+-- VI / EN LANGUAGE
+-- UI SCALE SLIDER
+-- BORDER COLOR PALETTE
+-- MENU TRANSPARENCY SLIDER
+-- TOUCH DRAG | SOUND | ANIMATION
+-- JSON CONFIG | RESPAWN | CLEANUP
+--========================================================
+
+--========================================================
+-- 1. SERVICES
+--========================================================
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local SoundService = game:GetService("SoundService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+
+local LP = Players.LocalPlayer
+local PlayerGui = LP:WaitForChild("PlayerGui")
+
+--========================================================
+-- 2. CONFIGURATION
+--========================================================
+
+local CFG = {
+    Name = "MINH KHA HUB V5",
+    GuiName = "MinhKhaHubV5",
+    File = "MinhKhaHubV5.json",
+
+    Width = 285,
+    Height = 430,
+
+    Dark = Color3.fromRGB(9,15,12),
+    Panel = Color3.fromRGB(19,29,23),
+    Button = Color3.fromRGB(28,48,37),
+    White = Color3.fromRGB(245,255,248),
+    Gray = Color3.fromRGB(135,155,145),
+    Red = Color3.fromRGB(255,75,75),
+
+    SoundClick = "rbxasset://sounds/electronicpingshort.wav",
+    SoundOpen = "rbxasset://sounds/button.wav",
+    SoundClose = "rbxasset://sounds/button.wav"
+}
+
+--========================================================
+-- 3. STATE
+--========================================================
+
+local savedCFrame = nil
+
+local infiniteJump = false
+local noclip = false
+
+local soundEnabled = true
+local animationEnabled = true
+local autoSave = true
+
+local language = "VI"
+local uiScale = 0.90
+local transparency = 0.08
+
+local borderColor = Color3.fromRGB(0,255,130)
+
+local menuVisible = true
+local settingsVisible = false
+
+local menuPosition = UDim2.new(0.04,0,0.25,0)
+local togglePosition = UDim2.new(0.04,0,0.15,0)
+
+local collisionData = {}
+local noclipConnection
+local descendantConnection
+local currentCharacter
+
+local saveAvailable = false
+local destroyed = false
+
+local connections = {}
+local activeTweens = {}
+
+--========================================================
+-- 4. LANGUAGE DICTIONARY
+--========================================================
+
+local TEXT = {
+    VI = {
+        title = "MINH KHA HUB V5",
+        ready = "HỆ THỐNG SẴN SÀNG",
+        teleport = "DỊCH CHUYỂN ĐẾN ĐIỂM LƯU",
+        savepoint = "LƯU VỊ TRÍ HIỆN TẠI",
+        jump = "NHẢY VÔ HẠN",
+        noclip = "XUYÊN VẬT THỂ",
+        settings = "CÀI ĐẶT",
+        close = "ĐÓNG",
+        back = "QUAY LẠI",
+
+        sound = "ÂM THANH",
+        animation = "HIỆU ỨNG",
+        autosave = "TỰ ĐỘNG LƯU",
+        saveconfig = "LƯU CẤU HÌNH",
+
+        language = "NGÔN NGỮ",
+        size = "KÍCH THƯỚC MENU",
+        color = "MÀU VIỀN",
+        opacity = "ĐỘ TRONG SUỐT",
+
+        on = "BẬT",
+        off = "TẮT",
+
+        saved = "ĐÃ LƯU VỊ TRÍ",
+        noPoint = "HÃY LƯU VỊ TRÍ TRƯỚC",
+        noCharacter = "KHÔNG TÌM THẤY NHÂN VẬT",
+        teleportDone = "ĐÃ GỬI LỆNH DỊCH CHUYỂN",
+        jumpOn = "ĐÃ BẬT NHẢY VÔ HẠN",
+        jumpOff = "ĐÃ TẮT NHẢY VÔ HẠN",
+        noclipOn = "ĐÃ BẬT XUYÊN VẬT THỂ",
+        noclipOff = "ĐÃ TẮT XUYÊN VẬT THỂ",
+        configSaved = "ĐÃ LƯU CẤU HÌNH",
+        fileError = "KHÔNG CÓ FILE API",
+        characterReady = "NHÂN VẬT ĐÃ SẴN SÀNG",
+        footer = "© MINH KHA • DELTA MOBILE"
+    },
+
+    EN = {
+        title = "MINH KHA HUB V5",
+        ready = "SYSTEM READY",
+        teleport = "TELEPORT TO SAVED POINT",
+        savepoint = "SAVE CURRENT POSITION",
+        jump = "INFINITE JUMP",
+        noclip = "NOCLIP",
+        settings = "SETTINGS",
+        close = "CLOSE",
+        back = "BACK",
+
+        sound = "SOUND",
+        animation = "ANIMATION",
+        autosave = "AUTO SAVE",
+        saveconfig = "SAVE CONFIGURATION",
+
+        language = "LANGUAGE",
+        size = "MENU SIZE",
+        color = "BORDER COLOR",
+        opacity = "MENU TRANSPARENCY",
+
+        on = "ON",
+        off = "OFF",
+
+        saved = "POSITION SAVED",
+        noPoint = "SAVE A POINT FIRST",
+        noCharacter = "CHARACTER NOT FOUND",
+        teleportDone = "TELEPORT REQUEST SENT",
+        jumpOn = "INFINITE JUMP ENABLED",
+        jumpOff = "INFINITE JUMP DISABLED",
+        noclipOn = "NOCLIP ENABLED",
+        noclipOff = "NOCLIP DISABLED",
+        configSaved = "CONFIGURATION SAVED",
+        fileError = "FILE API UNAVAILABLE",
+        characterReady = "CHARACTER READY",
+        footer = "© MINH KHA • DELTA MOBILE"
+    }
+}
+
+local function L(key)
+    return (TEXT[language] and TEXT[language][key])
+        or TEXT.EN[key]
+        or key
+end
+
+--========================================================
+-- 5. CHARACTER HELPERS
+--========================================================
+
+local function getRoot()
+    local character = LP.Character
+    return character and character:FindFirstChild("HumanoidRootPart")
+end
+
+local function getHumanoid()
+    local character = LP.Character
+    return character and character:FindFirstChildOfClass("Humanoid")
+end
+
+--========================================================
+-- 6. FILE SYSTEM
+--========================================================
+
+local function detectFileSystem()
+    return type(readfile) == "function"
+        and type(writefile) == "function"
+        and type(isfile) == "function"
+end
+
+saveAvailable = detectFileSystem()
+
+local function getData()
+    local point
+
+    if savedCFrame then
+        local rx,ry,rz = savedCFrame:ToOrientation()
+        local p = savedCFrame.Position
+
+        point = {
+            x=p.X, y=p.Y, z=p.Z,
+            rx=rx, ry=ry, rz=rz
+        }
+    end
+
+    return {
+        version = 5,
+
+        infiniteJump = infiniteJump,
+        noclip = noclip,
+
+        sound = soundEnabled,
+        animation = animationEnabled,
+        autoSave = autoSave,
+
+        language = language,
+        uiScale = uiScale,
+        transparency = transparency,
+
+        borderColor = {
+            borderColor.R,
+            borderColor.G,
+            borderColor.B
+        },
+
+        menuVisible = menuVisible,
+        settingsVisible = settingsVisible,
+
+        savedPoint = point,
+
+        menuPosition = {
+            menuPosition.X.Scale,
+            menuPosition.X.Offset,
+            menuPosition.Y.Scale,
+            menuPosition.Y.Offset
+        },
+
+        togglePosition = {
+            togglePosition.X.Scale,
+            togglePosition.X.Offset,
+            togglePosition.Y.Scale,
+            togglePosition.Y.Offset
+        }
+    }
+end
+
+local function saveConfig(force)
+    if not saveAvailable then return false end
+    if not force and not autoSave then return false end
+
+    local ok,err = pcall(function()
+        writefile(CFG.File, HttpService:JSONEncode(getData()))
+    end)
+
+    if not ok then
+        warn("[MINH KHA V5] Save error:",err)
+        return false
+    end
+
+    return true
+end
+
+local function readUDim(value,fallback)
+    if type(value) ~= "table" then
+        return fallback
+    end
+
+    return UDim2.new(
+        tonumber(value[1]) or fallback.X.Scale,
+        tonumber(value[2]) or fallback.X.Offset,
+        tonumber(value[3]) or fallback.Y.Scale,
+        tonumber(value[4]) or fallback.Y.Offset
+    )
+end
+
+local function loadConfig()
+    if not saveAvailable then return false end
+
+    local ok,data = pcall(function()
+        if not isfile(CFG.File) then return nil end
+        return HttpService:JSONDecode(readfile(CFG.File))
+    end)
+
+    if not ok or type(data) ~= "table" then
+        return false
+    end
+
+    infiniteJump = data.infiniteJump == true
+    noclip = data.noclip == true
+
+    soundEnabled = data.sound ~= false
+    animationEnabled = data.animation ~= false
+    autoSave = data.autoSave ~= false
+
+    if data.language == "VI" or data.language == "EN" then
+        language = data.language
+    end
+
+    uiScale = math.clamp(tonumber(data.uiScale) or 0.90,0.70,1.20)
+    transparency = math.clamp(tonumber(data.transparency) or 0.08,0,0.80)
+
+    if type(data.borderColor) == "table" then
+        local c = data.borderColor
+
+        if type(c[1]) == "number"
+        and type(c[2]) == "number"
+        and type(c[3]) == "number" then
+
+            borderColor = Color3.new(
+                math.clamp(c[1],0,1),
+                math.clamp(c[2],0,1),
+                math.clamp(c[3],0,1)
+            )
+        end
+    end
+
+    if type(data.menuVisible) == "boolean" then
+        menuVisible = data.menuVisible
+    end
+
+    if type(data.settingsVisible) == "boolean" then
+        settingsVisible = data.settingsVisible
+    end
+
+    if type(data.savedPoint) == "table" then
+        local p = data.savedPoint
+
+        if type(p.x) == "number"
+        and type(p.y) == "number"
+        and type(p.z) == "number" then
+
+            savedCFrame = CFrame.new(p.x,p.y,p.z)
+                * CFrame.fromOrientation(
+                    tonumber(p.rx) or 0,
+                    tonumber(p.ry) or 0,
+                    tonumber(p.rz) or 0
+                )
+        end
+    end
+
+    menuPosition = readUDim(data.menuPosition,menuPosition)
+    togglePosition = readUDim(data.togglePosition,togglePosition)
+
+    return true
+end
+
+loadConfig()
+
+--========================================================
+-- 7. GUI HELPERS
+--========================================================
+
+local function create(class,props,parent)
+    local obj = Instance.new(class)
+
+    for key,value in pairs(props) do
+        obj[key] = value
+    end
+
+    obj.Parent = parent
+    return obj
+end
+
+local function round(obj,radius)
+    create("UICorner",{
+        CornerRadius=UDim.new(0,radius)
+    },obj)
+end
+
+local function stroke(obj,color,thickness)
+    return create("UIStroke",{
+        Color=color,
+        Thickness=thickness or 1,
+        Transparency=0.1
+    },obj)
+end
+
+local function tween(obj,duration,props)
+    if destroyed or not obj or not obj.Parent then return end
+
+    local t = TweenService:Create(
+        obj,
+        TweenInfo.new(duration,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),
+        props
+    )
+
+    table.insert(activeTweens,t)
+    t:Play()
+    return t
+end
+
+local function playSound(id)
+    if not soundEnabled or destroyed then return end
+
+    pcall(function()
+        local s = Instance.new("Sound")
+        s.SoundId = id
+        s.Volume = 0.35
+        s.Parent = SoundService
+        s:Play()
+
+        s.Ended:Connect(function()
+            s:Destroy()
+        end)
+
+        task.delay(5,function()
+            if s.Parent then s:Destroy() end
+        end)
+    end)
+end
+
+--========================================================
+-- 8. REMOVE OLD GUI
+--========================================================
+
+pcall(function()
+    local old = PlayerGui:FindFirstChild(CFG.GuiName)
+    if old then old:Destroy() end
+end)
+
+pcall(function()
+    local old = CoreGui:FindFirstChild(CFG.GuiName)
+    if old then old:Destroy() end
+end)
+
+--========================================================
+-- 9. SCREEN GUI
+--========================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = CFG.GuiName
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local parentOK = pcall(function()
+    ScreenGui.Parent = CoreGui
+end)
+
+if not parentOK or not ScreenGui.Parent then
+    ScreenGui.Parent = PlayerGui
+end
+
+--========================================================
+-- 10. MAIN FRAME
+--========================================================
+
+local Main = create("Frame",{
+    Name="Main",
+    Size=UDim2.fromOffset(CFG.Width,CFG.Height),
+    Position=menuPosition,
+    BackgroundColor3=CFG.Dark,
+    BackgroundTransparency=transparency,
+    BorderSizePixel=0,
+    ClipsDescendants=true
+},ScreenGui)
+
+round(Main,13)
+
+local MainStroke = stroke(Main,borderColor,1.5)
+
+local MainScale = create("UIScale",{
+    Scale=uiScale
+},Main)
+
+--========================================================
+-- 11. HEADER
+--========================================================
+
+local Header = create("Frame",{
+    Size=UDim2.new(1,0,0,45),
+    BackgroundColor3=CFG.Panel,
+    BackgroundTransparency=transparency,
+    BorderSizePixel=0
+},Main)
+
+round(Header,10)
+
+local Title = create("TextLabel",{
+    Size=UDim2.new(1,-55,1,0),
+    Position=UDim2.fromOffset(12,0),
+    BackgroundTransparency=1,
+    Text=L("title"),
+    TextColor3=borderColor,
+    TextSize=15,
+    Font=Enum.Font.GothamBold,
+    TextXAlignment=Enum.TextXAlignment.Left
+},Header)
+
+local Close = create("TextButton",{
+    Size=UDim2.fromOffset(31,31),
+    Position=UDim2.new(1,-37,0,7),
+    BackgroundColor3=Color3.fromRGB(65,30,30),
+    Text="X",
+    TextColor3=CFG.Red,
+    TextSize=17,
+    Font=Enum.Font.GothamBold,
+    AutoButtonColor=false
+},Header)
+
+round(Close,7)
+
+--========================================================
+-- 12. STATUS
+--========================================================
+
+local Status = create("TextLabel",{
+    Size=UDim2.new(1,-20,0,22),
+    Position=UDim2.fromOffset(10,48),
+    BackgroundTransparency=1,
+    Text=L("ready"),
+    TextColor3=borderColor,
+    TextSize=10,
+    Font=Enum.Font.GothamBold,
+    TextXAlignment=Enum.TextXAlignment.Left
+},Main)
+
+local function setStatus(message,isError)
+    if Status and Status.Parent then
+        Status.Text = message
+        Status.TextColor3 = isError and CFG.Red or borderColor
+    end
+end
+
+--========================================================
+-- 13. BUTTON CREATOR
+--========================================================
+
+local function makeButton(name,text,y,parent,color,height)
+    local b = create("TextButton",{
+        Name=name,
+        Size=UDim2.new(1,-20,0,height or 36),
+        Position=UDim2.fromOffset(10,y),
+        BackgroundColor3=color or CFG.Button,
+        BackgroundTransparency=transparency,
+        BorderSizePixel=0,
+        Text=text,
+        TextColor3=CFG.White,
+        TextSize=11,
+        Font=Enum.Font.GothamBold,
+        AutoButtonColor=false
+    },parent)
+
+    round(b,7)
+    stroke(b,borderColor,0.7)
+
+    b.Activated:Connect(function()
+        playSound(CFG.SoundClick)
+
+        if animationEnabled then
+            local original = b.Size
+
+            tween(b,0.06,{
+                Size=UDim2.new(1,-24,0,34)
+            })
+
+            task.delay(0.09,function()
+                if b.Parent and not destroyed then
+                    tween(b,0.12,{Size=original})
+                end
+            end)
+        end
+    end)
+
+    return b
+end
+
+--========================================================
+-- 14. MAIN BUTTONS
+--========================================================
+
+local TeleportButton = makeButton("Teleport",L("teleport"),78,Main,Color3.fromRGB(20,85,65))
+local SetPointButton = makeButton("SetPoint",L("savepoint"),119,Main,Color3.fromRGB(20,95,65))
+local JumpButton = makeButton("Jump",L("jump").." : OFF",160,Main,Color3.fromRGB(65,45,85))
+local NoclipButton = makeButton("Noclip",L("noclip").." : OFF",201,Main,Color3.fromRGB(45,60,55))
+local SettingsButton = makeButton("Settings",L("settings"),242,Main,Color3.fromRGB(30,65,50))
+
+local Footer = create("TextLabel",{
+    Size=UDim2.new(1,-20,0,16),
+    Position=UDim2.new(0,10,1,-18),
+    BackgroundTransparency=1,
+    Text=L("footer"),
+    TextColor3=CFG.Gray,
+    TextSize=9,
+    Font=Enum.Font.Gotham
+},Main)
+
+--========================================================
+-- 15. SETTINGS PAGE
+--========================================================
+
+local SettingsPage = create("ScrollingFrame",{
+    Name="SettingsPage",
+    Size=UDim2.new(1,-20,0,345),
+    Position=UDim2.fromOffset(10,76),
+    BackgroundColor3=CFG.Panel,
+    BackgroundTransparency=transparency,
+    BorderSizePixel=0,
+    ScrollBarThickness=3,
+    ScrollBarImageColor3=borderColor,
+    CanvasSize=UDim2.new(0,0,0,690),
+    Visible=false
+},Main)
+
+round(SettingsPage,9)
+stroke(SettingsPage,borderColor,1)
+
+local SettingsTitle = create("TextLabel",{
+    Size=UDim2.new(1,-16,0,28),
+    Position=UDim2.fromOffset(8,4),
+    BackgroundTransparency=1,
+    Text=L("settings"),
+    TextColor3=borderColor,
+    TextSize=14,
+    Font=Enum.Font.GothamBold,
+    TextXAlignment=Enum.TextXAlignment.Left
+},SettingsPage)
+
+--========================================================
+-- 16. SETTINGS LABELS
+--========================================================
+
+local function makeLabel(text,y)
+    return create("TextLabel",{
+        Size=UDim2.new(1,-20,0,20),
+        Position=UDim2.fromOffset(10,y),
+        BackgroundTransparency=1,
+        Text=text,
+        TextColor3=CFG.White,
+        TextSize=10,
+        Font=Enum.Font.GothamBold,
+        TextXAlignment=Enum.TextXAlignment.Left
+    },SettingsPage)
+end
+
+--========================================================
+-- 17. LANGUAGE BUTTON
+--========================================================
+
+makeLabel(L("language"),36)
+
+local LanguageButton = makeButton(
+    "Language",
+    "TIẾNG VIỆT / ENGLISH",
+    58,
+    SettingsPage,
+    CFG.Button,
+    34
+)
+
+--========================================================
+-- 18. CUSTOM SLIDER CREATOR
+--========================================================
+
+local function makeSlider(name,y,minValue,maxValue,initialValue,suffix,callback)
+    local holder = create("Frame",{
+        Name=name,
+        Size=UDim2.new(1,-20,0,48),
+        Position=UDim2.fromOffset(10,y),
+        BackgroundTransparency=1
+    },SettingsPage)
+
+    local valueLabel = create("TextLabel",{
+        Size=UDim2.new(1,0,0,17),
+        BackgroundTransparency=1,
+        Text="",
+        TextColor3=CFG.White,
+        TextSize=10,
+        Font=Enum.Font.GothamBold,
+        TextXAlignment=Enum.TextXAlignment.Left
+    },holder)
+
+    local track = create("Frame",{
+        Size=UDim2.new(1,0,0,8),
+        Position=UDim2.fromOffset(0,27),
+        BackgroundColor3=Color3.fromRGB(55,65,58),
+        BorderSizePixel=0
+    },holder)
+
+    round(track,5)
+
+    local fill = create("Frame",{
+        Size=UDim2.new(0,0,1,0),
+        BackgroundColor3=borderColor,
+        BorderSizePixel=0
+    },track)
+
+    round(fill,5)
+
+    local knob = create("TextButton",{
+        Size=UDim2.fromOffset(18,18),
+        AnchorPoint=Vector2.new(0.5,0.5),
+        Position=UDim2.new(0,0,0.5,0),
+        BackgroundColor3=CFG.White,
+        Text="",
+        AutoButtonColor=false
+    },track)
+
+    round(knob,20)
+    stroke(knob,borderColor,1)
+
+    local value = math.clamp(initialValue,minValue,maxValue)
+    local dragging = false
+
+    local function updateVisual()
+        local percent = (value-minValue)/(maxValue-minValue)
+
+        fill.Size = UDim2.new(percent,0,1,0)
+        knob.Position = UDim2.new(percent,0,0.5,0)
+
+        valueLabel.Text = name .. " : " .. tostring(math.floor(value+0.5)) .. suffix
+    end
+
+    local function setFromX(x)
+        local width = track.AbsoluteSize.X
+        if width <= 0 then return end
+
+        local percent = math.clamp(
+            (x-track.AbsolutePosition.X)/width,
+            0,
+            1
+        )
+
+        value = minValue + (maxValue-minValue)*percent
+        value = math.floor(value*100+0.5)/100
+
+        updateVisual()
+        callback(value)
+    end
+
+    local function begin(input)
+        if input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+            dragging = true
+            setFromX(input.Position.X)
+        end
+    end
+
+    track.InputBegan:Connect(begin)
+    knob.InputBegan:Connect(begin)
+
+    local changed = UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+            setFromX(input.Position.X)
+        end
+    end)
+
+    local ended = UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    table.insert(connections,changed)
+    table.insert(connections,ended)
+
+    updateVisual()
+
+    return {
+        Set = function(newValue)
+            value = math.clamp(newValue,minValue,maxValue)
+            updateVisual()
+        end
+    }
+end
+
+--========================================================
+-- 19. UI SCALE SLIDER
+--========================================================
+
+makeLabel(L("size"),101)
+
+local ScaleSlider = makeSlider(
+    "MENU SIZE",
+    123,
+    70,
+    120,
+    uiScale*100,
+    "%",
+    function(value)
+        uiScale = value/100
+        MainScale.Scale = uiScale
+        saveConfig()
+    end
+)
+
+--========================================================
+-- 20. TRANSPARENCY SLIDER
+--========================================================
+
+makeLabel(L("opacity"),177)
+
+local OpacitySlider = makeSlider(
+    "TRANSPARENCY",
+    199,
+    0,
+    80,
+    transparency*100,
+    "%",
+    function(value)
+        transparency = value/100
+
+        Main.BackgroundTransparency = transparency
+        Header.BackgroundTransparency = transparency
+        SettingsPage.BackgroundTransparency = transparency
+
+        for _,obj in ipairs(Main:GetDescendants()) do
+            if obj:IsA("TextButton") then
+                obj.BackgroundTransparency = transparency
+            end
+        end
+
+        saveConfig()
+    end
+)
+
+--========================================================
+-- 21. BORDER COLOR PALETTE
+--========================================================
+
+makeLabel(L("color"),253)
+
+local palette = {
+    {name="GREEN",color=Color3.fromRGB(0,255,130)},
+    {name="BLUE",color=Color3.fromRGB(0,170,255)},
+    {name="RED",color=Color3.fromRGB(255,65,65)},
+    {name="PURPLE",color=Color3.fromRGB(180,80,255)},
+    {name="YELLOW",color=Color3.fromRGB(255,220,50)},
+    {name="PINK",color=Color3.fromRGB(255,90,190)},
+    {name="WHITE",color=Color3.fromRGB(245,255,248)},
+    {name="ORANGE",color=Color3.fromRGB(255,140,35)}
+}
+
+local ColorButtons = {}
+
+local function applyBorderColor(color)
+    borderColor = color
+
+    MainStroke.Color = color
+    Title.TextColor3 = color
+    Status.TextColor3 = color
+    SettingsTitle.TextColor3 = color
+
+    for _,obj in ipairs(ScreenGui:GetDescendants()) do
+        if obj:IsA("UIStroke") then
+            obj.Color = color
+        elseif obj:IsA("Frame") and obj.Name == "Fill" then
+            obj.BackgroundColor3 = color
+        end
+    end
+
+    if Toggle then
+        Toggle.TextColor3 = color
+    end
+
+    if SettingsPage then
+        SettingsPage.ScrollBarImageColor3 = color
+    end
+
+    saveConfig()
+end
+
+for i,item in ipairs(palette) do
+    local column = (i-1)%4
+    local row = math.floor((i-1)/4)
+
+    local colorButton = create("TextButton",{
+        Name=item.name,
+        Size=UDim2.fromOffset(45,29),
+        Position=UDim2.fromOffset(10+column*58,280+row*38),
+        BackgroundColor3=item.color,
+        Text="",
+        AutoButtonColor=false
+    },SettingsPage)
+
+    round(colorButton,7)
+    stroke(colorButton,CFG.White,0.6)
+
+    colorButton.Activated:Connect(function()
+        playSound(CFG.SoundClick)
+        applyBorderColor(item.color)
+    end)
+
+    table.insert(ColorButtons,colorButton)
+end
+
+--========================================================
+-- 22. SOUND / ANIMATION / AUTO SAVE
+--========================================================
+
+local SoundButton = makeButton("Sound","",365,SettingsPage)
+local AnimationButton = makeButton("Animation","",406,SettingsPage)
+local AutoSaveButton = makeButton("AutoSave","",447,SettingsPage)
+local SaveButton = makeButton("Save","",488,SettingsPage)
+local BackButton = makeButton("Back","",529,SettingsPage)
+
+local function updateSettingsText()
+    LanguageButton.Text = language == "VI"
+        and "TIẾNG VIỆT  /  ENGLISH"
+        or "ENGLISH  /  VIETNAMESE"
+
+    SoundButton.Text = L("sound") .. " : " .. (soundEnabled and L("on") or L("off"))
+    AnimationButton.Text = L("animation") .. " : " .. (animationEnabled and L("on") or L("off"))
+    AutoSaveButton.Text = L("autosave") .. " : " .. (autoSave and L("on") or L("off"))
+
+    SaveButton.Text = L("saveconfig")
+    BackButton.Text = L("back")
+
+    SettingsTitle.Text = L("settings")
+end
+
+--========================================================
+-- 23. LOCALIZATION REFRESH
+--========================================================
+
+local function refreshLanguage()
+    Title.Text = L("title")
+    Footer.Text = L("footer")
+
+    TeleportButton.Text = L("teleport")
+    SetPointButton.Text = L("savepoint")
+
+    SettingsButton.Text = L("settings")
+
+    updateSettingsText()
+
+    JumpButton.Text = L("jump") .. " : " .. (infiniteJump and L("on") or L("off"))
+    NoclipButton.Text = L("noclip") .. " : " .. (noclip and L("on") or L("off"))
+
+    SettingsTitle.Text = L("settings")
+end
+
+LanguageButton.Activated:Connect(function()
+    language = language == "VI" and "EN" or "VI"
+
+    refreshLanguage()
+    playSound(CFG.SoundClick)
+    saveConfig()
+end)
+
+SoundButton.Activated:Connect(function()
+    soundEnabled = not soundEnabled
+    updateSettingsText()
+    saveConfig()
+
+    if soundEnabled then
+        playSound(CFG.SoundClick)
+    end
+end)
+
+AnimationButton.Activated:Connect(function()
+    animationEnabled = not animationEnabled
+    updateSettingsText()
+    playSound(CFG.SoundClick)
+    saveConfig()
+end)
+
+AutoSaveButton.Activated:Connect(function()
+    autoSave = not autoSave
+    updateSettingsText()
+    playSound(CFG.SoundClick)
+
+    if autoSave then
+        saveConfig(true)
+    end
+end)
+
+SaveButton.Activated:Connect(function()
+    if saveConfig(true) then
+        setStatus(L("configSaved"))
+    else
+        setStatus(L("fileError"),true)
+    end
+end)
+
+--========================================================
+-- 24. FLOATING MK BUTTON
+--========================================================
+
+local Toggle = create("TextButton",{
+    Name="MK",
+    Size=UDim2.fromOffset(60,42),
+    Position=togglePosition,
+    BackgroundColor3=CFG.Dark,
+    Text="MK",
+    TextColor3=borderColor,
+    TextSize=17,
+    Font=Enum.Font.GothamBold,
+    AutoButtonColor=false
+},ScreenGui)
+
+round(Toggle,9)
+stroke(Toggle,borderColor,1.5)
+
+--========================================================
+-- 25. DRAG SYSTEM
+--========================================================
+
+local function makeDraggable(object,handle,onTap,onMove)
+    local dragging = false
+    local moved = false
+    local dragType
+    local startInput
+    local startPosition
+
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            moved = false
+            dragType = "Mouse"
+            startInput = input.Position
+            startPosition = object.Position
+
+        elseif input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            moved = false
+            dragType = "Touch"
+            startInput = input.Position
+            startPosition = object.Position
+        end
+    end)
+
+    local changed = UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+
+        local valid =
+            (dragType == "Mouse" and input.UserInputType == Enum.UserInputType.MouseMovement)
+            or (dragType == "Touch" and input.UserInputType == Enum.UserInputType.Touch)
+
+        if not valid then return end
+
+        local delta = input.Position-startInput
+
+        if math.abs(delta.X)>5 or math.abs(delta.Y)>5 then
+            moved = true
+        end
+
+        object.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset+delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset+delta.Y
+        )
+    end)
+
+    local ended = UserInputService.InputEnded:Connect(function(input)
+        if not dragging then return end
+
+        local valid =
+            (dragType == "Mouse" and input.UserInputType == Enum.UserInputType.MouseButton1)
+            or (dragType == "Touch" and input.UserInputType == Enum.UserInputType.Touch)
+
+        if not valid then return end
+
+        dragging = false
+        dragType = nil
+
+        if moved then
+            if onMove then onMove(object.Position) end
+        elseif onTap then
+            onTap()
+        end
+    end)
+
+    table.insert(connections,changed)
+    table.insert(connections,ended)
+end
+
+makeDraggable(Main,Header,nil,function(position)
+    menuPosition = position
+    saveConfig()
+end)
+
+--========================================================
+-- 26. MENU SYSTEM
+--========================================================
+
+local function showSettings(value)
+    settingsVisible = value
+
+    SettingsPage.Visible = value
+
+    TeleportButton.Visible = not value
+    SetPointButton.Visible = not value
+    JumpButton.Visible = not value
+    NoclipButton.Visible = not value
+    SettingsButton.Visible = not value
+
+    setStatus(value and L("settings") or L("ready"))
+end
+
+SettingsButton.Activated:Connect(function()
+    showSettings(true)
+    saveConfig()
+end)
+
+BackButton.Activated:Connect(function()
+    showSettings(false)
+    saveConfig()
+end)
+
+local function showMenu()
+    if destroyed or menuVisible then return end
+
+    menuVisible = true
+    Main.Visible = true
+
+    playSound(CFG.SoundOpen)
+
+    if animationEnabled then
+        MainScale.Scale = uiScale*0.82
+        tween(MainScale,0.22,{Scale=uiScale})
+    else
+        MainScale.Scale = uiScale
+    end
+
+    saveConfig()
+end
+
+local function hideMenu()
+    if destroyed or not menuVisible then return end
+
+    menuVisible = false
+    playSound(CFG.SoundClose)
+
+    if animationEnabled then
+        local t = tween(MainScale,0.16,{Scale=uiScale*0.82})
+
+        if t then
+            t.Completed:Once(function()
+                if not menuVisible and Main.Parent and not destroyed then
+                    Main.Visible = false
+                    MainScale.Scale = uiScale
+                end
+            end)
+        end
+    else
+        Main.Visible = false
+    end
+
+    saveConfig()
+end
+
+local function toggleMenu()
+    if menuVisible then
+        hideMenu()
+    else
+        showMenu()
+    end
+end
+
+Close.Activated:Connect(hideMenu)
+
+makeDraggable(Toggle,Toggle,toggleMenu,function(position)
+    togglePosition = position
+    saveConfig()
+end)
+
+--========================================================
+-- 27. SAVE POINT
+--========================================================
+
+SetPointButton.Activated:Connect(function()
+    local root = getRoot()
+
+    if not root then
+        setStatus(L("noCharacter"),true)
+        return
+    end
+
+    savedCFrame = root.CFrame
+
+    local p = root.Position
+
+    local prefix = language == "VI" and "ĐÃ LƯU" or "SAVED"
+
+    setStatus(string.format(
+        "%s: X %.1f | Y %.1f | Z %.1f",
+        prefix,p.X,p.Y,p.Z
+    ))
+
+    playSound(CFG.SoundClick)
+    saveConfig()
+end)
+
+--========================================================
+-- 28. TELEPORT
+--========================================================
+
+TeleportButton.Activated:Connect(function()
+    if not savedCFrame then
+        setStatus(L("noPoint"),true)
+        return
+    end
+
+    local root = getRoot()
+
+    if not root then
+        setStatus(L("noCharacter"),true)
+        return
+    end
+
+    local ok,err = pcall(function()
+        root.CFrame = savedCFrame
+    end)
+
+    if ok then
+        setStatus(L("teleportDone"))
+        playSound(CFG.SoundClick)
+    else
+        setStatus("TELEPORT ERROR",true)
+        warn(err)
+    end
+end)
+
+--========================================================
+-- 29. INFINITE JUMP
+--========================================================
+
+local function updateJump()
+    JumpButton.Text = L("jump") .. " : " .. (infiniteJump and L("on") or L("off"))
+
+    JumpButton.BackgroundColor3 = infiniteJump
+        and borderColor
+        or Color3.fromRGB(65,45,85)
+
+    JumpButton.TextColor3 = infiniteJump and CFG.Dark or CFG.White
+end
+
+JumpButton.Activated:Connect(function()
+    infiniteJump = not infiniteJump
+
+    updateJump()
+
+    setStatus(infiniteJump and L("jumpOn") or L("jumpOff"))
+    saveConfig()
+end)
+
+local jumpConnection = UserInputService.JumpRequest:Connect(function()
+    if destroyed or not infiniteJump then return end
+
+    local humanoid = getHumanoid()
+
+    if humanoid and humanoid.Health > 0 then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+table.insert(connections,jumpConnection)
+
+--========================================================
+-- 30. NOCLIP
+--========================================================
+
+local function rememberPart(part)
+    if not part:IsA("BasePart") then return end
+
+    if collisionData[part] == nil then
+        collisionData[part] = part.CanCollide
+    end
+end
+
+local function restoreCollision()
+    for part,original in pairs(collisionData) do
+        if part and part.Parent then
+            pcall(function()
+                part.CanCollide = original
+            end)
+        end
+    end
+
+    table.clear(collisionData)
+end
+
+local function disconnectNoclip()
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+
+    if descendantConnection then
+        descendantConnection:Disconnect()
+        descendantConnection = nil
+    end
+end
+
+local function bindNoclip(character)
+    disconnectNoclip()
+    restoreCollision()
+
+    currentCharacter = character
+
+    if not noclip or not character then return end
+
+    for _,part in ipairs(character:GetDescendants()) do
+        rememberPart(part)
+    end
+
+    descendantConnection = character.DescendantAdded:Connect(function(part)
+        if not noclip or currentCharacter ~= character then return end
+
+        if part:IsA("BasePart") then
+            rememberPart(part)
+
+            pcall(function()
+                part.CanCollide = false
+            end)
+        end
+    end)
+
+    noclipConnection = RunService.Stepped:Connect(function()
+        if destroyed or not noclip then return end
+        if currentCharacter ~= character then return end
+
+        for part in pairs(collisionData) do
+            if part and part.Parent then
+                pcall(function()
+                    part.CanCollide = false
+                end)
+            end
+        end
+    end)
+end
+
+local function updateNoclip()
+    NoclipButton.Text = L("noclip") .. " : " .. (noclip and L("on") or L("off"))
+
+    NoclipButton.BackgroundColor3 = noclip
+        and borderColor
+        or Color3.fromRGB(45,60,55)
+
+    NoclipButton.TextColor3 = noclip and CFG.Dark or CFG.White
+end
+
+local function disableNoclip()
+    noclip = false
+
+    disconnectNoclip()
+    restoreCollision()
+
+    currentCharacter = nil
+
+    updateNoclip()
+    setStatus(L("noclipOff"))
+end
+
+local function enableNoclip()
+    noclip = true
+
+    updateNoclip()
+    bindNoclip(LP.Character)
+
+    setStatus(L("noclipOn"))
+end
+
+NoclipButton.Activated:Connect(function()
+    if noclip then
+        disableNoclip()
+    else
+        enableNoclip()
+    end
+
+    playSound(CFG.SoundClick)
+    saveConfig()
+end)
+
+--========================================================
+-- 31. RESPAWN SUPPORT
+--========================================================
+
+local characterAdded = LP.CharacterAdded:Connect(function(character)
+    task.wait(0.25)
+
+    if destroyed then return end
+
+    if noclip then
+        bindNoclip(character)
+    else
+        disconnectNoclip()
+        restoreCollision()
+        currentCharacter = nil
+    end
+
+    setStatus(L("characterReady"))
+end)
+
+table.insert(connections,characterAdded)
+
+local characterRemoving = LP.CharacterRemoving:Connect(function(character)
+    if character == currentCharacter then
+        disconnectNoclip()
+        restoreCollision()
+        currentCharacter = nil
+    end
+end)
+
+table.insert(connections,characterRemoving)
+
+--========================================================
+-- 32. INITIALIZE SETTINGS
+--========================================================
+
+local function applyTransparency()
+    Main.BackgroundTransparency = transparency
+    Header.BackgroundTransparency = transparency
+    SettingsPage.BackgroundTransparency = transparency
+
+    for _,obj in ipairs(Main:GetDescendants()) do
+        if obj:IsA("TextButton") then
+            obj.BackgroundTransparency = transparency
+        end
+    end
+end
+
+local function applyColor()
+    MainStroke.Color = borderColor
+    Title.TextColor3 = borderColor
+    Status.TextColor3 = borderColor
+    SettingsTitle.TextColor3 = borderColor
+    Toggle.TextColor3 = borderColor
+    SettingsPage.ScrollBarImageColor3 = borderColor
+
+    for _,obj in ipairs(ScreenGui:GetDescendants()) do
+        if obj:IsA("UIStroke") then
+            obj.Color = borderColor
+        end
+    end
+end
+
+applyTransparency()
+applyColor()
+
+refreshLanguage()
+updateJump()
+updateNoclip()
+updateSettingsText()
+
+showSettings(settingsVisible)
+
+if noclip then
+    bindNoclip(LP.Character)
+end
+
+Main.Visible = menuVisible
+MainScale.Scale = uiScale
+
+--========================================================
+-- 33. AUTO SAVE
+--========================================================
+
+task.spawn(function()
+    while not destroyed do
+        task.wait(15)
+
+        if destroyed then break end
+
+        if autoSave then
+            saveConfig()
+        end
+    end
+end)
+
+--========================================================
+-- 34. CLEANUP
+--========================================================
+
+local function cleanup()
+    if destroyed then return end
+
+    saveConfig(true)
+    destroyed = true
+
+    disconnectNoclip()
+    restoreCollision()
+
+    for _,t in ipairs(activeTweens) do
+        pcall(function()
+            t:Cancel()
+        end)
+    end
+
+    table.clear(activeTweens)
+
+    for _,connection in ipairs(connections) do
+        pcall(function()
+            connection:Disconnect()
+        end)
+    end
+
+    table.clear(connections)
+end
+
+ScreenGui.Destroying:Connect(cleanup)
+
+--========================================================
+-- 35. START
+--========================================================
+
+setStatus(
+    saveAvailable and L("ready") or L("fileError")
+)
+
+print("======================================")
+print("          MINH KHA HUB V5")
+print("          DELTA ANDROID")
+print("======================================")
+print("Language:",language)
+print("UI Scale:",uiScale)
+print("Transparency:",transparency)
+print("File API:",saveAvailable)
+print("Infinite Jump:",infiniteJump)
+print("Noclip:",noclip)
+print("======================================")
