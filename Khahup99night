@@ -1,14 +1,8 @@
-
 --========================================================
---       MINH KHA HUB | 99 NIGHTS COMPLETE V4 UPDATED
---========================================================
--- KHA UI MENU 2.1
--- MOBILE • DARK GLASS • VIETNAMESE
--- TREE AURA • KILL AURA • GOD MODE STATUS
--- INSTANT BRING ALL • FUEL • SCRAP + LOG
--- FLY TO FIRE SPEED 300 • STOP FLY
--- TELEPORT LOST CHILD 1-4
--- FIX LAG • WORLD TRANSPARENCY
+--  MINH KHA HUB | 99 NIGHTS COMPLETE V7
+--  Kha UI Menu 2.1 | Mobile | Vietnamese
+--  V7: Anti Đạn, Fix Lag KHÔNG tự bật khi chạy, Bring theo nhóm,
+--      Anti Hit, chẩn đoán aura, bỏ God Mode
 --========================================================
 
 repeat task.wait() until game:IsLoaded()
@@ -18,9 +12,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local TweenService = game:GetService("TweenService")
+local VirtualUser = game:GetService("VirtualUser")
 
 local Player = Players.LocalPlayer
-local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 
 -- LOAD UI
 local Success, Library = pcall(function()
@@ -34,7 +28,7 @@ if not Success or not Library then
     return
 end
 
-Library:SetTitle("MINH KHA HUB", "99 NIGHTS COMPLETE V4", "MK")
+Library:SetTitle("MINH KHA HUB", "99 NIGHTS COMPLETE V7", "MK")
 
 local function Notify(title, message)
     pcall(function()
@@ -42,10 +36,27 @@ local function Notify(title, message)
     end)
 end
 
--- REMOTES
-local DamageRemote = RemoteEvents:WaitForChild("ToolDamageObject")
-local StartDrag = RemoteEvents:FindFirstChild("RequestStartDraggingItem")
-local StopDrag = RemoteEvents:FindFirstChild("StopDraggingItem")
+-- Thông báo có giới hạn tần suất (tránh spam)
+local LastWarn = {}
+local function Warn(key, message)
+    if os.clock() - (LastWarn[key] or 0) > 6 then
+        LastWarn[key] = os.clock()
+        Notify("CẢNH BÁO", message)
+    end
+end
+
+-- REMOTES (có timeout, không treo script)
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents", 15)
+local DamageRemote = RemoteEvents and RemoteEvents:WaitForChild("ToolDamageObject", 10)
+local StartDrag = RemoteEvents and RemoteEvents:FindFirstChild("RequestStartDraggingItem")
+local StopDrag = RemoteEvents and RemoteEvents:FindFirstChild("StopDraggingItem")
+
+if not DamageRemote then
+    Notify("LỖI", "Không thấy remote ToolDamageObject. Aura sẽ không chạy.")
+end
+if not StartDrag or not StopDrag then
+    Notify("LỖI", "Không thấy remote kéo vật phẩm. Bring sẽ không chạy.")
+end
 
 -- SETTINGS
 local Settings = {
@@ -53,26 +64,68 @@ local Settings = {
     KillAura = false,
     AutoFuel = false,
     AutoScrap = false,
+    AntiHit = false,
+    AntiAFK = true,
     FixLag = false,
+    BringToMe = false,
     WorldTransparency = 0,
     TreeRange = 25,
     KillRange = 25,
+    AntiHitRange = 15,
+    AntiHitHP = 35,
     FlySpeed = 300,
+    WalkSpeed = 16,
     BringBusy = false,
 }
 
 local Running = true
+local Booting = true -- chặn UI tự bật chức năng lúc mới chạy
+task.delay(3, function() Booting = false end)
 local FlyTween = nil
 local FlyToken = 0
 
+--========================================================
+-- LOOP MANAGER
+--========================================================
+local LoopTokens = {}
+
+local function StopLoop(name)
+    LoopTokens[name] = (LoopTokens[name] or 0) + 1
+end
+
+local function StartLoop(name, interval, fn)
+    StopLoop(name)
+    local my = LoopTokens[name]
+    task.spawn(function()
+        while Running and Settings[name] and LoopTokens[name] == my do
+            local ok, err = pcall(fn, my)
+            if not ok then
+                Warn("err_" .. name, name .. " lỗi: " .. tostring(err))
+            end
+            task.wait(interval)
+        end
+    end)
+end
+
+local function ToggleLoop(name, interval, fn)
+    return function(value)
+        Settings[name] = value
+        if value then
+            StartLoop(name, interval, fn)
+        else
+            StopLoop(name)
+        end
+    end
+end
+
+--========================================================
 -- CHARACTER
+--========================================================
 local function GetCharacter()
     local character = Player.Character
     if not character then return nil end
-
     local root = character:FindFirstChild("HumanoidRootPart")
     if not root then return nil end
-
     return character, root
 end
 
@@ -82,24 +135,58 @@ local function GetHumanoid()
     return character:FindFirstChildOfClass("Humanoid")
 end
 
--- AXE
-local function GetEquippedAxe()
+local function GetModelPart(model)
+    return model.PrimaryPart
+        or model:FindFirstChild("HumanoidRootPart")
+        or model:FindFirstChildWhichIsA("BasePart")
+end
+
+local function GetPosition(obj)
+    if not obj then return nil end
+    if obj:IsA("Model") then
+        return obj:GetPivot().Position
+    elseif obj:IsA("BasePart") then
+        return obj.Position
+    end
+    return nil
+end
+
+--========================================================
+-- TOOL DETECTION (rìu / cưa / vũ khí đang cầm)
+--========================================================
+local function HasWord(name, words)
+    local lower = name:lower()
+    for _, w in ipairs(words) do
+        if lower:find(w, 1, true) then return true end
+    end
+    return false
+end
+
+local ChopWords = {"axe", "chainsaw"}
+
+-- trả về (đối tượng gửi lên server, tên tool)
+local function GetEquippedTool(onlyChop)
     local character = Player.Character
     if not character then return nil end
 
-    for _, model in ipairs(character:GetChildren()) do
-        if model:IsA("Model") then
-            local name = model:GetAttribute("ToolName")
+    for _, child in ipairs(character:GetChildren()) do
+        if child:IsA("Model") or child:IsA("Tool") then
+            local toolName = child:GetAttribute("ToolName")
+            if type(toolName) ~= "string" then
+                toolName = child.Name
+            end
 
-            if type(name) == "string" and name:find("Axe") then
-                local original = model:FindFirstChild("OriginalItem")
+            if not onlyChop or HasWord(toolName, ChopWords) then
+                local original = child:FindFirstChild("OriginalItem")
                 if original and original.Value then
-                    return original.Value
+                    return original.Value, toolName
+                end
+                if child:IsA("Tool") then
+                    return child, toolName
                 end
             end
         end
     end
-
     return nil
 end
 
@@ -113,69 +200,102 @@ local function HasChainsaw()
             return true
         end
     end
-
     return false
 end
 
+--========================================================
 -- HIT REGISTRATION
+--========================================================
 local EnemyHandler
+
+local function FindEnemyHandler()
+    local ok, result = pcall(function()
+        return require(Player.PlayerScripts.Client.EnemyHandler)
+    end)
+    if ok then return result end
+
+    -- dự phòng: tìm ModuleScript tên EnemyHandler ở bất kỳ đâu
+    local scripts = Player:FindFirstChild("PlayerScripts")
+    if scripts then
+        for _, obj in ipairs(scripts:GetDescendants()) do
+            if obj:IsA("ModuleScript") and obj.Name == "EnemyHandler" then
+                local ok2, result2 = pcall(require, obj)
+                if ok2 then return result2 end
+            end
+        end
+    end
+    return nil
+end
 
 local function GetHitId()
     if not EnemyHandler then
-        local success, result = pcall(function()
-            return require(Player.PlayerScripts.Client.EnemyHandler)
-        end)
-
-        if success then
-            EnemyHandler = result
-        else
-            return nil
-        end
+        EnemyHandler = FindEnemyHandler()
+        if not EnemyHandler then return nil end
     end
 
-    local success, result = pcall(function()
+    local ok, result = pcall(function()
         return EnemyHandler.GetHitRegId()
     end)
-
-    if success then return result end
+    if ok then return result end
     return nil
 end
 
 local function DamageTarget(target, isTree)
-    local character, root = GetCharacter()
-    if not character or not root then return false end
+    if not DamageRemote then return false, "thiếu remote" end
 
-    local axe = GetEquippedAxe()
+    local _, root = GetCharacter()
+    if not root then return false, "không có nhân vật" end
+
+    local tool = GetEquippedTool(isTree)
+    if not tool then
+        return false, isTree and "chưa cầm rìu/cưa" or "chưa cầm vũ khí"
+    end
+
     local hitId = GetHitId()
+    if not hitId then return false, "không lấy được HitId" end
 
-    if not axe or not hitId then return false end
-
-    local success = pcall(function()
+    local ok, err = pcall(function()
         if isTree then
-            DamageRemote:InvokeServer(
-                target, axe, hitId, root.CFrame, true
-            )
+            DamageRemote:InvokeServer(target, tool, hitId, root.CFrame, true)
         else
-            DamageRemote:InvokeServer(
-                target, axe, hitId, root.CFrame
-            )
+            DamageRemote:InvokeServer(target, tool, hitId, root.CFrame)
         end
     end)
 
-    return success
+    if not ok then return false, tostring(err) end
+    return true
 end
 
+--========================================================
 -- TREE AURA
+--========================================================
+local TreeCache = {}
+local TreeScanTime = 0
+
 local function GetTrees()
-    local success, result = pcall(function()
+    -- 1) selector mới
+    local ok, result = pcall(function()
         return workspace:QueryDescendants("[$Resource]")
     end)
-
-    if success and type(result) == "table" then
+    if ok and type(result) == "table" and #result > 0 then
         return result
     end
 
-    return CollectionService:GetTagged("Resource")
+    -- 2) CollectionService
+    local tagged = CollectionService:GetTagged("Resource")
+    if #tagged > 0 then return tagged end
+
+    -- 3) quét dự phòng 5 giây/lần: Model có phần Trunk
+    if os.clock() - TreeScanTime > 5 then
+        TreeScanTime = os.clock()
+        TreeCache = {}
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj:FindFirstChild("Trunk") then
+                table.insert(TreeCache, obj)
+            end
+        end
+    end
+    return TreeCache
 end
 
 local function CanChopTree(tree)
@@ -186,7 +306,7 @@ local function CanChopTree(tree)
 end
 
 local function GetClosestTree()
-    local character, root = GetCharacter()
+    local _, root = GetCharacter()
     if not root then return nil end
 
     local closest
@@ -195,12 +315,8 @@ local function GetClosestTree()
     for _, tree in ipairs(GetTrees()) do
         if tree:IsA("Model") then
             local trunk = tree:FindFirstChild("Trunk")
-
-            if trunk and trunk:IsA("BasePart")
-                and CanChopTree(tree) then
-
+            if trunk and trunk:IsA("BasePart") and CanChopTree(tree) then
                 local distance = (trunk.Position - root.Position).Magnitude
-
                 if distance < shortest then
                     closest = tree
                     shortest = distance
@@ -208,25 +324,30 @@ local function GetClosestTree()
             end
         end
     end
-
     return closest
 end
 
-local function StartTreeAura()
-    task.spawn(function()
-        while Running and Settings.TreeAura do
-            if GetEquippedAxe() then
-                local tree = GetClosestTree()
-                if tree then
-                    DamageTarget(tree, true)
-                end
-            end
-            task.wait(0.15)
-        end
-    end)
+local function TreeAuraStep()
+    if not GetEquippedTool(true) then
+        Warn("noaxe", "Tree Aura: hãy cầm RÌU hoặc CƯA trên tay!")
+        return
+    end
+
+    local tree = GetClosestTree()
+    if not tree then
+        Warn("notree", "Tree Aura: không có cây trong bán kính.")
+        return
+    end
+
+    local ok, err = DamageTarget(tree, true)
+    if not ok then
+        Warn("treefail", "Tree Aura lỗi: " .. tostring(err))
+    end
 end
 
+--========================================================
 -- KILL AURA
+--========================================================
 local ExcludedEnemies = {
     ["Lost Child"] = true,
     ["Lost Child2"] = true,
@@ -235,127 +356,143 @@ local ExcludedEnemies = {
     ["Pelt Trader"] = true,
 }
 
-local function GetModelPart(model)
-    return model.PrimaryPart
-        or model:FindFirstChild("HumanoidRootPart")
-        or model:FindFirstChildWhichIsA("BasePart")
-end
+local function KillAuraStep(token)
+    local character, root = GetCharacter()
+    local enemies = workspace:FindFirstChild("Characters")
 
-local function StartKillAura()
-    task.spawn(function()
-        while Running and Settings.KillAura do
-            local character, root = GetCharacter()
-            local enemies = workspace:FindFirstChild("Characters")
-
-            if root and enemies and GetEquippedAxe() then
-                for _, enemy in ipairs(enemies:GetChildren()) do
-                    if not Settings.KillAura then break end
-
-                    if enemy:IsA("Model")
-                        and enemy ~= character
-                        and not ExcludedEnemies[enemy.Name] then
-
-                        local part = GetModelPart(enemy)
-                        local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-
-                        if part and (not humanoid or humanoid.Health > 0) then
-                            local distance = (part.Position - root.Position).Magnitude
-
-                            if distance <= Settings.KillRange then
-                                DamageTarget(enemy, false)
-                                task.wait(0.12)
-                            end
-                        end
-                    end
-                end
-            end
-
-            task.wait(0.15)
-        end
-    end)
-end
-
--- GOD MODE STATUS
-local function CheckGodMode()
-    local humanoid = GetHumanoid()
-
-    if not humanoid then
-        Notify("GOD MODE", "Không tìm thấy nhân vật!")
+    if not enemies then
+        Warn("nochars", "Kill Aura: không thấy Workspace.Characters.")
+        return
+    end
+    if not root then return end
+    if not GetEquippedTool(false) then
+        Warn("noweapon", "Kill Aura: hãy cầm vũ khí/rìu trên tay!")
         return
     end
 
-    Notify(
-        "GOD MODE",
-        "Máu: " .. math.floor(humanoid.Health)
-        .. "/" .. math.floor(humanoid.MaxHealth)
-        .. ". Chưa xác minh bất tử server."
-    )
+    for _, enemy in ipairs(enemies:GetChildren()) do
+        if not Settings.KillAura or LoopTokens.KillAura ~= token then break end
+
+        if enemy:IsA("Model")
+            and enemy ~= character
+            and not ExcludedEnemies[enemy.Name] then
+
+            local part = GetModelPart(enemy)
+            local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+
+            if part and (not humanoid or humanoid.Health > 0) then
+                local distance = (part.Position - root.Position).Magnitude
+                if distance <= Settings.KillRange then
+                    local ok, err = DamageTarget(enemy, false)
+                    if not ok then
+                        Warn("killfail", "Kill Aura lỗi: " .. tostring(err))
+                    end
+                    task.wait(0.12)
+                end
+            end
+        end
+    end
 end
 
--- DESTINATIONS
+--========================================================
+-- CHẨN ĐOÁN AURA
+--========================================================
+local function Diagnose()
+    local lines = {}
+
+    table.insert(lines, "Remote damage: " .. (DamageRemote and "OK" or "THIẾU"))
+
+    local chop, chopName = GetEquippedTool(true)
+    table.insert(lines, "Rìu/cưa: " .. (chop and tostring(chopName) or "CHƯA CẦM"))
+
+    local any, anyName = GetEquippedTool(false)
+    table.insert(lines, "Vũ khí: " .. (any and tostring(anyName) or "CHƯA CẦM"))
+
+    table.insert(lines, "HitId: " .. (GetHitId() and "OK" or "KHÔNG LẤY ĐƯỢC"))
+
+    local _, root = GetCharacter()
+    local trees = GetTrees()
+    local nearest = math.huge
+    if root then
+        for _, tree in ipairs(trees) do
+            local trunk = tree:IsA("Model") and tree:FindFirstChild("Trunk")
+            if trunk and trunk:IsA("BasePart") then
+                local d = (trunk.Position - root.Position).Magnitude
+                if d < nearest then nearest = d end
+            end
+        end
+    end
+    table.insert(lines, "Cây tìm thấy: " .. #trees
+        .. (nearest < math.huge and (" | gần nhất " .. math.floor(nearest)) or ""))
+
+    local chars = workspace:FindFirstChild("Characters")
+    table.insert(lines, "Characters: " .. (chars and (#chars:GetChildren() .. " mục") or "THIẾU"))
+
+    for _, l in ipairs(lines) do print("[CHẨN ĐOÁN] " .. l) end
+    Notify("CHẨN ĐOÁN", table.concat(lines, "\n"))
+end
+
+--========================================================
+-- ĐÍCH ĐẾN
+--========================================================
+local CachedFire
 local function GetFire()
+    if CachedFire and CachedFire.Parent then return CachedFire end
     local map = workspace:FindFirstChild("Map")
     local campground = map and map:FindFirstChild("Campground")
-    return campground and campground:FindFirstChild("MainFire")
+    CachedFire = campground and campground:FindFirstChild("MainFire")
+    return CachedFire
 end
 
+local CachedScrapper
 local function GetScrapper()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        local name = obj.Name:lower()
+    if CachedScrapper and CachedScrapper.Parent then return CachedScrapper end
 
-        if name == "scrapper"
-            or name == "scrap machine"
-            or name == "grinder" then
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        local n = obj.Name:lower()
+        if (n == "scrapper" or n == "scrap machine" or n == "grinder")
+            and (obj:IsA("Model") or obj:IsA("BasePart")) then
+            CachedScrapper = obj
             return obj
         end
     end
-
     return nil
 end
 
--- ITEM FILTERS
-local ScrapNames = {
-    ["Tyre"] = true,
-    ["Sheet Metal"] = true,
-    ["Broken Fan"] = true,
-    ["Bolt"] = true,
-    ["Old Radio"] = true,
-    ["UFO Junk"] = true,
-    ["UFO Scrap"] = true,
-    ["Broken Microwave"] = true,
-    ["Broken Radio"] = true,
-    ["Scrap"] = true,
-    ["Pipe"] = true,
-    ["Wire"] = true,
-    ["Battery"] = true,
-    ["Circuit"] = true,
-    ["Spring"] = true,
-
-    -- GỖ ĐÃ THÊM
-    ["Log"] = true,
+--========================================================
+-- PHÂN LOẠI VẬT PHẨM (theo từ khóa, không phân biệt hoa thường)
+--========================================================
+local CategoryOrder = {
+    {id = "Ammo",    words = {"ammo", "arrow", "bullet"}},
+    {id = "Weapon",  words = {"rifle", "revolver", "spear", "axe", "chainsaw", "katana",
+                              "morningstar", "sword", "knife", "crossbow", "shotgun",
+                              "flashlight", "hammer", "pickaxe", "bow", "club"}},
+    {id = "Armor",   words = {"body", "armor", "armour", "helmet", "vest"}},
+    {id = "Medical", words = {"bandage", "medkit", "med kit", "medic"}},
+    {id = "Food",    words = {"steak", "morsel", "carrot", "berry", "apple", "corn",
+                              "pumpkin", "stew", "cake", "ribs", "soup", "meat",
+                              "pepper", "bread", "chili", "mushroom", "cooked"}},
+    {id = "Fuel",    words = {"log", "coal", "fuel", "oil", "biofuel", "canister"}},
+    {id = "Scrap",   words = {"tyre", "tire", "metal", "bolt", "radio", "ufo", "microwave",
+                              "scrap", "pipe", "wire", "battery", "circuit", "spring",
+                              "washing", "fan", "broken", "junk"}},
+    {id = "Pelt",    words = {"pelt", "foot", "tusk", "hide", "fur", "tooth", "claw"}},
+    {id = "Gem",     words = {"gem", "cultist", "fragment", "crystal", "diamond"}},
+    {id = "Sack",    words = {"sack", "bag"}},
 }
 
-local FuelNames = {
-    ["Log"] = true,
-    ["Fuel Canister"] = true,
-    ["Coal"] = true,
-    ["Oil Barrel"] = true,
-    ["Biofuel"] = true,
-}
-
--- INSTANT BRING: GIỮ CƠ CHẾ CŨ
-local function GetPosition(obj)
-    if not obj then return nil end
-
-    if obj:IsA("Model") then
-        return obj:GetPivot().Position
-    elseif obj:IsA("BasePart") then
-        return obj.Position
+local function Classify(itemName)
+    for _, cat in ipairs(CategoryOrder) do
+        if HasWord(itemName, cat.words) then
+            return cat.id
+        end
     end
-
-    return nil
+    return "Other"
 end
 
+--========================================================
+-- BRING
+--========================================================
 local function SetItemPosition(item, position)
     if item:IsA("Model") then
         item:PivotTo(CFrame.new(position))
@@ -364,171 +501,129 @@ local function SetItemPosition(item, position)
         item.CFrame = CFrame.new(position)
         return true
     end
-
     return false
 end
 
 local function TeleportObject(item, destination)
-    if not item or not item.Parent then
-        return false
-    end
-
-    if not destination or not StartDrag or not StopDrag then
-        return false
-    end
+    if not item or not item.Parent then return false end
+    if not destination or not StartDrag or not StopDrag then return false end
 
     local position = GetPosition(destination)
     if not position then return false end
 
-    local targetPosition = position + Vector3.new(0, 3, 0)
+    local target = position + Vector3.new(0, 3, 0)
 
-    local startSuccess = pcall(function()
-        StartDrag:FireServer(item)
-    end)
+    local startOk = pcall(function() StartDrag:FireServer(item) end)
+    if not startOk then return false end
 
-    if not startSuccess then
-        return false
-    end
-
-    local moveSuccess = pcall(function()
-        SetItemPosition(item, targetPosition)
-    end)
-
+    local moveOk = pcall(function() SetItemPosition(item, target) end)
     task.wait(0.05)
+    local stopOk = pcall(function() StopDrag:FireServer(item) end)
 
-    local stopSuccess = pcall(function()
-        StopDrag:FireServer(item)
-    end)
-
-    return startSuccess and moveSuccess and stopSuccess
+    return startOk and moveOk and stopOk
 end
 
-local function BringItems(filter, destination)
-    if Settings.BringBusy then
-        Notify("BRING", "Đang xử lý vật phẩm!")
-        return 0
-    end
+local function BringItems(filterFn, destination)
+    if Settings.BringBusy then return 0 end
 
     local items = workspace:FindFirstChild("Items")
-
-    if not items then
-        Notify("BRING", "Không tìm thấy Workspace.Items!")
-        return 0
-    end
-
-    if not destination then
-        Notify("BRING", "Không tìm thấy vị trí đích!")
-        return 0
-    end
+    if not items or not destination then return 0 end
 
     Settings.BringBusy = true
     local count = 0
 
-    for _, item in ipairs(items:GetChildren()) do
-        if not Running then break end
-
-        if not filter or filter[item.Name] then
-            if TeleportObject(item, destination) then
-                count += 1
+    pcall(function()
+        for _, item in ipairs(items:GetChildren()) do
+            if not Running then break end
+            if not filterFn or filterFn(item) then
+                if TeleportObject(item, destination) then
+                    count += 1
+                end
+                task.wait(0.05)
             end
-            task.wait(0.05)
         end
-    end
+    end)
 
     Settings.BringBusy = false
     return count
 end
 
--- BRING BUTTON FUNCTIONS
-local function BringAllToFire()
-    task.spawn(function()
-        local fire = GetFire()
-
-        if not fire then
-            Notify("BRING ALL", "Không tìm thấy MainFire!")
-            return
-        end
-
-        local count = BringItems(nil, fire)
-        Notify("BRING ALL", "Đã gửi thao tác cho " .. count .. " vật phẩm.")
-    end)
+-- catSet: bảng {Fuel=true,...} hoặc nil = tất cả
+-- destKind: "fire" hoặc "scrap"; allowMe: cho phép đích là bản thân
+local function ResolveDestination(destKind, allowMe)
+    if allowMe and Settings.BringToMe then
+        local _, root = GetCharacter()
+        return root, "bạn"
+    end
+    if destKind == "scrap" then
+        return GetScrapper(), "Scrapper"
+    end
+    return GetFire(), "MainFire"
 end
 
-local function BringFuelNow()
-    task.spawn(function()
-        local fire = GetFire()
+local function BringSync(catSet, destKind, allowMe)
+    local destination, destName = ResolveDestination(destKind, allowMe)
+    if not destination then return 0, destName end
 
-        if not fire then
-            Notify("NHIÊN LIỆU", "Không tìm thấy MainFire!")
-            return
-        end
+    local count = BringItems(function(item)
+        return not catSet or catSet[Classify(item.Name)]
+    end, destination)
 
-        local count = BringItems(FuelNames, fire)
-        Notify("NHIÊN LIỆU", "Đã gửi thao tác cho " .. count .. " vật phẩm.")
-    end)
+    return count, destName
 end
 
-local function BringScrapNow()
-    task.spawn(function()
-        local machine = GetScrapper()
-
-        if not machine then
-            Notify("PHẾ LIỆU", "Không tìm thấy Scrapper!")
-            return
-        end
-
-        local count = BringItems(ScrapNames, machine)
-        Notify("SCRAPPER", "Đã gửi thao tác cho " .. count .. " vật phẩm.")
-    end)
-end
-
--- AUTO FUEL
-local function StartAutoFuel()
-    task.spawn(function()
-        while Running and Settings.AutoFuel do
-            if not Settings.BringBusy then
-                local fire = GetFire()
-                if fire then
-                    BringItems(FuelNames, fire)
-                end
+local function BringButton(label, catSet, destKind)
+    return function()
+        task.spawn(function()
+            if Settings.BringBusy then
+                Notify("BRING", "Đang xử lý vật phẩm, đợi chút!")
+                return
             end
-            task.wait(2)
-        end
-    end)
-end
 
--- AUTO SCRAP
-local function StartAutoScrap()
-    task.spawn(function()
-        while Running and Settings.AutoScrap do
-            if not Settings.BringBusy then
-                local machine = GetScrapper()
-                if machine then
-                    BringItems(ScrapNames, machine)
-                end
+            local destination, destName = ResolveDestination(destKind, true)
+            if not destination then
+                Notify("BRING", "Không tìm thấy " .. tostring(destName) .. "!")
+                return
             end
-            task.wait(2)
-        end
-    end)
-end
 
--- FLY TO FIRE
-local function StopFly()
-    FlyToken += 1
+            local count = BringItems(function(item)
+                return not catSet or catSet[Classify(item.Name)]
+            end, destination)
 
-    if FlyTween then
-        pcall(function()
-            FlyTween:Cancel()
+            Notify("BRING " .. label, "Đã gửi " .. count .. " vật phẩm về " .. destName .. ".")
         end)
+    end
+end
+
+local function AutoFuelStep()
+    if Settings.BringBusy then return end
+    BringSync({Fuel = true}, "fire", false)
+end
+
+local function AutoScrapStep()
+    if Settings.BringBusy then return end
+    BringSync({Scrap = true}, "scrap", false)
+end
+
+--========================================================
+-- FLY TO FIRE
+--========================================================
+local function CancelFly()
+    FlyToken += 1
+    if FlyTween then
+        pcall(function() FlyTween:Cancel() end)
         FlyTween = nil
     end
+end
 
+local function StopFly()
+    CancelFly()
     Notify("BAY", "Đã dừng bay!")
 end
 
 local function FlyToFire()
     local fire = GetFire()
-    local character, root = GetCharacter()
+    local _, root = GetCharacter()
 
     if not fire or not root then
         Notify("BAY", "Không tìm thấy nhân vật hoặc đống lửa!")
@@ -541,29 +636,25 @@ local function FlyToFire()
         return
     end
 
-    StopFly()
-
-    FlyToken += 1
+    CancelFly()
     local currentToken = FlyToken
 
     local target = destination + Vector3.new(0, 6, 0)
     local distance = (root.Position - target).Magnitude
     local duration = math.max(distance / Settings.FlySpeed, 0.05)
 
-    FlyTween = TweenService:Create(
+    local tween = TweenService:Create(
         root,
         TweenInfo.new(duration, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(target)}
     )
-
-    FlyTween:Play()
+    FlyTween = tween
+    tween:Play()
 
     Notify("BAY", "Đang bay về đống lửa. Tốc độ: " .. Settings.FlySpeed)
 
     task.spawn(function()
-        local tween = FlyTween
         tween.Completed:Wait()
-
         if currentToken == FlyToken then
             FlyTween = nil
             Notify("BAY", "Đã kết thúc hành trình!")
@@ -571,32 +662,153 @@ local function FlyToFire()
     end)
 end
 
+--========================================================
+-- ANTI HIT (né quái + rút về lửa khi máu thấp)
+-- Lưu ý: KHÔNG phải bất tử. Server vẫn tính sát thương.
+--========================================================
+local LastEvade = 0
+local LastRetreat = 0
+
+local function AntiHitStep()
+    local character, root = GetCharacter()
+    local humanoid = GetHumanoid()
+    if not (character and root and humanoid) or humanoid.Health <= 0 then return end
+
+    -- 1) máu thấp: về đống lửa
+    local hpPercent = humanoid.Health / math.max(humanoid.MaxHealth, 1) * 100
+    if hpPercent <= Settings.AntiHitHP and os.clock() - LastRetreat > 5 then
+        local fire = GetFire()
+        local firePos = fire and GetPosition(fire)
+        if firePos then
+            LastRetreat = os.clock()
+            CancelFly()
+            root.CFrame = CFrame.new(firePos + Vector3.new(0, 6, 0))
+            Notify("ANTI HIT", "Máu thấp (" .. math.floor(hpPercent) .. "%), đã về đống lửa!")
+            return
+        end
+    end
+
+    -- 2) quái đến gần: lùi ra xa
+    if os.clock() - LastEvade < 0.4 then return end
+
+    local enemies = workspace:FindFirstChild("Characters")
+    if not enemies then return end
+
+    local nearestPos, nearestDist
+    for _, enemy in ipairs(enemies:GetChildren()) do
+        if enemy:IsA("Model")
+            and enemy ~= character
+            and not ExcludedEnemies[enemy.Name] then
+
+            local part = GetModelPart(enemy)
+            local h = enemy:FindFirstChildOfClass("Humanoid")
+
+            if part and (not h or h.Health > 0) then
+                local d = (part.Position - root.Position).Magnitude
+                if d < Settings.AntiHitRange and (not nearestDist or d < nearestDist) then
+                    nearestDist = d
+                    nearestPos = part.Position
+                end
+            end
+        end
+    end
+
+    if nearestPos then
+        local away = Vector3.new(
+            root.Position.X - nearestPos.X, 0, root.Position.Z - nearestPos.Z
+        )
+        if away.Magnitude < 0.1 then
+            away = Vector3.new(1, 0, 0)
+        end
+        local newPos = root.Position + away.Unit * (Settings.AntiHitRange + 6 - nearestDist)
+        LastEvade = os.clock()
+        root.CFrame = CFrame.new(newPos, newPos + root.CFrame.LookVector)
+    end
+end
+
+--========================================================
+-- ANTI ĐẠN (né vật bay nhanh lao về phía mình)
+--========================================================
+Settings.AntiProjectile = false
+Settings.ProjectileRange = 60
+
+local Tracked = {}
+local LastDodge = 0
+local SeenNames = {}
+
+workspace.DescendantAdded:Connect(function(obj)
+    if Settings.AntiProjectile and obj:IsA("BasePart") and not obj.Anchored then
+        Tracked[obj] = os.clock()
+    end
+end)
+
+local function IsFlying(part)
+    if part.Anchored then return false end
+    local ch = Player.Character
+    if ch and part:IsDescendantOf(ch) then return false end
+    for _, folderName in ipairs({"Items", "Characters"}) do
+        local f = workspace:FindFirstChild(folderName)
+        if f and part:IsDescendantOf(f) then return false end
+    end
+    return part.AssemblyLinearVelocity.Magnitude > 40
+end
+
+local function AntiProjectileStep()
+    local _, root = GetCharacter()
+    if not root or os.clock() - LastDodge < 0.25 then return end
+
+    for part, t in pairs(Tracked) do
+        if not part.Parent or os.clock() - t > 6 then
+            Tracked[part] = nil
+        elseif IsFlying(part) then
+            local rel = root.Position - part.Position
+            local vel = part.AssemblyLinearVelocity
+            local dir = vel.Unit
+            local approach = rel:Dot(dir)
+
+            if approach > 0 and rel.Magnitude < Settings.ProjectileRange then
+                local perp = rel - dir * approach
+                if perp.Magnitude < 8 then
+                    local side = perp.Magnitude > 0.5 and perp.Unit
+                        or dir:Cross(Vector3.yAxis).Unit
+                    side = Vector3.new(side.X, 0, side.Z)
+                    if side.Magnitude < 0.1 then side = Vector3.xAxis end
+
+                    pcall(function() part.CanTouch = false end)
+                    root.CFrame = root.CFrame + side.Unit * 12
+                    LastDodge = os.clock()
+
+                    if not SeenNames[part.Name] then
+                        SeenNames[part.Name] = true
+                        Notify("ANTI ĐẠN", "Đã né: " .. part.Name)
+                    end
+                    return
+                end
+            end
+        end
+    end
+end
+
+--========================================================
 -- LOST CHILD
-local ChildNames = {
-    "Lost Child",
-    "Lost Child2",
-    "Lost Child3",
-    "Lost Child4",
-}
+--========================================================
+local ChildNames = {"Lost Child", "Lost Child2", "Lost Child3", "Lost Child4"}
 
 local function TeleportToChild(index)
     local characters = workspace:FindFirstChild("Characters")
-
     if not characters then
         Notify("TELEPORT", "Không tìm thấy Characters!")
         return
     end
 
     local child = characters:FindFirstChild(ChildNames[index])
-
     if not child then
         Notify("TELEPORT", "Không tìm thấy Lost Child " .. index)
         return
     end
 
     local part = GetModelPart(child)
-    local character, root = GetCharacter()
-
+    local _, root = GetCharacter()
     if not part or not root then
         Notify("TELEPORT", "Không tìm thấy vị trí!")
         return
@@ -606,7 +818,33 @@ local function TeleportToChild(index)
     Notify("TELEPORT", "Đã yêu cầu dịch chuyển đến Lost Child " .. index)
 end
 
+--========================================================
+-- WALK SPEED + ANTI AFK
+--========================================================
+local function ApplyWalkSpeed(value)
+    Settings.WalkSpeed = value
+    local humanoid = GetHumanoid()
+    if humanoid then humanoid.WalkSpeed = value end
+end
+
+Player.CharacterAdded:Connect(function(char)
+    local humanoid = char:WaitForChild("Humanoid", 10)
+    if humanoid and Settings.WalkSpeed ~= 16 then
+        humanoid.WalkSpeed = Settings.WalkSpeed
+    end
+end)
+
+Player.Idled:Connect(function()
+    if not Settings.AntiAFK then return end
+    pcall(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+end)
+
+--========================================================
 -- FIX LAG
+--========================================================
 local OriginalEffects = {}
 
 local function SetFixLag(value)
@@ -614,34 +852,22 @@ local function SetFixLag(value)
 
     if value then
         for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("ParticleEmitter")
-                or obj:IsA("Trail")
-                or obj:IsA("Beam")
-                or obj:IsA("Fire")
-                or obj:IsA("Smoke")
-                or obj:IsA("Sparkles") then
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail")
+                or obj:IsA("Beam") or obj:IsA("Fire")
+                or obj:IsA("Smoke") or obj:IsA("Sparkles") then
 
                 if OriginalEffects[obj] == nil then
-                    OriginalEffects[obj] = {
-                        Type = "Enabled",
-                        Value = obj.Enabled
-                    }
+                    OriginalEffects[obj] = {Type = "Enabled", Value = obj.Enabled}
                 end
-
                 obj.Enabled = false
 
             elseif obj:IsA("BasePart") then
                 if OriginalEffects[obj] == nil then
-                    OriginalEffects[obj] = {
-                        Type = "Shadow",
-                        Value = obj.CastShadow
-                    }
+                    OriginalEffects[obj] = {Type = "Shadow", Value = obj.CastShadow}
                 end
-
                 obj.CastShadow = false
             end
         end
-
         Notify("FIX LAG", "Đã giảm hiệu ứng đồ họa!")
     else
         for obj, data in pairs(OriginalEffects) do
@@ -655,13 +881,14 @@ local function SetFixLag(value)
                 end)
             end
         end
-
         table.clear(OriginalEffects)
         Notify("FIX LAG", "Đã khôi phục hiệu ứng!")
     end
 end
 
--- WORLD TRANSPARENCY
+--========================================================
+-- WORLD TRANSPARENCY (debounce)
+--========================================================
 local OriginalTransparency = {}
 
 local function SaveTransparency(obj)
@@ -672,12 +899,12 @@ local function SaveTransparency(obj)
             OriginalTransparency[obj] = {
                 Type = "Part",
                 Transparency = obj.Transparency,
-                LocalTransparencyModifier = obj.LocalTransparencyModifier
+                LocalTransparencyModifier = obj.LocalTransparencyModifier,
             }
         elseif obj:IsA("Decal") or obj:IsA("Texture") then
             OriginalTransparency[obj] = {
                 Type = "Texture",
-                Transparency = obj.Transparency
+                Transparency = obj.Transparency,
             }
         end
     end)
@@ -691,17 +918,14 @@ local function ApplyTransparency(amount)
         if obj:IsA("BasePart") then
             SaveTransparency(obj)
             local data = OriginalTransparency[obj]
-
             if data then
                 obj.LocalTransparencyModifier =
                     data.LocalTransparencyModifier
                     + (1 - data.LocalTransparencyModifier) * alpha
             end
-
         elseif obj:IsA("Decal") or obj:IsA("Texture") then
             SaveTransparency(obj)
             local data = OriginalTransparency[obj]
-
             if data then
                 obj.Transparency =
                     data.Transparency + (1 - data.Transparency) * alpha
@@ -710,193 +934,236 @@ local function ApplyTransparency(amount)
     end
 end
 
+local TransToken = 0
+local function ApplyTransparencyDebounced(value)
+    TransToken += 1
+    local my = TransToken
+    task.delay(0.3, function()
+        if my == TransToken then
+            ApplyTransparency(value)
+        end
+    end)
+end
+
 local function RestoreTransparency()
+    TransToken += 1
     for obj, data in pairs(OriginalTransparency) do
         if obj and obj.Parent then
             pcall(function()
                 if data.Type == "Part" then
                     obj.Transparency = data.Transparency
-                    obj.LocalTransparencyModifier =
-                        data.LocalTransparencyModifier
+                    obj.LocalTransparencyModifier = data.LocalTransparencyModifier
                 else
                     obj.Transparency = data.Transparency
                 end
             end)
         end
     end
-
     table.clear(OriginalTransparency)
     Settings.WorldTransparency = 0
     Notify("TRANSPARENCY", "Đã khôi phục độ trong suốt!")
 end
 
+--========================================================
 -- STOP ALL
+--========================================================
 local function StopAll()
-    Settings.TreeAura = false
-    Settings.KillAura = false
-    Settings.AutoFuel = false
-    Settings.AutoScrap = false
-
-    StopFly()
-    Notify("MINH KHA HUB", "Đã tắt tất cả chức năng!")
+    for _, name in ipairs({"TreeAura", "KillAura", "AutoFuel", "AutoScrap", "AntiHit", "AntiProjectile"}) do
+        Settings[name] = false
+        StopLoop(name)
+    end
+    CancelFly()
+    Notify("MINH KHA HUB", "Đã tắt tất cả! (công tắc UI có thể vẫn hiện bật)")
 end
 
--- HOME TAB
+--========================================================
+-- UI: TRANG CHỦ
+--========================================================
 local Home = Library:CreateTab("🏠 Trang Chủ")
 
-Home:CreateSection("MINH KHA HUB V4")
-
+Home:CreateSection("MINH KHA HUB V7")
 Home:CreateLabel(
     "99 NIGHTS IN THE FOREST\n"
-    .. "COMPLETE V4 UPDATED\n"
+    .. "COMPLETE V7\n"
     .. "KHA UI MENU 2.1\n"
     .. "MOBILE • DARK GLASS"
 )
 
 Home:CreateButton("📍 SAO CHÉP TỌA ĐỘ", function()
-    local character, root = GetCharacter()
-
+    local _, root = GetCharacter()
     if root then
         Library:Copy(string.format(
             "%.1f, %.1f, %.1f",
-            root.Position.X,
-            root.Position.Y,
-            root.Position.Z
+            root.Position.X, root.Position.Y, root.Position.Z
         ))
         Notify("TỌA ĐỘ", "Đã sao chép!")
     end
 end)
 
-Home:CreateButton("🔥 BRING ALL VỀ ĐỐNG LỬA", BringAllToFire)
+Home:CreateButton("🔥 BRING TẤT CẢ", BringButton("TẤT CẢ", nil, "fire"))
 Home:CreateButton("🔥 BAY VỀ ĐỐNG LỬA", FlyToFire)
 Home:CreateButton("🛑 DỪNG BAY", StopFly)
 Home:CreateButton("🛑 DỪNG TẤT CẢ", StopAll)
 
--- TREE TAB
+--========================================================
+-- UI: CHẶT CÂY
+--========================================================
 local TreeTab = Library:CreateTab("🌲 Chặt Cây")
 
 TreeTab:CreateSection("TREE AURA")
+TreeTab:CreateSlider("Bán kính chặt cây", 5, 100, 25, function(value)
+    Settings.TreeRange = value
+end, "TreeRange", 5)
 
-TreeTab:CreateSlider(
-    "Bán kính chặt cây",
-    5, 100, 25,
-    function(value)
-        Settings.TreeRange = value
-    end,
-    "TreeRange",
-    5
+TreeTab:CreateToggle("🌲 CHẶT CÂY AURA", false,
+    ToggleLoop("TreeAura", 0.15, TreeAuraStep), "TreeAura")
+
+TreeTab:CreateButton("🔎 CHẨN ĐOÁN AURA", Diagnose)
+TreeTab:CreateLabel(
+    "Phải CẦM rìu/cưa trên tay.\n"
+    .. "Nếu không chạy, bấm CHẨN ĐOÁN\n"
+    .. "và gửi mình nội dung thông báo."
 )
 
-TreeTab:CreateToggle("🌲 CHẶT CÂY AURA", false, function(value)
-    Settings.TreeAura = value
-    if value then StartTreeAura() end
-end, "TreeAura")
-
-TreeTab:CreateLabel("Cần trang bị rìu.\nCây lớn có thể yêu cầu Chainsaw.")
-
--- COMBAT TAB
+--========================================================
+-- UI: CHIẾN ĐẤU
+--========================================================
 local Combat = Library:CreateTab("⚔️ Chiến Đấu")
 
 Combat:CreateSection("KILL AURA")
+Combat:CreateSlider("Bán kính tấn công", 5, 100, 25, function(value)
+    Settings.KillRange = value
+end, "KillRange", 5)
 
-Combat:CreateSlider(
-    "Bán kính tấn công",
-    5, 100, 25,
-    function(value)
-        Settings.KillRange = value
-    end,
-    "KillRange",
-    5
+Combat:CreateToggle("⚔️ KILL AURA", false,
+    ToggleLoop("KillAura", 0.15, KillAuraStep), "KillAura")
+
+Combat:CreateButton("🔎 CHẨN ĐOÁN AURA", Diagnose)
+
+Combat:CreateSection("ANTI HIT")
+Combat:CreateSlider("Khoảng cách né quái", 5, 40, 15, function(value)
+    Settings.AntiHitRange = value
+end, "AntiHitRange", 1)
+
+Combat:CreateSlider("Về lửa khi máu dưới (%)", 5, 90, 35, function(value)
+    Settings.AntiHitHP = value
+end, "AntiHitHP", 5)
+
+Combat:CreateToggle("🛡️ ANTI HIT", false,
+    ToggleLoop("AntiHit", 0.2, AntiHitStep), "AntiHit")
+
+Combat:CreateSection("ANTI ĐẠN")
+Combat:CreateSlider("Tầm phát hiện đạn", 20, 120, 60, function(v)
+    Settings.ProjectileRange = v
+end, "ProjectileRange", 10)
+
+Combat:CreateToggle("🎯 ANTI ĐẠN", false, function(value)
+    if Booting and value then return end
+    Settings.AntiProjectile = value
+    if value then
+        StartLoop("AntiProjectile", 0.05, AntiProjectileStep)
+    else
+        StopLoop("AntiProjectile")
+        table.clear(Tracked)
+    end
+end, "AntiProjectile")
+
+Combat:CreateLabel(
+    "Né vật bay nhanh lao về phía bạn.\n"
+    .. "Không chặn được đạn tính tức thì\n"
+    .. "của server. Có thể nhận nhầm vật."
 )
 
-Combat:CreateToggle("⚔️ KILL AURA", false, function(value)
-    Settings.KillAura = value
-    if value then StartKillAura() end
-end, "KillAura")
+Combat:CreateLabel(
+    "Né quái + rút về lửa khi máu thấp.\n"
+    .. "KHÔNG phải bất tử.\n"
+    .. "Đừng bật cùng Kill Aura nếu\n"
+    .. "muốn đứng đánh gần."
+)
 
-Combat:CreateSection("GOD MODE")
-Combat:CreateButton("🛡️ KIỂM TRA GOD MODE", CheckGodMode)
-Combat:CreateLabel("free thì đéo có đâu")
-
--- ITEMS TAB
+--========================================================
+-- UI: VẬT PHẨM
+--========================================================
 local Items = Library:CreateTab("📦 Vật Phẩm")
 
-Items:CreateSection("BRING ALL")
-Items:CreateButton("🔥 BRING TẤT CẢ VỀ LỬA", BringAllToFire)
+Items:CreateSection("ĐÍCH ĐẾN")
+Items:CreateToggle("🧍 MANG VỀ CHỖ TÔI (thay vì lửa)", false, function(value)
+    Settings.BringToMe = value
+end, "BringToMe")
 
-Items:CreateSection("NHIÊN LIỆU")
+Items:CreateSection("BRING THEO NHÓM")
+Items:CreateButton("📦 TẤT CẢ VẬT PHẨM", BringButton("TẤT CẢ", nil, "fire"))
+Items:CreateButton("🪵 NHIÊN LIỆU (gỗ, than, xăng)", BringButton("NHIÊN LIỆU", {Fuel = true}, "fire"))
+Items:CreateButton("♻️ PHẾ LIỆU → MÁY", BringButton("PHẾ LIỆU", {Scrap = true}, "scrap"))
+Items:CreateButton("🍖 THỨC ĂN", BringButton("THỨC ĂN", {Food = true}, "fire"))
+Items:CreateButton("🩹 Y TẾ", BringButton("Y TẾ", {Medical = true}, "fire"))
+Items:CreateButton("🔫 VŨ KHÍ / DỤNG CỤ", BringButton("VŨ KHÍ", {Weapon = true}, "fire"))
+Items:CreateButton("🎯 ĐẠN", BringButton("ĐẠN", {Ammo = true}, "fire"))
+Items:CreateButton("🛡️ GIÁP", BringButton("GIÁP", {Armor = true}, "fire"))
+Items:CreateButton("🐺 DA / CHIẾN LỢI PHẨM", BringButton("DA", {Pelt = true}, "fire"))
+Items:CreateButton("💎 NGỌC / CULTIST", BringButton("NGỌC", {Gem = true}, "fire"))
+Items:CreateButton("🎒 TÚI ĐỰNG", BringButton("TÚI", {Sack = true}, "fire"))
+Items:CreateButton("❓ VẬT PHẨM KHÁC", BringButton("KHÁC", {Other = true}, "fire"))
 
-Items:CreateToggle("🔥 AUTO BRING NHIÊN LIỆU", false, function(value)
-    Settings.AutoFuel = value
-    if value then StartAutoFuel() end
-end, "AutoFuel")
-
-Items:CreateButton("🔥 BRING NHIÊN LIỆU NGAY", BringFuelNow)
-
-Items:CreateSection("PHẾ LIỆU + GỖ")
-
-Items:CreateToggle("♻️ AUTO BRING PHẾ LIỆU + GỖ", false, function(value)
-    Settings.AutoScrap = value
-    if value then StartAutoScrap() end
-end, "AutoScrap")
-
-Items:CreateButton("♻️ BRING PHẾ LIỆU + GỖ ĐẾN MÁY", BringScrapNow)
+Items:CreateSection("TỰ ĐỘNG")
+Items:CreateToggle("🔥 AUTO BRING NHIÊN LIỆU", false,
+    ToggleLoop("AutoFuel", 2, AutoFuelStep), "AutoFuel")
+Items:CreateToggle("♻️ AUTO BRING PHẾ LIỆU", false,
+    ToggleLoop("AutoScrap", 2, AutoScrapStep), "AutoScrap")
 
 Items:CreateLabel(
-    "Danh sách có Log (gỗ).\n"
-    .. "Cơ chế kéo/thả cũ được giữ nguyên.\n"
-    .. "Server có thể từ chối hoặc khôi phục vị trí."
+    "Phân loại theo tên vật phẩm.\n"
+    .. "Gỗ (Log) chỉ thuộc NHIÊN LIỆU.\n"
+    .. "Server có thể từ chối hoặc\n"
+    .. "khôi phục vị trí vật phẩm."
 )
 
--- FLY TAB
+--========================================================
+-- UI: ĐỐNG LỬA
+--========================================================
 local FlyTab = Library:CreateTab("🔥 Đống Lửa")
 
 FlyTab:CreateSection("BAY VỀ MAIN FIRE")
-
-FlyTab:CreateSlider(
-    "Tốc độ bay",
-    50, 500, 300,
-    function(value)
-        Settings.FlySpeed = value
-    end,
-    "FlySpeed",
-    25
-)
+FlyTab:CreateSlider("Tốc độ bay", 50, 500, 300, function(value)
+    Settings.FlySpeed = value
+end, "FlySpeed", 25)
 
 FlyTab:CreateButton("🔥 BAY VỀ ĐỐNG LỬA", FlyToFire)
 FlyTab:CreateButton("🛑 DỪNG BAY", StopFly)
+FlyTab:CreateLabel("Tốc độ mặc định: 300\nBay đến vị trí gần MainFire.")
 
-FlyTab:CreateLabel(
-    "Tốc độ mặc định: 300\n"
-    .. "Bay đến vị trí gần MainFire."
-)
-
--- LOST CHILD TAB
+--========================================================
+-- UI: GIẢI CỨU
+--========================================================
 local ChildTab = Library:CreateTab("🧒 Giải Cứu")
 
 ChildTab:CreateSection("TELEPORT ĐẾN 4 ĐỨA TRẺ")
-
 for i = 1, 4 do
-    ChildTab:CreateButton(
-        "👶 TELEPORT LOST CHILD " .. i,
-        function()
-            TeleportToChild(i)
-        end
-    )
+    ChildTab:CreateButton("👶 TELEPORT LOST CHILD " .. i, function()
+        TeleportToChild(i)
+    end)
 end
+ChildTab:CreateLabel("Cần có nhân vật trẻ em trong Workspace.Characters.")
 
-ChildTab:CreateLabel(
-    "Cần có nhân vật trẻ em trong Workspace.Characters."
-)
-
--- SETTINGS TAB
+--========================================================
+-- UI: CÀI ĐẶT
+--========================================================
 local SettingsTab = Library:CreateTab("⚙️ Cài Đặt")
 
-SettingsTab:CreateSection("FIX LAG")
+SettingsTab:CreateSection("NHÂN VẬT")
+SettingsTab:CreateSlider("Tốc độ chạy", 16, 100, 16, function(value)
+    ApplyWalkSpeed(value)
+end, "WalkSpeed", 2)
 
+SettingsTab:CreateToggle("💤 CHỐNG AFK", true, function(value)
+    Settings.AntiAFK = value
+end, "AntiAFK")
+
+SettingsTab:CreateSection("FIX LAG")
 SettingsTab:CreateToggle("⚡ FIX LAG", false, function(value)
+    if Booting then return end -- không tự bật khi mới chạy
     SetFixLag(value)
-end, "FixLag")
+end)
 
 SettingsTab:CreateButton("♻️ KHÔI PHỤC ĐỒ HỌA", function()
     SetFixLag(false)
@@ -904,45 +1171,27 @@ SettingsTab:CreateButton("♻️ KHÔI PHỤC ĐỒ HỌA", function()
 end)
 
 SettingsTab:CreateSection("WORLD TRANSPARENCY")
-
-SettingsTab:CreateSlider(
-    "Độ trong suốt thế giới (%)",
-    0, 100, 0,
-    function(value)
-        ApplyTransparency(value)
-    end,
-    "WorldTransparency",
-    5
-)
-
+SettingsTab:CreateSlider("Độ trong suốt thế giới (%)", 0, 100, 0, function(value)
+    if Booting then return end
+    ApplyTransparencyDebounced(value)
+end, nil, 5)
 SettingsTab:CreateButton("👁️ KHÔI PHỤC ĐỘ TRONG SUỐT", RestoreTransparency)
 
 SettingsTab:CreateSection("GIAO DIỆN")
-
-SettingsTab:CreateColorPicker(
-    "Màu chủ đạo",
-    Color3.fromRGB(40, 210, 100),
-    function(color)
-        Library:SetAccent(color)
-    end,
-    "MKAccent"
-)
+SettingsTab:CreateColorPicker("Màu chủ đạo", Color3.fromRGB(40, 210, 100), function(color)
+    Library:SetAccent(color)
+end, "MKAccent")
 
 SettingsTab:CreateSection("QUẢN LÝ")
 SettingsTab:CreateButton("🛑 DỪNG TẤT CẢ", StopAll)
-
 SettingsTab:CreateLabel(
-    "MINH KHA HUB V4 UPDATED\n"
+    "MINH KHA HUB V7\n"
     .. "99 Nights in the Forest\n"
-    .. "Kha UI Menu 2.1\n"
-    .. "MOBILE • VIETNAMESE"
+    .. "Kha UI Menu 2.1"
 )
 
+--========================================================
 -- INIT
-Notify("MINH KHA HUB", "COMPLETE V4 UPDATED đã khởi tạo!")
-
-print("[MINH KHA HUB] 99 NIGHTS COMPLETE V4 UPDATED READY")
-
 --========================================================
--- END MINH KHA HUB V4
---========================================================
+Notify("MINH KHA HUB", "COMPLETE V7 đã khởi tạo!")
+print("[MINH KHA HUB] 99 NIGHTS COMPLETE V7 READY")
